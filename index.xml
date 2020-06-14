@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Catatan Raka Kuswanto</title>
+    <link>https://rakakuswanto.github.io/</link>
+    <description>Recent content on Catatan Raka Kuswanto</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 14 Jun 2020 00:00:00 +0000</lastBuildDate>
+    
+	<atom:link href="https://rakakuswanto.github.io/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>Bypass Login Menggunakan Plugin Google</title>
+      <link>https://rakakuswanto.github.io/2020/06/bypass-login-menggunakan-plugin-google/</link>
+      <pubDate>Sun, 14 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://rakakuswanto.github.io/2020/06/bypass-login-menggunakan-plugin-google/</guid>
+      <description>&lt;p&gt;Kali ini saya akan membagikan pengalaman saya menemukan sebuah celah keamanan pada sebuah website startup lokal yang menggunakan plugin untuk login dengan akun google.&lt;/p&gt;</description>
+    </item>
+    
+  </channel>
+</rss>
