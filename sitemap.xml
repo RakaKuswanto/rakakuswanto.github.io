@@ -3,48 +3,71 @@
   xmlns:xhtml="http://www.w3.org/1999/xhtml">
   
   <url>
-    <loc>https://rakakuswanto.github.io/2020/06/bypass-login-plugin-google-menggunakan-teknik-tampering-parameter/</loc>
-    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
     <loc>https://rakakuswanto.github.io/</loc>
-    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://rakakuswanto.github.io/categories/</loc>
-    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://rakakuswanto.github.io/post/</loc>
-    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://rakakuswanto.github.io/tags/</loc>
-    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/</loc>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/categories/capture-the-flag/</loc>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/tags/cryptography/</loc>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://rakakuswanto.github.io/tags/security/</loc>
-    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
-    <loc>https://rakakuswanto.github.io/categories/stories/</loc>
-    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
+    <loc>https://rakakuswanto.github.io/tags/steganography/</loc>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://rakakuswanto.github.io/tags/write-up/</loc>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/2020/06/bypass-login-plugin-google-menggunakan-teknik-tampering-parameter/</loc>
+    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/categories/stories/</loc>
     <lastmod>2020-06-14T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
