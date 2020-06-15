@@ -21,6 +21,11 @@
   </url>
   
   <url>
+    <loc>https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/</loc>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
     <loc>https://rakakuswanto.github.io/tags/</loc>
     <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
@@ -56,6 +61,12 @@
   </url>
   
   <url>
+    <loc>https://rakakuswanto.github.io/categories/stories/</loc>
+    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
     <loc>https://rakakuswanto.github.io/tags/write-up/</loc>
     <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
@@ -64,12 +75,6 @@
   <url>
     <loc>https://rakakuswanto.github.io/2020/06/bypass-login-plugin-google-menggunakan-teknik-tampering-parameter/</loc>
     <lastmod>2020-06-14T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://rakakuswanto.github.io/categories/stories/</loc>
-    <lastmod>2020-06-14T00:00:00+00:00</lastmod>
-    <priority>0</priority>
   </url>
   
   <url>

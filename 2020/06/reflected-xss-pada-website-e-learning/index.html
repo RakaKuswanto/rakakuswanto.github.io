@@ -8,18 +8,18 @@
 <meta name="generator" content="Hugo 0.56.3 with theme Tranquilpeak 0.4.8-BETA">
 <meta name="author" content="Raka Kuswanto">
 <meta name="keywords" content="">
-<meta name="description" content="Pada soal ini diberikan sebuah file gambar, gambar tersebut berisi kata yang bertuliskan NgabuburIT, ya ngabuburIT, itulah yang ada di benak saya pada saat membuat soal ini, karena waktu itu sedang bulan puasa dan saya juga sedang menunggu untuk berbuka puasa, akhirnya muncul soal tersebut dengan nama ngabuburIT, plesetan kata dari ngabuburit namun diisi dengan kegiatan IT.">
+<meta name="description" content="Virus corona, yap.. virus yang satu ini sedang booming sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.">
 
 
-<meta property="og:description" content="Pada soal ini diberikan sebuah file gambar, gambar tersebut berisi kata yang bertuliskan NgabuburIT, ya ngabuburIT, itulah yang ada di benak saya pada saat membuat soal ini, karena waktu itu sedang bulan puasa dan saya juga sedang menunggu untuk berbuka puasa, akhirnya muncul soal tersebut dengan nama ngabuburIT, plesetan kata dari ngabuburit namun diisi dengan kegiatan IT.">
+<meta property="og:description" content="Virus corona, yap.. virus yang satu ini sedang booming sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.">
 <meta property="og:type" content="article">
-<meta property="og:title" content="UICTC Capture The Flag - Writeup NgabuburIT">
-<meta name="twitter:title" content="UICTC Capture The Flag - Writeup NgabuburIT">
-<meta property="og:url" content="https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
-<meta property="twitter:url" content="https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
+<meta property="og:title" content="Reflected XSS Pada Website E-learning">
+<meta name="twitter:title" content="Reflected XSS Pada Website E-learning">
+<meta property="og:url" content="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+<meta property="twitter:url" content="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
 <meta property="og:site_name" content="Catatan Raka Kuswanto">
-<meta property="og:description" content="Pada soal ini diberikan sebuah file gambar, gambar tersebut berisi kata yang bertuliskan NgabuburIT, ya ngabuburIT, itulah yang ada di benak saya pada saat membuat soal ini, karena waktu itu sedang bulan puasa dan saya juga sedang menunggu untuk berbuka puasa, akhirnya muncul soal tersebut dengan nama ngabuburIT, plesetan kata dari ngabuburit namun diisi dengan kegiatan IT.">
-<meta name="twitter:description" content="Pada soal ini diberikan sebuah file gambar, gambar tersebut berisi kata yang bertuliskan NgabuburIT, ya ngabuburIT, itulah yang ada di benak saya pada saat membuat soal ini, karena waktu itu sedang bulan puasa dan saya juga sedang menunggu untuk berbuka puasa, akhirnya muncul soal tersebut dengan nama ngabuburIT, plesetan kata dari ngabuburit namun diisi dengan kegiatan IT.">
+<meta property="og:description" content="Virus corona, yap.. virus yang satu ini sedang booming sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.">
+<meta name="twitter:description" content="Virus corona, yap.. virus yang satu ini sedang booming sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.">
 <meta property="og:locale" content="en-us">
 
   
@@ -31,7 +31,7 @@
   
   
     
-      <meta property="article:section" content="capture the flag">
+      <meta property="article:section" content="stories">
     
   
   
@@ -39,10 +39,6 @@
       <meta property="article:tag" content="security">
     
       <meta property="article:tag" content="write up">
-    
-      <meta property="article:tag" content="steganography">
-    
-      <meta property="article:tag" content="cryptography">
     
   
 
@@ -55,12 +51,12 @@
 
 
 
-  <meta property="og:image" content="//d1u9biwaxjngwg.cloudfront.net/highlighted-code-showcase/peak-140.jpg">
-  <meta property="twitter:image" content="//d1u9biwaxjngwg.cloudfront.net/highlighted-code-showcase/peak-140.jpg">
+  <meta property="og:image" content="//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
+  <meta property="twitter:image" content="//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
 
 
-  <meta property="og:image" content="//d1u9biwaxjngwg.cloudfront.net/cover-image-showcase/city.jpg">
-  <meta property="twitter:image" content="//d1u9biwaxjngwg.cloudfront.net/cover-image-showcase/city.jpg">
+  <meta property="og:image" content="//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
+  <meta property="twitter:image" content="//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
 
 
 
@@ -69,14 +65,14 @@
   <meta property="twitter:image" content="https://www.gravatar.com/avatar/95959092febe443d9cf735e5e41b8398?s=640">
 
 
-    <title>UICTC Capture The Flag - Writeup NgabuburIT</title>
+    <title>Reflected XSS Pada Website E-learning</title>
 
     <link rel="icon" href="https://rakakuswanto.github.io/favicon.png">
     
 
     
 
-    <link rel="canonical" href="https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
+    <link rel="canonical" href="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
 
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
@@ -231,13 +227,13 @@ if (!doNotTrack) {
   <div class="post-header-cover
               text-left
               "
-       style="background-image:url('//d1u9biwaxjngwg.cloudfront.net/cover-image-showcase/city.jpg')"
+       style="background-image:url('//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&amp;cs=tinysrgb&amp;fit=crop&amp;fm=jpg&amp;h=1820&amp;ixid=eyJhcHBfaWQiOjF9&amp;ixlib=rb-1.2.1&amp;q=80&amp;w=1920')"
        data-behavior="4">
     
       <div class="post-header main-content-wrap text-left">
   
     <h1 class="post-title" itemprop="headline">
-      UICTC Capture The Flag - Writeup NgabuburIT
+      Reflected XSS Pada Website E-learning
     </h1>
   
   
@@ -254,7 +250,7 @@ if (!doNotTrack) {
   
     <span>in</span>
     
-      <a class="category-link" href="https://rakakuswanto.github.io/categories/capture-the-flag">capture the flag</a>
+      <a class="category-link" href="https://rakakuswanto.github.io/categories/stories">stories</a>
     
   
 
@@ -274,47 +270,42 @@ if (!doNotTrack) {
           
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
-              <p>Pada soal ini diberikan sebuah file gambar, gambar tersebut berisi kata yang bertuliskan NgabuburIT, ya ngabuburIT, itulah yang ada di benak saya pada saat membuat soal ini, karena waktu itu sedang bulan puasa dan saya juga sedang menunggu untuk berbuka puasa, akhirnya muncul soal tersebut dengan nama ngabuburIT, plesetan kata dari ngabuburit namun diisi dengan kegiatan IT.</p>
+              <p>Virus corona, yap.. virus yang satu ini sedang <i>booming</i> sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.</p>
+
+<p>Hal itu banyak dikeluhkan oleh peserta didik, dikarenakan ada yang merasa susah untuk mencerna ilmu secara <i>online</i>, tugas <i>online</i> dan hal-hal lain nya yang serba <i>online</i>. Pihak - pihak terkait segera memikirkan cara agar para siswa atau mahasiswa agar tidak susah saat belajar daring, salah satu nya menggunakan sistem E-Learning.</p>
 
 <h1 id="table-of-contents">Table of Contents</h1><nav id="TableOfContents">
 <ul>
-<li><a href="#soal">Soal</a></li>
+<li><a href="#pendahuluan">Pendahuluan</a></li>
 <li><a href="#analisa">Analisa</a></li>
-<li><a href="#lets-get-the-flag">Lets Get The Flag</a></li>
+<li><a href="#penemuan-reflected-xss">Penemuan Reflected XSS</a></li>
 <li><a href="#kesimpulan">Kesimpulan</a></li>
+<li><a href="#penanganan">Penanganan</a></li>
 </ul>
 </nav>
 
-<h1 id="soal">Soal</h1>
+<h1 id="pendahuluan">Pendahuluan</h1>
 
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/NgabuburIT.png" alt="" />
-<center><a href="https://rakakuswanto.github.io/images/2020/06/15/NgabuburIT.jpg">https://rakakuswanto.github.io/images/2020/06/15/NgabuburIT.jpg</a></center></p>
+<p>Seperti <a href="https://rakakuswanto.github.io/2020/06/bypass-login-plugin-google-menggunakan-teknik-tampering-parameter/">postingan saya sebelumnya</a>, disana dijelaskan bahwa saya memang orang yang senang melakukan sesuatu dan selalu kepo haha.
+Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan nya seperti dibawah ini:</p>
 
-<p>Gambar diatas merupakan file soal dari CTF ini, file tersebut diberi nama NgabuburIT.jpg dan berisikan sebuah tulisan yaitu ngabuburIT with UICTC.</p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning.png" alt="" /></p>
+
+<p>Dari halaman yang pertama kali dilihat saja mata saya langsung tertuju pada sebuah parameter di <i>address bar</i>, yaitu pada parameter /?affcode. lalu saya coba lakukan testing, hal yang pertama saya tes adalah SQL <i>Injection</i>.</p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning-sql.png" alt="" /></p>
+
+<p>Namun tidak ada respon apapun, halaman tetap memunculkan halaman nya dengan normal, saya pikir web tersebut aman dari serangan <i>SQL Injection</i>. Lalu saya pikirkan kembali, apakah ada kemungkinan celah dari parameter tersebut. saya coba lihat <i>source code</i> dari halaman tersebut ternyata <i>string</i> yang saya masukan tersimpan ke halaman website tersebut dan inilah yang dinamakan refleksi, jadi yang kita masukan muncul kedalam halaman.</p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning-sc.png" alt="" /></p>
 
 <h1 id="analisa">Analisa</h1>
 
-<p>Secara umum file tersebut merupakan file gambar pada umumnya, jika kita buka menggunakan image viewer hanya menampilkan gambar dengan tulisan ngabuburIT with UICTC. Karena soal ini berjenis steganography, pasti ada sesuatu yang disembunyikan dari file ini.</p>
+<p>Setelah mengetahui bahwa halaman tersebut merefleksikan masukan yang saya tulis, maka saya lakukan tes untuk mengecek apakah terdapat bug XSS atau tidak.</p>
 
-<p>Pertama kita buka file tersebut menggunakan text editor, disini saya menggunakan notepad karena ukuran file ini tergolong kecil, yaitu sekitar 3kb, jadi kita tidak terlalu sulit untuk menganalisa isi dari file tersebut, namun jika file yang ingin kita periksa memiliki size yang lebih besar dari 500kb, anda bisa menggunakan aplikasi seperti Bintext.</p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning-test.png" alt="" /></p>
 
-<p>Lanjut, kita buka file tersebut dengan notepad.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/notepad.png" alt="" /></p>
-
-<p>dari gambar diatas terdapat sebuah string yang menarik untuk diselidiki, yaitu string PK   , sebelumnya apa menariknya sih string itu ? untuk mengetahui itu kita bisa belajar terlebih dahulu mengenai Magic Bytes atau file signatures. Itu merupakan data yang digunakan untuk mengidentifikasi atau memverifikasi sebuah file, dengan kata lain kita dapat mengetahui sebuah jenis file melalui magic byte atau file signatures tersebut. Kita dapat melihat list file signatures atau magic bytes di internet.</p>
-
-<p>jika kita cari, string PK merupakan signature dari file dengan format zip. Sekarang kita buktikan apakah benar didalam file soal ini terdapat sebuah file zip ? kita ubah nama ekstensi file NgabuburIT.jpg menjadi NgabuburIT.zip</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/NgabuburZIP.png" alt="" /></p>
-
-<p>Setelah itu kita coba buka menggunakan aplikasi zip, bisa menggunakan winrar, winzip, 7-zip atau lainnya.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/NgabuburFlag.png" alt="" /></p>
-
-<p>Ternyata benar, file tersebut memiliki sebuah file zip didalamnya, dan didalam file zip tersebut terdapat file dengan nama FLAG, namun file tersebut tidak memiliki ekstensi file. Tapi tenang, sebelumnya kita sudah belajar mengenai magic bytes atau file signature maka dari itu kita gunakan cara yang sama seperti sebelumnya, yaitu buka file tersebut menggunakan text editor.</p>
-
-<p>tetapi didalam file tersebut tidak ada sesuatu yang bisa kita anggap magic bytes, karena isinya hanya tulisan aneh yang panjang seperti tulisan dibawah ini.</p>
+<p>Saya menggunakan payload seperti yang tertera dibawah ini:</p>
 
 
   
@@ -324,30 +315,25 @@ if (!doNotTrack) {
     
   
   
-    
-  
-  
-    
   
 
 
 <figure class="highlight http language-http">
   <figcaption>
     
-      <span>FLAG</span><a href="http://" target="_blank" rel="external">FLAG</a>
+      <span>Payload XSS</span>
     
   </figcaption>
   <table>
     <tbody>
       <tr>
         <td class="gutter">
-          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre>
+          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre>
         </td>
         <td class="code">
           <pre class="code-highlight language-http"><code class="http">
 
-LS4tLi0tIC4uLS4gLi0uLiAuLSAtLS4gIC4uLi4uIC0gLiAtLS4gLi4uLi0gLS4g
-LS0tLS0gLS0uIC4tLS0tIC4uLS0tIC4tIC4tLS4gLi4uLiAtLi0tIA==
+&#34;&lt;script&gt;alert();&lt;/script&gt;
 </code></pre>
         </td>
       </tr>
@@ -355,13 +341,11 @@ LS0tLS0gLS0uIC4tLS0tIC4uLS0tIC4tIC4tLS4gLi4uLiAtLi0tIA==
   </table>
 </figure>
 
-<h1 id="lets-get-the-flag">Lets Get The Flag</h1>
+<p>ternyata masukan pada parameter affcode terbaca oleh sistem, seperti pada gambar diatas, masukan tersimpan pada beberapa atribut HTML, namun belum fungsi alert dari payload tersebut tidak berjalan.</p>
 
-<p>Setelah mendapatkan teks yang cukup aneh dari file FLAG tersebut, kita coba menggunakan tools yang keren yaitu cyberchef karena kemungkinan file tersebut merupakan hash ataupun sebuah teks yang di enkripsi.</p>
+<h1 id="penemuan-reflected-xss">Penemuan Reflected XSS</h1>
 
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/cyberchef.png" alt="" /></p>
-
-<p>Setelah mencari cara yang cocok untuk memecahkan tulisan diatas akhirnya didapatkan bahwa teks tersebut merupakan hasil enkoding base64, setelah di dekoding akhirnya muncul tulisan dengan pola garis dan titik, dari pola tersebut dapat ditebak pasti teks tersebut merupakan kode morse.</p>
+<p>Dari temuan diatas, saya lalu memikirkan bagaimana cara memastikan bahwa benar terdapat XSS pada halaman tersebut. Akhirnya saya pun mencoba payload dengan attribut img</p>
 
 
   
@@ -371,17 +355,13 @@ LS0tLS0gLS0uIC4tLS0tIC4uLS0tIC4tIC4tLS4gLi4uLiAtLi0tIA==
     
   
   
-    
-  
-  
-    
   
 
 
 <figure class="highlight http language-http">
   <figcaption>
     
-      <span>FLAG</span><a href="http://" target="_blank" rel="external">FLAG</a>
+      <span>Payload XSS</span>
     
   </figcaption>
   <table>
@@ -392,7 +372,7 @@ LS0tLS0gLS0uIC4tLS0tIC4uLS0tIC4tIC4tLS4gLi4uLiAtLi0tIA==
         </td>
         <td class="code">
           <pre class="code-highlight language-http"><code class="http">
--.-.-- ..-. .-.. .- --.  ..... - . --. ....- -. ----- --. .---- ..--- .- .--. .... -.-- 
+&#34;&gt;&lt;img/src=x%20onerror=alert()&gt;
 </code></pre>
         </td>
       </tr>
@@ -400,12 +380,15 @@ LS0tLS0gLS0uIC4tLS0tIC4uLS0tIC4tIC4tLS4gLi4uLiAtLi0tIA==
   </table>
 </figure>
 
-<p>Kita gunakan kembali aplikasi cyberchef, dan pilih operasi nya from morse code</p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning-test.png" alt="" /></p>
 
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/flag.png" alt="" /></p>
+<p>Tapi tetap saja halaman tidak bereaksi atas payload yang saya gunakan :(</p>
 
-<p>Dan akhirnya didapatkan FLAG yang selama ini kita cari..
-Flag nya yaitu:</p>
+<p>Akhirnya saya berhenti sejenak, dan mencoba mencari bug yang lain, tetapi tiba - tiba saja saya ingin sekali me-refresh halaman tersebut (karena jaringan internet saya lemot makanya sering refresh halaman webnya hahaha), entah kenapa muncul sebuah alert atau pesan seperti message box.</p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learningxss.png" alt="" /></p>
+
+<p>Setelah itu saya coba dengan menggunakan payload untuk mendapatkan cookies dari user.</p>
 
 
   
@@ -415,30 +398,24 @@ Flag nya yaitu:</p>
     
   
   
-    
-  
-  
-    
   
 
 
 <figure class="highlight http language-http">
   <figcaption>
     
-      <span>FLAG</span><a href="http://" target="_blank" rel="external">FLAG</a>
+      <span>Payload XSS</span>
     
   </figcaption>
   <table>
     <tbody>
       <tr>
         <td class="gutter">
-          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre>
+          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre>
         </td>
         <td class="code">
           <pre class="code-highlight language-http"><code class="http">
-
-!FLAG5TEG4N0G12APHY
-
+&#34;&gt;&lt;img/src=x%20onerror=alert(document.cookie)&gt;
 </code></pre>
         </td>
       </tr>
@@ -446,15 +423,19 @@ Flag nya yaitu:</p>
   </table>
 </figure>
 
+<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learningxss-cookie.png" alt="" /></p>
+
+<p>Dari situ saya menyadari, bahwa bug tersebut berasal dari cookies yang disimpan oleh web, seperti pada gambar diatas, sebuah pesan alert menampilkan isi dari cookies, disitu terlihat jelas ada elemen html yang ikut masuk kedalam cookies milik user pada field affcode.</p>
+
 <h1 id="kesimpulan">Kesimpulan</h1>
 
-<p>Dari soal ini kita dapat mempelajari mengenai beberapa teknik, yaitu:</p>
+<p>Jadi website tersebut menyimpan affcode secara langsung tanpa dicek terlebih dahulu apakah affcode mengandung string &ldquo;berbahaya&rdquo; atau tidak, sehingga jika user memasukan affcode menggunakan kode HTML maka sistem akan membaca masukan user sebagai HTML juga.</p>
 
-<ul>
-<li>Pengetahuan mengenai magic bytes atau file signature</li>
-<li>Steganografi</li>
-<li>Kriptografi</li>
-</ul>
+<p>Perlu diketahui, bahwa bug jenis XSS ini dapat digunakan oleh penjahat untuk mendapatkan akses seorang user melalui cookies user tersebut.</p>
+
+<h1 id="penanganan">Penanganan</h1>
+
+<p>Website ini menggunakan LMS atau <a href="https://chamilo.org/en/download/">Learning Management System Chamilo</a> dengan versi yang lawas, maka disarankan untuk update LMS tersebut ke versi terbaru.</p>
               
             </div>
           </div>
@@ -470,10 +451,6 @@ Flag nya yaitu:</p>
 
   <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/write-up/">write up</a>
 
-  <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/steganography/">steganography</a>
-
-  <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/cryptography/">cryptography</a>
-
                   </div>
                 
               
@@ -485,7 +462,7 @@ Flag nya yaitu:</p>
           
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/" data-tooltip="Reflected XSS Pada Website E-learning">
+                <a class="post-action-btn btn btn--disabled">
               
                   <i class="fa fa-angle-left"></i>
                   <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
@@ -493,7 +470,7 @@ Flag nya yaitu:</p>
             </li>
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/bypass-login-plugin-google-menggunakan-teknik-tampering-parameter/" data-tooltip="Bypass Login Plugin Google Menggunakan Teknik Tampering Parameter">
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/" data-tooltip="UICTC Capture The Flag - Writeup NgabuburIT">
               
                   <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
                   <i class="fa fa-angle-right"></i>
@@ -511,19 +488,19 @@ Flag nya yaitu:</p>
         </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
               <i class="fa fa-facebook-official"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
               <i class="fa fa-twitter"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
               <i class="fa fa-google-plus"></i>
             </a>
           </li>
@@ -561,7 +538,7 @@ Flag nya yaitu:</p>
           
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/" data-tooltip="Reflected XSS Pada Website E-learning">
+                <a class="post-action-btn btn btn--disabled">
               
                   <i class="fa fa-angle-left"></i>
                   <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
@@ -569,7 +546,7 @@ Flag nya yaitu:</p>
             </li>
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/bypass-login-plugin-google-menggunakan-teknik-tampering-parameter/" data-tooltip="Bypass Login Plugin Google Menggunakan Teknik Tampering Parameter">
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/" data-tooltip="UICTC Capture The Flag - Writeup NgabuburIT">
               
                   <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
                   <i class="fa fa-angle-right"></i>
@@ -587,19 +564,19 @@ Flag nya yaitu:</p>
         </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
               <i class="fa fa-facebook-official"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
               <i class="fa fa-twitter"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
               <i class="fa fa-google-plus"></i>
             </a>
           </li>
@@ -623,19 +600,19 @@ Flag nya yaitu:</p>
   <ul class="share-options">
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fuictc-capture-the-flag-writeup-ngabuburit%2F">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Freflected-xss-pada-website-e-learning%2F">
           <i class="fa fa-facebook-official"></i><span>Share on Facebook</span>
         </a>
       </li>
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fuictc-capture-the-flag-writeup-ngabuburit%2F">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Freflected-xss-pada-website-e-learning%2F">
           <i class="fa fa-twitter"></i><span>Share on Twitter</span>
         </a>
       </li>
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fuictc-capture-the-flag-writeup-ngabuburit%2F">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Freflected-xss-pada-website-e-learning%2F">
           <i class="fa fa-google-plus"></i><span>Share on Google&#43;</span>
         </a>
       </li>
