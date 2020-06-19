@@ -4,31 +4,60 @@
   
   <url>
     <loc>https://rakakuswanto.github.io/</loc>
-    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://rakakuswanto.github.io/categories/</loc>
-    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://rakakuswanto.github.io/post/</loc>
-    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/</loc>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/tags/</loc>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/tags/security/</loc>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/tags/sql/</loc>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/categories/stories/</loc>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rakakuswanto.github.io/tags/write-up/</loc>
+    <lastmod>2020-06-19T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>
   
   <url>
     <loc>https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/</loc>
     <lastmod>2020-06-15T00:00:00+00:00</lastmod>
-  </url>
-  
-  <url>
-    <loc>https://rakakuswanto.github.io/tags/</loc>
-    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
-    <priority>0</priority>
   </url>
   
   <url>
@@ -49,25 +78,7 @@
   </url>
   
   <url>
-    <loc>https://rakakuswanto.github.io/tags/security/</loc>
-    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
     <loc>https://rakakuswanto.github.io/tags/steganography/</loc>
-    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://rakakuswanto.github.io/categories/stories/</loc>
-    <lastmod>2020-06-15T00:00:00+00:00</lastmod>
-    <priority>0</priority>
-  </url>
-  
-  <url>
-    <loc>https://rakakuswanto.github.io/tags/write-up/</loc>
     <lastmod>2020-06-15T00:00:00+00:00</lastmod>
     <priority>0</priority>
   </url>

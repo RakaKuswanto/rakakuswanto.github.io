@@ -6,10 +6,19 @@
     <description>Recent content in stories on Catatan Raka Kuswanto</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 15 Jun 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 19 Jun 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://rakakuswanto.github.io/categories/stories/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>SQL Injection di Subdomain Website Kampus</title>
+      <link>https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/</link>
+      <pubDate>Fri, 19 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/</guid>
+      <description>&lt;p&gt;&amp;ldquo;Bug lagi, bug lagi!.&amp;rdquo;&lt;br&gt;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>Reflected XSS Pada Website E-learning</title>

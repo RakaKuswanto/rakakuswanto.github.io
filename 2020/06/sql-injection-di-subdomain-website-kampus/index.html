@@ -8,25 +8,25 @@
 <meta name="generator" content="Hugo 0.56.3 with theme Tranquilpeak 0.4.8-BETA">
 <meta name="author" content="Raka Kuswanto">
 <meta name="keywords" content="">
-<meta name="description" content="Virus corona, yap.. virus yang satu ini sedang booming sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.">
+<meta name="description" content="&ldquo;Bug lagi, bug lagi!.&rdquo;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.">
 
 
-<meta property="og:description" content="Virus corona, yap.. virus yang satu ini sedang booming sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.">
+<meta property="og:description" content="&ldquo;Bug lagi, bug lagi!.&rdquo;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Reflected XSS Pada Website E-learning">
-<meta name="twitter:title" content="Reflected XSS Pada Website E-learning">
-<meta property="og:url" content="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
-<meta property="twitter:url" content="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+<meta property="og:title" content="SQL Injection di Subdomain Website Kampus">
+<meta name="twitter:title" content="SQL Injection di Subdomain Website Kampus">
+<meta property="og:url" content="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+<meta property="twitter:url" content="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
 <meta property="og:site_name" content="Catatan Raka Kuswanto">
-<meta property="og:description" content="Virus corona, yap.. virus yang satu ini sedang booming sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.">
-<meta name="twitter:description" content="Virus corona, yap.. virus yang satu ini sedang booming sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.">
+<meta property="og:description" content="&ldquo;Bug lagi, bug lagi!.&rdquo;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.">
+<meta name="twitter:description" content="&ldquo;Bug lagi, bug lagi!.&rdquo;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.">
 <meta property="og:locale" content="en-us">
 
   
-    <meta property="article:published_time" content="2020-06-15T00:00:00">
+    <meta property="article:published_time" content="2020-06-19T00:00:00">
   
   
-    <meta property="article:modified_time" content="2020-06-15T00:00:00">
+    <meta property="article:modified_time" content="2020-06-19T00:00:00">
   
   
   
@@ -40,6 +40,8 @@
     
       <meta property="article:tag" content="write up">
     
+      <meta property="article:tag" content="sql">
+    
   
 
 
@@ -51,12 +53,12 @@
 
 
 
-  <meta property="og:image" content="//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
-  <meta property="twitter:image" content="//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
+  <meta property="og:image" content="//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
+  <meta property="twitter:image" content="//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
 
 
-  <meta property="og:image" content="//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
-  <meta property="twitter:image" content="//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
+  <meta property="og:image" content="//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
+  <meta property="twitter:image" content="//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
 
 
 
@@ -65,14 +67,14 @@
   <meta property="twitter:image" content="https://www.gravatar.com/avatar/95959092febe443d9cf735e5e41b8398?s=640">
 
 
-    <title>Reflected XSS Pada Website E-learning</title>
+    <title>SQL Injection di Subdomain Website Kampus</title>
 
     <link rel="icon" href="https://rakakuswanto.github.io/favicon.png">
     
 
     
 
-    <link rel="canonical" href="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+    <link rel="canonical" href="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
 
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
@@ -227,21 +229,21 @@ if (!doNotTrack) {
   <div class="post-header-cover
               text-left
               "
-       style="background-image:url('//images.unsplash.com/photo-1514168757508-07ffe9ae125b?crop=entropy&amp;cs=tinysrgb&amp;fit=crop&amp;fm=jpg&amp;h=1820&amp;ixid=eyJhcHBfaWQiOjF9&amp;ixlib=rb-1.2.1&amp;q=80&amp;w=1920')"
+       style="background-image:url('//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&amp;cs=tinysrgb&amp;fit=crop&amp;fm=jpg&amp;h=1820&amp;ixid=eyJhcHBfaWQiOjF9&amp;ixlib=rb-1.2.1&amp;q=80&amp;w=1920')"
        data-behavior="4">
     
       <div class="post-header main-content-wrap text-left">
   
     <h1 class="post-title" itemprop="headline">
-      Reflected XSS Pada Website E-learning
+      SQL Injection di Subdomain Website Kampus
     </h1>
   
   
   <div class="postShorten-meta post-meta">
     
-      <time itemprop="datePublished" datetime="2020-06-15T00:00:00Z">
+      <time itemprop="datePublished" datetime="2020-06-19T00:00:00Z">
         
-  June 15, 2020
+  June 19, 2020
 
       </time>
     
@@ -270,172 +272,81 @@ if (!doNotTrack) {
           
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
-              <p>Virus corona, yap.. virus yang satu ini sedang <i>booming</i> sejak kemunculan nya pertama kali di china, virus tersebut berdampak pada banyak aspek termasuk di bidang pendidikan. Sekolah, Kampus, semua ditutup sampai waktu yang belum dapat ditentukan, kemudian hal itu lah yang menyebabkan sekolah - sekolah atau kampus mengubah cara belajar nya, yang asalnya tatap muka menjadi belajar secara daring.</p>
-
-<p>Hal itu banyak dikeluhkan oleh peserta didik, dikarenakan ada yang merasa susah untuk mencerna ilmu secara <i>online</i>, tugas <i>online</i> dan hal-hal lain nya yang serba <i>online</i>. Pihak - pihak terkait segera memikirkan cara agar para siswa atau mahasiswa agar tidak susah saat belajar daring, salah satu nya menggunakan sistem E-Learning.</p>
+              <p>&ldquo;Bug lagi, bug lagi!.&rdquo;<br>Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.</p>
 
 <h1 id="table-of-contents">Table of Contents</h1><nav id="TableOfContents">
 <ul>
 <li><a href="#pendahuluan">Pendahuluan</a></li>
 <li><a href="#analisa">Analisa</a></li>
-<li><a href="#penemuan-reflected-xss">Penemuan Reflected XSS</a></li>
-<li><a href="#kesimpulan">Kesimpulan</a></li>
+<li><a href="#sql-injection">SQL Injection</a></li>
+<li><a href="#kesimpulan">Kesimpulan</a>
+<ul>
+<li><a href="#kesalahan">Kesalahan</a></li>
 <li><a href="#penanganan">Penanganan</a></li>
+</ul></li>
 </ul>
 </nav>
 
 <h1 id="pendahuluan">Pendahuluan</h1>
 
-<p>Seperti <a href="https://rakakuswanto.github.io/2020/06/bypass-login-plugin-google-menggunakan-teknik-tampering-parameter/">postingan saya sebelumnya</a>, disana dijelaskan bahwa saya memang orang yang senang melakukan sesuatu dan selalu kepo haha.
-Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan nya seperti dibawah ini:</p>
+<p>Bug yang kali ini akan saya bahas adalah bug yang terdapat pada salah satu subdomain milik kampus saya berkuliah, jadi pihak kampus saya itu memiliki sebuah sistem untuk menangani proses penerimaan mahasiswa baru secara online, sistem tersebut memiliki desain yang cukup modern dan simpel.
+Selain itu, website ini juga memiliki fungsi penerimaan mahasiswa baru (PMB) secara umumnya seperti fungsi daftar, registrasi dan lain-lain yang berhubungan dengan pendaftaran kuliah.</p>
 
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning.png" alt="" /></p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb.png" alt="" /></p>
 
-<p>Dari halaman yang pertama kali dilihat saja mata saya langsung tertuju pada sebuah parameter di <i>address bar</i>, yaitu pada parameter /?affcode. lalu saya coba lakukan testing, hal yang pertama saya tes adalah SQL <i>Injection</i>.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning-sql.png" alt="" /></p>
-
-<p>Namun tidak ada respon apapun, halaman tetap memunculkan halaman nya dengan normal, saya pikir web tersebut aman dari serangan <i>SQL Injection</i>. Lalu saya pikirkan kembali, apakah ada kemungkinan celah dari parameter tersebut. saya coba lihat <i>source code</i> dari halaman tersebut ternyata <i>string</i> yang saya masukan tersimpan ke halaman website tersebut dan inilah yang dinamakan refleksi, jadi yang kita masukan muncul kedalam halaman.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning-sc.png" alt="" /></p>
+<p>Namun ada fungsi yang cukup unik, yaitu fungsi daftar secara &ldquo;khusus&rdquo;, fungsi tersebut digunakan oleh mahasiswa/dosen/pihak yang berhubungan dengan kampus untuk mendaftarkan teman/keluarga nya agar daftar ke kampus tersebut dengan maksud mendapatkan keuntungan, ya keuntungan karena pada saat daftar secara khusus calon mahasiswa memerlukan sebuah kode refferal atau kode referensi, sehingga pemilik kode tersebut mendapatkan imbalan/keuntungan.</p>
 
 <h1 id="analisa">Analisa</h1>
 
-<p>Setelah mengetahui bahwa halaman tersebut merefleksikan masukan yang saya tulis, maka saya lakukan tes untuk mengecek apakah terdapat bug XSS atau tidak.</p>
+<p>Penemuan bug jenis SQL injection pada website ini sudah dua kali saya temukan, sebelumnya kurang lebih di tahun 2016 saya menemukan bug SQL Injection untuk melakukan &ldquo;bypass login&rdquo; pada website pendaftaran ini, sudah saya laporkan namun sepertinya pihak dari kampus masih kurang memahami tentang pentingnya keamanan pada website. Kembali ke pembahasan, jadi fokus saya tertuju pada fungsi pendaftaran khusus.</p>
 
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning-test.png" alt="" /></p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-khusus.png" alt="" /></p>
 
-<p>Saya menggunakan payload seperti yang tertera dibawah ini:</p>
+<p>Yang pertama kali saya lakukan adalah mengecek bagaimana fungsi yang seharusnya terjadi pada saat menjalankan fungsi pendaftaran khusus.</p>
 
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-tes.png" alt="" /></p>
 
-  
-    
-  
-  
-    
-  
-  
-  
+<p>Ternyata jika saya mengisikan no referensi yang salah akan memunculkan sebuah pesan kesalahan.</p>
 
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-salah.png" alt="" /></p>
 
-<figure class="highlight http language-http">
-  <figcaption>
-    
-      <span>Payload XSS</span>
-    
-  </figcaption>
-  <table>
-    <tbody>
-      <tr>
-        <td class="gutter">
-          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre>
-        </td>
-        <td class="code">
-          <pre class="code-highlight language-http"><code class="http">
+<h1 id="sql-injection">SQL Injection</h1>
 
-&#34;&lt;script&gt;alert();&lt;/script&gt;
-</code></pre>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</figure>
+<p>Setelah mendapatkan pesan kesalahan, lalu saya menggunakan &ldquo;mantra khusus&rdquo; untuk mengecek apakah ada peluang untuk injeksi melalui parameter no referensi.
+no referensi yang asalnya menggunakan nomor,</p>
 
-<p>ternyata masukan pada parameter affcode terbaca oleh sistem, seperti pada gambar diatas, masukan tersimpan pada beberapa atribut HTML, namun belum fungsi alert dari payload tersebut tidak berjalan.</p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/noawal.png" alt="" /></p>
 
-<h1 id="penemuan-reflected-xss">Penemuan Reflected XSS</h1>
+<p>diubah menjadi <b>&lsquo;or&rdquo;=&rsquo;</b></p>
 
-<p>Dari temuan diatas, saya lalu memikirkan bagaimana cara memastikan bahwa benar terdapat XSS pada halaman tersebut. Akhirnya saya pun mencoba payload dengan attribut img</p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/noakhir.png" alt="" /></p>
 
+<p>dan benar saja, terdapat bug SQL Injection pada parameter inputan no referensi</p>
 
-  
-    
-  
-  
-    
-  
-  
-  
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-sql.png" alt="" /></p>
 
+<p>Seperti yang dapat dilihat pada gambar diatas, sistem tidak menampilkan pesan eror, padahal no referensi yang diinputkan tidak sesuai dengan no referensi yang ada.</p>
 
-<figure class="highlight http language-http">
-  <figcaption>
-    
-      <span>Payload XSS</span>
-    
-  </figcaption>
-  <table>
-    <tbody>
-      <tr>
-        <td class="gutter">
-          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre>
-        </td>
-        <td class="code">
-          <pre class="code-highlight language-http"><code class="http">
-&#34;&gt;&lt;img/src=x%20onerror=alert()&gt;
-</code></pre>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</figure>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learning-test.png" alt="" /></p>
-
-<p>Tapi tetap saja halaman tidak bereaksi atas payload yang saya gunakan :(</p>
-
-<p>Akhirnya saya berhenti sejenak, dan mencoba mencari bug yang lain, tetapi tiba - tiba saja saya ingin sekali me-refresh halaman tersebut (karena jaringan internet saya lemot makanya sering refresh halaman webnya hahaha), entah kenapa muncul sebuah alert atau pesan seperti message box.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learningxss.png" alt="" /></p>
-
-<p>Setelah itu saya coba dengan menggunakan payload untuk mendapatkan cookies dari user.</p>
-
-
-  
-    
-  
-  
-    
-  
-  
-  
-
-
-<figure class="highlight http language-http">
-  <figcaption>
-    
-      <span>Payload XSS</span>
-    
-  </figcaption>
-  <table>
-    <tbody>
-      <tr>
-        <td class="gutter">
-          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre>
-        </td>
-        <td class="code">
-          <pre class="code-highlight language-http"><code class="http">
-&#34;&gt;&lt;img/src=x%20onerror=alert(document.cookie)&gt;
-</code></pre>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-</figure>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/15/e-learningxss-cookie.png" alt="" /></p>
-
-<p>Dari situ saya menyadari, bahwa bug tersebut berasal dari cookies yang disimpan oleh web, seperti pada gambar diatas, sebuah pesan alert menampilkan isi dari cookies, disitu terlihat jelas ada elemen html yang ikut masuk kedalam cookies milik user pada field affcode.</p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-dashboard.png" alt="" /></p>
 
 <h1 id="kesimpulan">Kesimpulan</h1>
 
-<p>Jadi website tersebut menyimpan affcode secara langsung tanpa dicek terlebih dahulu apakah affcode mengandung string &ldquo;berbahaya&rdquo; atau tidak, sehingga jika user memasukan affcode menggunakan kode HTML maka sistem akan membaca masukan user sebagai HTML juga.</p>
+<h2 id="kesalahan">Kesalahan</h2>
 
-<p>Perlu diketahui, bahwa bug jenis XSS ini dapat digunakan oleh penjahat untuk mendapatkan akses seorang user melalui cookies user tersebut.</p>
+<ul>
+<li>Inputan tidak dibersihkan dari karakter - karakter berbahaya, terbukti pada saat memasukan tanda petik <b>&lsquo;</b> sistem langsung memunculkan pesan eror</li>
+</ul>
 
-<h1 id="penanganan">Penanganan</h1>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/19/error.png" alt="" /></p>
 
-<p>Website ini menggunakan LMS atau <a href="https://chamilo.org/en/download/">Learning Management System Chamilo</a> dengan versi yang lawas, maka disarankan untuk update LMS tersebut ke versi terbaru.</p>
+<h2 id="penanganan">Penanganan</h2>
+
+<ul>
+<li>Untuk mengatasi masalah SQL Injection developer website dapat menggunakan fungsi <b>mysql_real_escape_string</b> atau mengubah terlebih dahulu inputan parameter kedalam bentuk enkripsi.</li>
+<li>Sebaiknya matikan fitur error reporting pada website production.</li>
+</ul>
+
+<p>Note : Bug ini telah diperbaiki.</p>
               
             </div>
           </div>
@@ -451,6 +362,8 @@ Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan 
 
   <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/write-up/">write up</a>
 
+  <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/sql/">sql</a>
+
                   </div>
                 
               
@@ -462,7 +375,7 @@ Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan 
           
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/" data-tooltip="SQL Injection di Subdomain Website Kampus">
+                <a class="post-action-btn btn btn--disabled">
               
                   <i class="fa fa-angle-left"></i>
                   <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
@@ -470,7 +383,7 @@ Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan 
             </li>
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/" data-tooltip="UICTC Capture The Flag - Writeup NgabuburIT">
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/" data-tooltip="Reflected XSS Pada Website E-learning">
               
                   <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
                   <i class="fa fa-angle-right"></i>
@@ -488,19 +401,19 @@ Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan 
         </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
               <i class="fa fa-facebook-official"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
               <i class="fa fa-twitter"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
               <i class="fa fa-google-plus"></i>
             </a>
           </li>
@@ -538,7 +451,7 @@ Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan 
           
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/" data-tooltip="SQL Injection di Subdomain Website Kampus">
+                <a class="post-action-btn btn btn--disabled">
               
                   <i class="fa fa-angle-left"></i>
                   <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
@@ -546,7 +459,7 @@ Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan 
             </li>
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/uictc-capture-the-flag-writeup-ngabuburit/" data-tooltip="UICTC Capture The Flag - Writeup NgabuburIT">
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/" data-tooltip="Reflected XSS Pada Website E-learning">
               
                   <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
                   <i class="fa fa-angle-right"></i>
@@ -564,19 +477,19 @@ Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan 
         </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
               <i class="fa fa-facebook-official"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
               <i class="fa fa-twitter"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
               <i class="fa fa-google-plus"></i>
             </a>
           </li>
@@ -600,19 +513,19 @@ Jadi pada saat itu pihak kampus menyediakan sebuah layanan e-learning, tampilan 
   <ul class="share-options">
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Freflected-xss-pada-website-e-learning%2F">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fsql-injection-di-subdomain-website-kampus%2F">
           <i class="fa fa-facebook-official"></i><span>Share on Facebook</span>
         </a>
       </li>
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Freflected-xss-pada-website-e-learning%2F">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fsql-injection-di-subdomain-website-kampus%2F">
           <i class="fa fa-twitter"></i><span>Share on Twitter</span>
         </a>
       </li>
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Freflected-xss-pada-website-e-learning%2F">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fsql-injection-di-subdomain-website-kampus%2F">
           <i class="fa fa-google-plus"></i><span>Share on Google&#43;</span>
         </a>
       </li>

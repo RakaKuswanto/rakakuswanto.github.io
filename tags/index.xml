@@ -6,10 +6,37 @@
     <description>Recent content in Tags on Catatan Raka Kuswanto</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 15 Jun 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 19 Jun 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://rakakuswanto.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>security</title>
+      <link>https://rakakuswanto.github.io/tags/security/</link>
+      <pubDate>Fri, 19 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://rakakuswanto.github.io/tags/security/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>sql</title>
+      <link>https://rakakuswanto.github.io/tags/sql/</link>
+      <pubDate>Fri, 19 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://rakakuswanto.github.io/tags/sql/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>write up</title>
+      <link>https://rakakuswanto.github.io/tags/write-up/</link>
+      <pubDate>Fri, 19 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://rakakuswanto.github.io/tags/write-up/</guid>
+      <description></description>
+    </item>
     
     <item>
       <title>cryptography</title>
@@ -21,29 +48,11 @@
     </item>
     
     <item>
-      <title>security</title>
-      <link>https://rakakuswanto.github.io/tags/security/</link>
-      <pubDate>Mon, 15 Jun 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://rakakuswanto.github.io/tags/security/</guid>
-      <description></description>
-    </item>
-    
-    <item>
       <title>steganography</title>
       <link>https://rakakuswanto.github.io/tags/steganography/</link>
       <pubDate>Mon, 15 Jun 2020 00:00:00 +0000</pubDate>
       
       <guid>https://rakakuswanto.github.io/tags/steganography/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>write up</title>
-      <link>https://rakakuswanto.github.io/tags/write-up/</link>
-      <pubDate>Mon, 15 Jun 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://rakakuswanto.github.io/tags/write-up/</guid>
       <description></description>
     </item>
     
