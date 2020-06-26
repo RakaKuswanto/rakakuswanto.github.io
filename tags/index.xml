@@ -6,7 +6,7 @@
     <description>Recent content in Tags on Catatan Raka Kuswanto</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 19 Jun 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 26 Jun 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://rakakuswanto.github.io/tags/index.xml" rel="self" type="application/rss+xml" />
     
@@ -14,9 +14,18 @@
     <item>
       <title>security</title>
       <link>https://rakakuswanto.github.io/tags/security/</link>
-      <pubDate>Fri, 19 Jun 2020 00:00:00 +0000</pubDate>
+      <pubDate>Fri, 26 Jun 2020 00:00:00 +0000</pubDate>
       
       <guid>https://rakakuswanto.github.io/tags/security/</guid>
+      <description></description>
+    </item>
+    
+    <item>
+      <title>steganography</title>
+      <link>https://rakakuswanto.github.io/tags/steganography/</link>
+      <pubDate>Fri, 26 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://rakakuswanto.github.io/tags/steganography/</guid>
       <description></description>
     </item>
     
@@ -44,15 +53,6 @@
       <pubDate>Mon, 15 Jun 2020 00:00:00 +0000</pubDate>
       
       <guid>https://rakakuswanto.github.io/tags/cryptography/</guid>
-      <description></description>
-    </item>
-    
-    <item>
-      <title>steganography</title>
-      <link>https://rakakuswanto.github.io/tags/steganography/</link>
-      <pubDate>Mon, 15 Jun 2020 00:00:00 +0000</pubDate>
-      
-      <guid>https://rakakuswanto.github.io/tags/steganography/</guid>
       <description></description>
     </item>
     

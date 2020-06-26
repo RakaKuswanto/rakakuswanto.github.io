@@ -6,10 +6,19 @@
     <description>Recent content in steganography on Catatan Raka Kuswanto</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 15 Jun 2020 00:00:00 +0000</lastBuildDate>
+    <lastBuildDate>Fri, 26 Jun 2020 00:00:00 +0000</lastBuildDate>
     
 	<atom:link href="https://rakakuswanto.github.io/tags/steganography/index.xml" rel="self" type="application/rss+xml" />
     
+    
+    <item>
+      <title>Menyembunyikan File PHP Kedalam File JPG</title>
+      <link>https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/</link>
+      <pubDate>Fri, 26 Jun 2020 00:00:00 +0000</pubDate>
+      
+      <guid>https://rakakuswanto.github.io/2020/06/menyembunyikan-file-php-kedalam-file-jpg/</guid>
+      <description>&lt;p&gt;Ditulisan kali ini saya akan membahas bagaimana sebuah teknik steganografi dapat digunakan untuk menyembunyikan perintah php dalam sebuah gambar jpg dan dapat dijalankan walaupun ekstensi file tersebut tidak diubah. penasaran bukan ? file berformat .jpg ternyata dapat melakukan perintah file PHP.&lt;/p&gt;</description>
+    </item>
     
     <item>
       <title>UICTC Capture The Flag - Writeup NgabuburIT</title>
