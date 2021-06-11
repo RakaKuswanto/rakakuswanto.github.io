@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>Page Title</title>
+    <script src="./js/plugins/jquery.min.js"></script>
+    <script src="./js/plugins/sql-wasm.js"></script>
+    <script>
+      // Load sql.js WebAssembly file
+      let config = {
+        locateFile: () => "./js/plugins/sql-wasm.wasm",
+      };
+      
+      // The `initSqlJs` function is globally provided by all of the main dist files if loaded in the browser.
+      // We must specify this locateFile function if we are loading a wasm file from anywhere other than the current html page's folder.
+      initSqlJs(config).then(function(SQL){
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', './db/db.db', true);
+        xhr.responseType = 'arraybuffer';
+
+        xhr.onload = e => {
+          var uInt8Array = new Uint8Array(xhr.response);
+          var db = new SQL.Database(uInt8Array);
+          var contents = db.exec("SELECT * FROM t_portfolio");
+
+          $(jQuery.parseJSON(JSON.stringify(contents))).each(function() {  
+            var values = this.values;
+              $(jQuery.parseJSON(JSON.stringify(values))).each(function() {  
+                var id = this[0];
+                var title = this[1];
+                var desc = this[2];
+                alert(title + ' ' + desc);
+              });
+          });
+
+        };
+        xhr.send();
+      });
+    </script>
+  </head>
+  <body></body>
+</html>
