@@ -178,7 +178,7 @@
                   </div>
                   <!-- col end -->
 
-                  <div class="art-grid art-grid-3-col art-gallery">
+                  <div class="art-grid art-grid-3-col art-gallery" id="div_tmp_portfolio">
                     <!-- TAMBAH PORTOFOLIO BARU DIBAWAH SINI DAN DI TABEL -->
                     <div class="art-grid-item" id="tmp_portfolio1"></div>
                     <div class="art-grid-item" id="tmp_portfolio2"></div>
@@ -186,6 +186,11 @@
                     <div class="art-grid-item" id="tmp_portfolio4"></div>
                     <div class="art-grid-item" id="tmp_portfolio5"></div>
                     <div class="art-grid-item" id="tmp_portfolio6"></div>
+                    <div class="art-grid-item" id="tmp_portfolio7"></div>
+                    <div class="art-grid-item" id="tmp_portfolio8"></div>
+                    <div class="art-grid-item" id="tmp_portfolio9"></div>
+                    <div class="art-grid-item" id="tmp_portfolio10"></div>
+                    <div class="art-grid-item" id="tmp_portfolio11"></div>
                     <!-- TAMBAH PORTOFOLIO BARU DIBAWAH SINI DAN DI TABEL -->
                   </div>
 
@@ -327,6 +332,30 @@
       locateFile: () => "./js/plugins/sql-wasm.wasm",
     };
 
+    // load portfolio count
+    initSqlJs(config).then(function(SQL){
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', './db/db.db', true);
+    xhr.responseType = 'arraybuffer';
+
+    xhr.onload = e => {
+      var uInt8Array = new Uint8Array(xhr.response);
+      var db = new SQL.Database(uInt8Array);
+      var contents = db.exec("SELECT COUNT(*) FROM t_portfolio");
+
+      $(jQuery.parseJSON(JSON.stringify(contents))).each(function() {  
+        var values = this.values;
+          $(jQuery.parseJSON(JSON.stringify(values))).each(function() {  
+            var countPortfolio = this[0];
+            for (let i = 1; i < countPortfolio; i++) {
+              // $('#div_tmp_portfolio').prepend('<div class="art-grid-item" id="tmp_portfolio'+i+'"></div>');
+            }
+          });
+
+      });
+
+    }; xhr.send();});
+
     // load portfolio
     initSqlJs(config).then(function(SQL){
 
@@ -459,48 +488,48 @@
   
     // load skills
     initSqlJs(config).then(function(SQL){
-var xhr = new XMLHttpRequest();
-xhr.open('GET', './db/db.db', true);
-xhr.responseType = 'arraybuffer';
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', './db/db.db', true);
+    xhr.responseType = 'arraybuffer';
 
-xhr.onload = e => {
-  var uInt8Array = new Uint8Array(xhr.response);
-  var db = new SQL.Database(uInt8Array);
-  var contents = db.exec("SELECT * FROM t_skill");
+    xhr.onload = e => {
+      var uInt8Array = new Uint8Array(xhr.response);
+      var db = new SQL.Database(uInt8Array);
+      var contents = db.exec("SELECT * FROM t_skill");
 
-  $(jQuery.parseJSON(JSON.stringify(contents))).each(function() {  
-    var values = this.values; var i = 0;
-      $(jQuery.parseJSON(JSON.stringify(values))).each(function() {  
+      $(jQuery.parseJSON(JSON.stringify(contents))).each(function() {  
+        var values = this.values; var i = 0;
+          $(jQuery.parseJSON(JSON.stringify(values))).each(function() {  
 
-        i++;
-        var skill = this[1];var percentage = this[2];var type = this[3];
-        if (type == 2) {
+            i++;
+            var skill = this[1];var percentage = this[2];var type = this[3];
+            if (type == 2) {
 
-          var myskill = '<div class="art-lang-skills-item"><div id="circleprog'+i+'" class="art-cirkle-progress"></div><h6>'+skill+'</h6></div>';
-          $('#tmp_skillsbahasa').append(myskill).html();
-          var pb = '#circleprog'+i;
-          var bar = new ProgressBar.Circle(pb, { strokeWidth: 7,easing: 'easeInOut',duration: 1400,delay: 2500,trailWidth: 7, step: function(state, circle) { var value = Math.round(circle.value() * 100); if (value === 0) { circle.setText(''); } else { circle.setText(value); } } });
-          bar.animate(percentage);
-          
-        } else if (type == 1) {
-          
-          var myskill = '<div class="art-hard-skills-item"><div class="art-skill-heading"><h6>'+skill+'</h6></div><div class="art-line-progress"><div id="lineprog'+i+'"></div></div></div>';
-          $('#tmp_skills').append(myskill).html();
-          var pb = '#lineprog'+i;
-          var bar = new ProgressBar.Line(pb, { strokeWidth: 1.72, easing: 'easeInOut', duration: 1400, delay: 2800, trailWidth: 1.72, svgStyle: { width: '100%', height: '100%' }, step: (state, bar) => { bar.setText(Math.round(bar.value() * 100) + ' %');} }); 
-          bar.animate(percentage);
-          
-        } else if (type == 3) {
-          
-          var myskill = '<li>'+skill+'</li>';
-          $('#tmp_knowledge').append(myskill).html();
-          
-        }
+              var myskill = '<div class="art-lang-skills-item"><div id="circleprog'+i+'" class="art-cirkle-progress"></div><h6>'+skill+'</h6></div>';
+              $('#tmp_skillsbahasa').append(myskill).html();
+              var pb = '#circleprog'+i;
+              var bar = new ProgressBar.Circle(pb, { strokeWidth: 7,easing: 'easeInOut',duration: 1400,delay: 2500,trailWidth: 7, step: function(state, circle) { var value = Math.round(circle.value() * 100); if (value === 0) { circle.setText(''); } else { circle.setText(value); } } });
+              bar.animate(percentage);
+              
+            } else if (type == 1) {
+              
+              var myskill = '<div class="art-hard-skills-item"><div class="art-skill-heading"><h6>'+skill+'</h6></div><div class="art-line-progress"><div id="lineprog'+i+'"></div></div></div>';
+              $('#tmp_skills').append(myskill).html();
+              var pb = '#lineprog'+i;
+              var bar = new ProgressBar.Line(pb, { strokeWidth: 1.72, easing: 'easeInOut', duration: 1400, delay: 2800, trailWidth: 1.72, svgStyle: { width: '100%', height: '100%' }, step: (state, bar) => { bar.setText(Math.round(bar.value() * 100) + ' %');} }); 
+              bar.animate(percentage);
+              
+            } else if (type == 3) {
+              
+              var myskill = '<li>'+skill+'</li>';
+              $('#tmp_knowledge').append(myskill).html();
+              
+            }
 
+          });
       });
-  });
 
-}; xhr.send();});
+    }; xhr.send();});
 
     // load profile
     initSqlJs(config).then(function(SQL){
