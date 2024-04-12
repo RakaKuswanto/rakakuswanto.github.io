@@ -1,0 +1,32 @@
+﻿{
+	"version": 1712888217,
+	"fileList": [
+		"data.js",
+		"c2runtime.js",
+		"jquery-3.4.1.min.js",
+		"offlineClient.js",
+		"images/player-sheet0.png",
+		"images/player-sheet1.png",
+		"images/tanah-sheet0.png",
+		"images/ganjel-sheet0.png",
+		"images/trpolin-sheet0.png",
+		"images/keranjang-sheet0.png",
+		"images/slotlevel-sheet0.png",
+		"images/slotlevel-sheet1.png",
+		"images/bg-sheet0.png",
+		"images/bckmenu-sheet0.png",
+		"images/fb-sheet0.png",
+		"images/spritefont.png",
+		"images/sprite-sheet0.png",
+		"images/rope1-sheet0.png",
+		"images/fruitslash-sheet0.png",
+		"images/finish-sheet0.png",
+		"images/gesermap-sheet0.png",
+		"icon-16.png",
+		"icon-32.png",
+		"icon-114.png",
+		"icon-128.png",
+		"icon-256.png",
+		"loading-logo.png"
+	]
+}
