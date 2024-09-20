@@ -1,20 +1,36 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CHIP-8 Emulator</title>
-    
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    
-    <!-- Font Awesome for icons -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
 
-    <style>
-        /* Custom styles */
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Affan - PWA Mobile HTML Template">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- The above 4 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+
+  <meta name="theme-color" content="#0134d4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  <!-- Title -->
+  <title>Affan - PWA Mobile HTML Template</title>
+
+  <!-- Favicon -->
+  <link rel="icon" href="img/core-img/favicon.ico">
+  <link rel="apple-touch-icon" href="img/icons/icon-96x96.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="img/icons/icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="167x167" href="img/icons/icon-167x167.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="img/icons/icon-180x180.png">
+
+  <!-- Style CSS -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Web App Manifest -->
+  <link rel="manifest" href="manifest.json">
+
+  <style>
         #screen {
-            border-radius: 15px;
+            border-radius: 5px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
             image-rendering: pixelated;
             display: block;
@@ -23,390 +39,382 @@
             height: auto;
             aspect-ratio: 2 / 1; /* Maintain a 64x32 aspect ratio */
         }
-
-        #memory-view {
-            max-height: 400px;
-            max-width: 100%;
-            overflow-x: auto; /* Tambahkan scroll horizontal */
-            background-color: #f8f9fa;
-            border: 1px solid #ced4da;
-            padding: 10px;
-            font-family: monospace;
-            border-radius: 10px;
-        }
-
-        .memory-table thead th {
-            position: sticky;
-            top: 0;
-            background-color: #f1f1f1;
-            z-index: 1;
-        }
-
-        .memory-table td, .memory-table th {
-            font-size: 0.85rem;
-            text-align: center;
-        }
-
-        .highlight {
-            background-color: #ffeb3b;
-        }
-
-        .control-panel {
-            border-radius: 10px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            padding: 20px;
-            background-color: #e9ecef;
-        }
-
-        #touch-controls button {
-            width: 60px;
-            height: 60px;
-            font-size: 20px;
-            border-radius: 10px;
-        }
-
-        /* Ensuring proper layout on mobile */
-        @media (max-width: 768px) {
-            #screen {
-                width: 100%;
-                height: auto;
-            }
-
-            .control-panel {
-                padding: 15px;
-            }
-
-            #touch-controls button {
-                width: 50px;
-                height: 50px;
-                font-size: 18px;
-            }
-        }
-
-    </style>
+  </style>
 </head>
-<body class="container my-4">
-    <div class="row">
-        <!-- Main Emulator Area -->
-        <div class="col-md-8 mb-4">
-            <div class="card shadow-sm">
-                <div class="card-header text-center">
-                    <h2>CHIP-8 Emulator</h2>
-                </div>
-                <div class="card-body">
-                    <div class="text-center">
-                        <canvas id="screen"></canvas>
-                    </div>
-                    <div class="text-center mt-4">
-                        <div id="touch-controls" class="d-flex flex-wrap justify-content-center">
-                            <!-- Tombol sentuhan untuk masing-masing tombol CHIP-8 -->
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x1">1</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x2">2</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x3">3</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0xC">4</button>
-                    
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x4">Q</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x5">W</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x6">E</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0xD">R</button>
-                    
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x7">A</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x8">S</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x9">D</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0xE">F</button>
-                    
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0xA">Z</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0x0">X</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0xB">C</button>
-                            <button class="btn btn-secondary m-2 touch-btn" data-key="0xF">V</button>
-                        </div>
-                    </div>                    
-                    <div class="text-center mt-4">
-                        <input type="file" id="rom-file" class="form-control w-50 mx-auto" accept=".ch8" />
-                    </div>
-                </div>
-            </div>
+
+<body>
+  <!-- Preloader -->
+  <div id="preloader">
+    <div class="spinner-grow text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <!-- Internet Connection Status -->
+  <div class="internet-connection-status" id="internetStatus"></div>
+
+  <!-- Header Area -->
+  <div class="header-area" id="headerArea">
+    <div class="container">
+      <!-- Header Content -->
+      <div class="header-content header-style-five position-relative d-flex align-items-center justify-content-between">
+        <!-- Logo Wrapper -->
+        <div class="logo-wrapper">
+          <a href="home.html">
+            <img src="img/core-img/logo.png" alt="">
+          </a>
         </div>
 
-        <!-- Control Panel -->
-        <div class="col-md-4">
-            <div class="control-panel bg-light p-3">
-                <h3 class="text-center">Controls</h3>
-                <div class="d-grid gap-3">
-                    <button id="pause-btn" class="btn btn-warning"><i class="fas fa-pause"></i> Pause</button>
-                    <button id="resume-btn" class="btn btn-success"><i class="fas fa-play"></i> Resume</button>
-                    <button id="step-btn" class="btn btn-info"><i class="fas fa-step-forward"></i> Step</button>
-                    <button id="step-mode-btn" class="btn btn-secondary"><i class="fas fa-toggle-on"></i> Toggle Step Mode</button>
-                    <button id="reset-btn" class="btn btn-danger"><i class="fas fa-redo"></i> Reset</button>
-                </div>
-            </div>
-        </div>   
+        <!-- Navbar Toggler -->
+        <div class="navbar--toggler" id="affanNavbarToggler" data-bs-toggle="offcanvas" data-bs-target="#affanOffcanvas"
+          aria-controls="affanOffcanvas">
+          <span class="d-block"></span>
+          <span class="d-block"></span>
+          <span class="d-block"></span>
+        </div>
+      </div>
+    </div>
+  </div>
 
-        <!-- Memory View -->
-        <div class="col-md-8 mt-4">
-            <h3 class="mt-4 text-center">Debugger Viewer</h3>
-            <div id="debug-info">
-                <h4>CPU Debugger</h4>
-                <div>PC: <span id="debug-pc">0x000</span></div>
-                <div>SP: <span id="debug-sp">0x00</span></div>
-                <div>I: <span id="debug-i">0x000</span></div>
-                <div>Delay Timer: <span id="debug-dt">0</span></div>
-                <div>Sound Timer: <span id="debug-st">0</span></div>
-                <div>V Registers: <span id="debug-v">[0x00, 0x00, ..., 0x00]</span></div>
-                <div>Stack: <span id="debug-stack">[]</span></div>
-            </div>            
-            <h3 class="mt-4 text-center">Memory View</h3>
-            <div id="memory-view" class="table-responsive">
-                <table class="table table-bordered memory-table">
-                    <thead>
-                        <tr>
-                            <th>Address</th>
-                            <th>00</th>
-                            <th>01</th>
-                            <th>02</th>
-                            <th>03</th>
-                            <th>04</th>
-                            <th>05</th>
-                            <th>06</th>
-                            <th>07</th>
-                            <th>08</th>
-                            <th>09</th>
-                            <th>0A</th>
-                            <th>0B</th>
-                            <th>0C</th>
-                            <th>0D</th>
-                            <th>0E</th>
-                            <th>0F</th>
-                        </tr>
-                    </thead>
-                    <tbody id="memory-content">
-                        <!-- Memory data will be injected here -->
-                    </tbody>
-                </table>
-            </div>
+  <!-- # Sidenav Left -->
+  <div class="offcanvas offcanvas-start" id="affanOffcanvas" data-bs-scroll="true" tabindex="-1"
+    aria-labelledby="affanOffcanvsLabel">
+
+    <button class="btn-close btn-close-white text-reset" type="button" data-bs-dismiss="offcanvas"
+      aria-label="Close"></button>
+
+    <div class="offcanvas-body p-0">
+      <div class="sidenav-wrapper">
+        <!-- Sidenav Profile -->
+        <div class="sidenav-profile bg-gradient">
+          <div class="sidenav-style1"></div>
+
+          <!-- User Thumbnail -->
+          <div class="user-profile">
+            <img src="img/bg-img/2.jpg" alt="">
+          </div>
+
+          <!-- User Info -->
+          <div class="user-info">
+            <h6 class="user-name mb-0">Affan Islam</h6>
+            <span>CEO, Designing World</span>
+          </div>
         </div>
 
-        <!-- Log Viewer -->
-        <div class="col-md-4 mt-4">
-            <h3 class="text-center">Log Viewer</h3>
-            <div id="opcode-log" style="max-height: 200px; overflow-y: scroll;">
-                <ul id="opcode-list"></ul>
-            </div>            
-        </div>
+        <!-- Sidenav Nav -->
+        <ul class="sidenav-nav ps-0">
+          <li>
+            <a href="home.html"><i class="bi bi-house-door"></i> Home</a>
+          </li>
+          <li>
+            <a href="elements.html"><i class="bi bi-heart"></i> Elements
+              <span class="badge bg-danger rounded-pill ms-2">220+</span>
+            </a>
+          </li>
+          <li>
+            <a href="pages.html"><i class="bi bi-folder2-open"></i> Pages
+              <span class="badge bg-success rounded-pill ms-2">100+</span>
+            </a>
+          </li>
+        </ul>
 
-        <div class="col-md-12 mt-4">
-            <h3 class="mt-4 text-center">Memory Editor</h3>
-            <div id="memory-editor" class="mb-3">
-                <label for="memory-address">Start Address (hex):</label>
-                <input type="text" id="memory-address" placeholder="0x200" class="form-control w-25 mx-auto" />
-        
-                <label for="memory-data" class="mt-3">Data (bytecode in hex, separated by spaces):</label>
-                <input type="text" id="memory-data" placeholder="e.g., A2 F0 60 0A" class="form-control w-75 mx-auto" />
-        
-                <button id="update-memory-btn" class="btn btn-primary mt-3">Update Memory</button>
+        <!-- Copyright Info -->
+        <div class="copyright-info">
+          <p>
+            <span id="copyrightYear"></span>
+            &copy; Made by <a href="#"> Designing World</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="page-content-wrapper">
+
+    <!-- Tiny Slider One Wrapper -->
+    <div class="tiny-slider-one-wrapper">
+      <div class="tiny-slider-one">
+        <!-- Single Hero Slide -->
+        <div>
+          <div class="single-hero-slide bg-overlay" style="background-image: url('img/bg-img/31.jpg')">
+            <div class="h-100 d-flex align-items-center text-center">
+              <div class="container">
+                <canvas id="screen"></canvas>
+              </div>
             </div>
-        </div>        
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Footer Section -->
-    <footer class="text-center mt-5">
-        <p class="text-muted">&copy; 2024 CHIP-8 Emulator | Built with Bootstrap & jQuery</p>
-    </footer>
+    <div class="pt-3"></div>
 
-    <!-- Bootstrap and jQuery JS -->
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <div class="container direction-rtl">
+      <div class="card mb-3">
+        <div class="card-body">
 
-    <!-- Emulator Components -->
-    <script src="cpu.js"></script>
-    <script src="memory.js"></script>
-    <script src="display.js"></script>
-    <script src="input.js"></script>
-    <script src="timer.js"></script>
-    <script src="emulator.js"></script>
+          <div class="row g-3">
+            
+            <div class="col-3">
+              <div class="feature-card mx-auto text-center">
+                <div class="card mx-auto bg-gray">
+                    1
+                </div>
+              </div>
+            </div>
 
-    <!-- Emulator Logic -->
-    <script>
-        $(document).ready(function() {
-            const canvas = document.getElementById('screen');
-            const context = canvas.getContext('2d');
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                      2
+                  </div>
+                </div>
+            </div>
 
-            const SCREEN_WIDTH = 64;
-            const SCREEN_HEIGHT = 32;
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                      3
+                  </div>
+                </div>
+            </div>            
 
-            canvas.width = SCREEN_WIDTH;
-            canvas.height = SCREEN_HEIGHT;
-           
-            const emulator = new Emulator(context);
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                      C
+                  </div>
+                </div>
+            </div>   
 
-            function resizeCanvas() {
-                const maxWidth = 640; // Max width for the canvas
-                const scale = Math.min(maxWidth / SCREEN_WIDTH, window.innerWidth / SCREEN_WIDTH);
-                canvas.style.width = `${SCREEN_WIDTH * scale}px`;
-                canvas.style.height = `${SCREEN_HEIGHT * scale}px`;
-            }
+          </div>
 
-            window.addEventListener('resize', resizeCanvas);
-            resizeCanvas(); // Call once to set the size correctly initially            
+          <div class="row g-3">
+            
+            <div class="col-3">
+              <div class="feature-card mx-auto text-center">
+                <div class="card mx-auto bg-gray">
+                    4
+                </div>
+              </div>
+            </div>
 
-            $('#resume-btn').hide();
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    5
+                  </div>
+                </div>
+            </div>
 
-            // Load ROM file
-            $('#rom-file').change(function(event) {
-                const file = event.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        const romData = new Uint8Array(e.target.result);
-                        emulator.loadROM(romData);
-                        emulator.start();
-                        $('#rom-file').after('<div class="alert alert-success mt-2">ROM loaded successfully!</div>');
-                    };
-                    reader.readAsArrayBuffer(file);
-                }
-            });            
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    6
+                  </div>
+                </div>
+            </div>            
 
-            // Pause/Resume/Step/Reset buttons
-            $('#pause-btn').click(() => {
-                emulator.pause();
-                $('#pause-btn').hide();
-                $('#resume-btn').show();
-                console.log('Emulator paused');
-            });
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    D
+                  </div>
+                </div>
+            </div>   
 
-            $('#resume-btn').click(() => {
-                emulator.resume();
-                $('#resume-btn').hide();
-                $('#pause-btn').show();
-                console.log('Emulator resumed');
-            });
+          </div>
+
+          <div class="row g-3">
+            
+            <div class="col-3">
+              <div class="feature-card mx-auto text-center">
+                <div class="card mx-auto bg-gray">
+                    7
+                </div>
+              </div>
+            </div>
+
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    8
+                  </div>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    9
+                  </div>
+                </div>
+            </div>            
+
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    E
+                  </div>
+                </div>
+            </div>   
+
+          </div>
+          
+          <div class="row g-3">
+            
+            <div class="col-3">
+              <div class="feature-card mx-auto text-center">
+                <div class="card mx-auto bg-gray">
+                    A
+                </div>
+              </div>
+            </div>
+
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    0
+                  </div>
+                </div>
+            </div>
+
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    B
+                  </div>
+                </div>
+            </div>            
+
+            <div class="col-3">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    F
+                  </div>
+                </div>
+            </div>   
+
+          </div>          
+        
+        </div>
+      </div>
+    </div>
+
+    <div class="container direction-rtl">
+        <div class="card mb-3">
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-4">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    <img src="img/demo-img/sass.png" alt="">
+                  </div>
+                  <p class="mb-0">SCSS</p>
+                </div>
+              </div>
   
-            let stepCooldown = false;
-            $('#step-btn').click(() => {
-                if (!stepCooldown) {
-                    emulator.step();
-                    stepCooldown = true;
-                    setTimeout(() => stepCooldown = false, 200); // Mengatur cooldown menjadi 200ms
-                }
-            });
+              <div class="col-4">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    <img src="img/demo-img/npm.png" alt="">
+                  </div>
+                  <p class="mb-0">npm</p>
+                </div>
+              </div>
+  
+              <div class="col-4">
+                <div class="feature-card mx-auto text-center">
+                  <div class="card mx-auto bg-gray">
+                    <img src="img/demo-img/gulp.png" alt="">
+                  </div>
+                  <p class="mb-0">Gulp 4</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            $('#step-mode-btn').click(() => {
-                emulator.toggleStepMode();
-                const isStepMode = emulator.stepMode;
-                if (isStepMode) {
-                    $('#step-mode-btn').text('Disable Step Mode');
-                } else {
-                    $('#step-mode-btn').text('Enable Step Mode');
-                }
-            });
+    <div class="pb-3"></div>
+  </div>
 
-            $('#reset-btn').click(() => {
-                emulator.reset();
-                $('#resume-btn').hide();
-                $('#pause-btn').show();
-                console.log('Emulator reset');
-            });
+  <!-- Footer Nav -->
+  <div class="footer-nav-area" id="footerNav">
+    <div class="container px-0">
+      <!-- Footer Content -->
+      <div class="footer-nav position-relative">
+        <ul class="h-100 d-flex align-items-center justify-content-between ps-0">
+          <li class="active">
+            <a href="home.html">
+              <i class="bi bi-house"></i>
+              <span>Emulator</span>
+            </a>
+          </li>
 
-            // Add/Remove breakpoint buttons
-            $('#add-breakpoint-btn').click(() => {
-                const address = parseInt($('#breakpoint-input').val(), 16); // Pastikan format heksadesimal
-                if (!isNaN(address)) {
-                    emulator.cpu.addBreakpoint(address);
-                } else {
-                    console.log('Invalid address format');
-                }
-            });
+          <li>
+            <a href="pages.html">
+              <i class="bi bi-folder2-open"></i>
+              <span>Disassembler</span>
+            </a>
+          </li>
 
-            $('#remove-breakpoint-btn').click(() => {
-                const address = parseInt($('#breakpoint-input').val(), 16);
-                if (!isNaN(address)) {
-                    emulator.cpu.removeBreakpoint(address);
-                } else {
-                    console.log('Invalid address format');
-                }
-            });
+          <li>
+            <a href="elements.html">
+              <i class="bi bi-heart"></i>
+              <span>Assembler</span>
+            </a>
+          </li>
 
-            // Event listener for memory update button
-            $('#update-memory-btn').click(function() {
-                const startAddress = parseInt($('#memory-address').val(), 16);
-                const data = $('#memory-data').val().split(' ').map(byte => parseInt(byte, 16));
-                const byteArray = new Uint8Array(data);
+        </ul>
+      </div>
+    </div>
+  </div>
 
-                try {
-                    emulator.updateMemory(startAddress, byteArray);
-                    alert('Memory updated successfully.');
-                } catch (error) {
-                    alert('Failed to update memory: ' + error.message);
-                }
-            });
+  <!-- All JavaScript Files -->
+  <script src="js/jquery-3.7.1.min.js"></script>
+  <script src="js/bootstrap.bundle.min.js"></script>
+  <script src="js/slideToggle.min.js"></script>
+  <script src="js/internet-status.js"></script>
+  <script src="js/tiny-slider.js"></script>
+  <script src="js/venobox.min.js"></script>
+  <script src="js/countdown.js"></script>
+  <script src="js/rangeslider.min.js"></script>
+  <script src="js/vanilla-dataTables.min.js"></script>
+  <script src="js/index.js"></script>
+  <script src="js/imagesloaded.pkgd.min.js"></script>
+  <script src="js/isotope.pkgd.min.js"></script>
+  <script src="js/dark-rtl.js"></script>
+  <script src="js/active.js"></script>
+  <script src="js/pwa.js"></script>
 
-            // Event listener for double click to edit memory directly from table
-            $(document).on('dblclick', '#memory-content td', function() {
-                const currentTd = $(this);
-                const oldValue = currentTd.text();
-                const address = parseInt(currentTd.closest('tr').find('td:first').text(), 16); // Get address from row
-                const offset = currentTd.index() - 1; // Subtract 1 to account for the address column
-                const memoryAddress = address + offset;
+  <!-- Emulator Logic -->
+  <script>
+  $(document).ready(function() {
+        const canvas = document.getElementById('screen');
+        const context = canvas.getContext('2d');
 
-                // Replace cell content with input field
-                const inputField = $('<input type="text" />').val(oldValue);
-                currentTd.html(inputField);
+        const SCREEN_WIDTH = 64;
+        const SCREEN_HEIGHT = 32;
 
-                // Focus on the input field and select the text
-                inputField.focus().select();
+        canvas.width = SCREEN_WIDTH;
+        canvas.height = SCREEN_HEIGHT;
 
-                // Handle saving new value on focus out or enter key press
-                inputField.on('blur keyup', function(e) {
-                    if (e.type === 'blur' || e.key === 'Enter') {
-                        let newValue = inputField.val();
+        function resizeCanvas() {
+            const maxWidth = 640; // Max width for the canvas
+            const scale = Math.min(maxWidth / SCREEN_WIDTH, window.innerWidth / SCREEN_WIDTH);
+            canvas.style.width = `${SCREEN_WIDTH * scale}px`;
+            canvas.style.height = `${SCREEN_HEIGHT * scale}px`;
+        }
 
-                        // Validate new value (should be a valid hex byte)
-                        if (/^[0-9a-fA-F]{2}$/.test(newValue)) {
-                            // Update the emulator memory
-                            const byteValue = parseInt(newValue, 16);
-                            emulator.updateMemory(memoryAddress, new Uint8Array([byteValue]));
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas(); // Call once to set the size correctly initially  
 
-                            // Update cell text
-                            currentTd.text(newValue);
-                        } else {
-                            // Revert to the old value if input is invalid
-                            currentTd.text(oldValue);
-                        }
-                    }
-                });
-            });            
+        context.fillStyle = 'black';
+        context.fillRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
 
-            // Update memory view
-            let lastMemory = null;
-            setInterval(() => {
-                // Update nilai di debugger
-                $("#pc-value").text(`0x${emulator.cpu.PC.toString(16).padStart(3, '0')}`);
-                $("#sp-value").text(`0x${emulator.cpu.SP.toString(16).padStart(2, '0')}`);
-                $("#stack-value").text(`[${emulator.cpu.stack.map(v => `0x${v.toString(16).padStart(2, '0')}`).join(', ')}]`);
-                $("#i-value").text(`0x${emulator.cpu.I.toString(16).padStart(3, '0')}`);
-                $("#dt-value").text(`${emulator.timer.delayTimer}`);
-                $("#st-value").text(`${emulator.timer.soundTimer}`);
-                $("#v-value").text(`[${emulator.cpu.V.map(v => `0x${v.toString(16).padStart(2, '0')}`).join(', ')}]`);
-
-                // Update tampilan memori jika berubah
-                const memoryContents = emulator.memory.memory;
-                if (JSON.stringify(lastMemory) !== JSON.stringify(memoryContents)) {
-                    let memoryHtml = '';
-                    for (let i = 0x200; i < memoryContents.length; i += 16) {
-                        memoryHtml += `<tr><td>0x${i.toString(16).padStart(3, '0')}</td>`;
-                        for (let j = 0; j < 16; j++) {
-                            const value = memoryContents[i + j].toString(16).padStart(2, '0');
-                            memoryHtml += `<td>${value}</td>`;
-                        }
-                        memoryHtml += '</tr>';
-                    }
-                    $('#memory-content').html(memoryHtml);
-                    lastMemory = memoryContents.slice();
-                }
-            }, 250); // Mengubah interval menjadi 250ms untuk efisiensi
-
-
-        });
-    </script>
+    });
+  </script>
 </body>
+
 </html>
