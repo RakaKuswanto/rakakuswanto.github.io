@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Affan - PWA Mobile HTML Template">
+  <meta name="description" content="">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <!-- The above 4 meta tags *must* come first in the head; any other head content must come *after* these tags -->
 
@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
 
   <!-- Title -->
-  <title>Affan - PWA Mobile HTML Template</title>
+  <title>CHIP-8 Emulator</title>
 
   <!-- Favicon -->
   <link rel="icon" href="img/core-img/favicon.ico">
@@ -24,9 +24,6 @@
 
   <!-- Style CSS -->
   <link rel="stylesheet" href="style.css">
-
-  <!-- Web App Manifest -->
-  <link rel="manifest" href="manifest.json">
 
   <style>
         #screen {
@@ -96,8 +93,8 @@
 
           <!-- User Info -->
           <div class="user-info">
-            <h6 class="user-name mb-0">Affan Islam</h6>
-            <span>CEO, Designing World</span>
+            <h6 class="user-name mb-0">CHIP 8 Emulator</h6>
+            <span>Raka Kuswanto</span>
           </div>
         </div>
 
@@ -171,7 +168,7 @@
             
                         <div class="col-3">
                           <div class="feature-card mx-auto text-center">
-                            <div class="card mx-auto bg-gray">
+                            <div class="card mx-auto bg-gray touch-btn" data-key="0x1">
                                 1
                             </div>
                           </div>
@@ -179,24 +176,24 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
-                                  2
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0x2">
+                                2
                               </div>
                             </div>
                         </div>
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
-                                  3
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0x3">
+                                3
                               </div>
                             </div>
                         </div>            
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
-                                  C
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0xC">
+                                C
                               </div>
                             </div>
                         </div>   
@@ -207,7 +204,7 @@
                         
                         <div class="col-3">
                           <div class="feature-card mx-auto text-center">
-                            <div class="card mx-auto bg-gray">
+                            <div class="card mx-auto bg-gray touch-btn" data-key="0x4">
                                 4
                             </div>
                           </div>
@@ -215,7 +212,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0x5">
                                 5
                               </div>
                             </div>
@@ -223,7 +220,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0x6">
                                 6
                               </div>
                             </div>
@@ -231,7 +228,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0xD">
                                 D
                               </div>
                             </div>
@@ -243,7 +240,7 @@
                         
                         <div class="col-3">
                           <div class="feature-card mx-auto text-center">
-                            <div class="card mx-auto bg-gray">
+                            <div class="card mx-auto bg-gray touch-btn" data-key="0x7">
                                 7
                             </div>
                           </div>
@@ -251,7 +248,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0x8">
                                 8
                               </div>
                             </div>
@@ -259,7 +256,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0x9">
                                 9
                               </div>
                             </div>
@@ -267,7 +264,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0xE">
                                 E
                               </div>
                             </div>
@@ -279,7 +276,7 @@
                         
                         <div class="col-3">
                           <div class="feature-card mx-auto text-center">
-                            <div class="card mx-auto bg-gray">
+                            <div class="card mx-auto bg-gray touch-btn" data-key="0xA">
                                 A
                             </div>
                           </div>
@@ -287,7 +284,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0x0">
                                 0
                               </div>
                             </div>
@@ -295,7 +292,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0xB">
                                 B
                               </div>
                             </div>
@@ -303,7 +300,7 @@
             
                         <div class="col-3">
                             <div class="feature-card mx-auto text-center">
-                              <div class="card mx-auto bg-gray">
+                              <div class="card mx-auto bg-gray touch-btn" data-key="0xF">
                                 F
                               </div>
                             </div>
@@ -374,7 +371,6 @@
   <script src="js/isotope.pkgd.min.js"></script>
   <script src="js/dark-rtl.js"></script>
   <script src="js/active.js"></script>
-  <script src="js/pwa.js"></script>
 
   <!-- Emulator Components -->
   <script src="cpu.js"></script>
