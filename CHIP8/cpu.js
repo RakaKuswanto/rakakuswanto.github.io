@@ -42,14 +42,15 @@ class CPU {
     }
 
     executeOpcode(opcode) {
-        const x = (opcode & 0x0F00) >> 8;
-        const y = (opcode & 0x00F0) >> 4;
-        const n = opcode & 0x000F;
-        const nn = opcode & 0x00FF;
-        const nnn = opcode & 0x0FFF;
+        // Get the values of the registers and constants from the opcode
+        const x = (opcode & 0x0F00) >> 8;   // Get the value of the first register (x) from bits 8-11
+        const y = (opcode & 0x00F0) >> 4;   // Get the value of the second register (y) from bits 4-7
+        const n = opcode & 0x000F;          // Get the value of the constant (n) from bits 0-3
+        const nn = opcode & 0x00FF;         // Get the value of the 8-bit constant (nn) from bits 0-7
+        const nnn = opcode & 0x0FFF;        // Get the value of the 12-bit address (nnn) from bits 0-11
 
-        console.log(`PC: 0x${this.PC.toString(16)}, Opcode: 0x${opcode.toString(16)}`); // Logging
-        this.updateOpcodeLog(opcode, this.PC);
+        // console.log(`PC: 0x${this.PC.toString(16)}, Opcode: 0x${opcode.toString(16)}`); // Logging
+        // this.updateOpcodeLog(opcode, this.PC);
 
         switch (opcode & 0xF000) {
             case 0x0000:
@@ -203,10 +204,10 @@ class CPU {
         }
     }
 
-    updateOpcodeLog(opcode, pc) {
-        const logItem = document.createElement('li');
-        logItem.textContent = `PC: 0x${pc.toString(16).padStart(3, '0')}, Opcode: 0x${opcode.toString(16).padStart(4, '0')}`;
-        document.getElementById('opcode-list').appendChild(logItem);
-    }
+    // updateOpcodeLog(opcode, pc) {
+    //     const logItem = document.createElement('li');
+    //     logItem.textContent = `PC: 0x${pc.toString(16).padStart(3, '0')}, Opcode: 0x${opcode.toString(16).padStart(4, '0')}`;
+    //     document.getElementById('opcode-list').appendChild(logItem);
+    // }
 
 }

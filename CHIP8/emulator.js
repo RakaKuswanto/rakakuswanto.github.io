@@ -7,7 +7,7 @@ class Emulator {
         this.input = new Input(); // Inisialisasi input
         this.cpu = new CPU(this.display, this.memory, this.timer, this.input); // Pass input to CPU
 
-        this.paused = false;
+        this.paused = true;
         this.stepMode = false;
     }    
 
@@ -42,6 +42,7 @@ class Emulator {
     }
 
     start() {
+        this.paused = false;
         this.emulationLoop();
     }
 
@@ -52,7 +53,7 @@ class Emulator {
             this.display.render(); // Redraw the display
         }
         if (!this.stepMode) {
-            requestAnimationFrame(() => this.emulationLoop()); // Continue the loop
+            this.animationFrameRequest = requestAnimationFrame(() => this.emulationLoop()); // Store request ID
         }
         this.updateDebugInfo(); // Update debugger information if any
     }    
@@ -94,7 +95,10 @@ class Emulator {
         this.timer = new Timer(); // Reset the timer
         this.input = new Input(); // Reset input
         this.cpu = new CPU(this.display, this.memory, this.timer, this.input); // Pass input to CPU
+        this.cpu.speed = 10; // Pastikan kecepatan di-reset ke nilai default
         this.paused = true; // Pause the emulation after resetting
+        // Hentikan loop emulasi jika sedang berjalan
+        cancelAnimationFrame(this.animationFrameRequest); // Berhenti dari emulationLoop sebelumnya    
     }    
 
     updateDebugInfo() {
