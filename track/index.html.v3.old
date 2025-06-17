@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Peta Cerdas dengan Routing Dinamis (Dijkstra)</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; }
+        #map-container { width: 100%; height: 100%; position: relative; }
+        #map { width: 100%; height: 100%; }
+        #controls {
+            position: absolute; top: 10px; right: 10px; z-index: 1000; background: white;
+            padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); width: 250px;
+        }
+        #controls > * { display: block; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
+        #controls > *:last-child { margin-bottom: 0; }
+        #controls > label { margin-bottom: 4px; font-weight: bold; font-size: 14px; }
+        #controls > input, #controls > select, #controls > button { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        #controls > button { background-color: #007bff; color: white; border: none; cursor: pointer; transition: background-color 0.2s; }
+        #controls > button:hover { background-color: #0056b3; }
+        #controls > button:disabled { background-color: #a0a0a0; cursor: not-allowed; }
+        #controls > button.stop { background-color: #dc3545; }
+        #controls > button.stop:hover { background-color: #c82333; }
+        .rotated-icon { transition: transform 0.1s linear; }
+        #route-info { 
+            margin-top: 10px; padding-top: 10px; border-top: 1px solid #eee; 
+            font-size: 13px; display: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="map-container">
+        <div id="controls">
+            <label for="file-input">1. Pilih File GeoJSON</label>
+            <input type="file" id="file-input" accept=".geojson, .json">
+            
+            <label for="network-selector">2. Pilih Jaringan</label>
+            <select id="network-selector" disabled></select>
+            
+            <label for="start-station-selector">3. Stasiun Awal</label>
+            <select id="start-station-selector" disabled></select>
+
+            <label for="end-station-selector">4. Stasiun Akhir</label>
+            <select id="end-station-selector" disabled></select>
+
+            <label for="speed-input">5. Kecepatan (km/jam)</label>
+            <input type="number" id="speed-input" value="80" min="1" disabled>
+            
+            <button id="animation-button" disabled>Pilih Jaringan & Stasiun</button>
+            
+            <div id="route-info"></div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <script>
+    (function() {
+        // --- Referensi Elemen DOM & State ---
+        const dom = {
+            fileInput: document.getElementById('file-input'),
+            networkSelector: document.getElementById('network-selector'),
+            startStationSelector: document.getElementById('start-station-selector'),
+            endStationSelector: document.getElementById('end-station-selector'),
+            speedInput: document.getElementById('speed-input'),
+            animationButton: document.getElementById('animation-button'),
+            routeInfo: document.getElementById('route-info')
+        };
+        
+        let map;
+        let rawGeojsonData;
+        let networks = {};
+        let currentNetworkData;
+        let allFeaturesLayer = L.featureGroup();
+        let animatedMarker;
+        let routeHighlightLayer = L.featureGroup();
+        let animationState = { id: null, isRunning: false };
+
+        function initializeMap() {
+            map = L.map('map').setView([-6.25, 106.88], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map).on('load', () => map.addLayer(routeHighlightLayer));
+
+            dom.fileInput.addEventListener('change', handleFileSelect);
+            dom.networkSelector.addEventListener('change', handleNetworkSelect);
+            dom.animationButton.addEventListener('click', handleAnimationToggle);
+            dom.startStationSelector.addEventListener('change', validateSelections);
+            dom.endStationSelector.addEventListener('change', validateSelections);
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    rawGeojsonData = JSON.parse(e.target.result);
+                    processGeojsonForNetworks();
+                } catch (error) {
+                    alert("Error: Gagal mem-parsing file GeoJSON.");
+                    console.error(error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function processGeojsonForNetworks() {
+            stopAnimation();
+            networks = {};
+            const networkNames = new Set();
+            rawGeojsonData.features.forEach(f => {
+                if (f.geometry?.type === 'LineString' && f.properties?.name) {
+                    networkNames.add(f.properties.name);
+                }
+            });
+
+            dom.networkSelector.innerHTML = '<option value="">Pilih jaringan...</option>';
+            networkNames.forEach(name => dom.networkSelector.innerHTML += `<option value="${name}">${name}</option>`);
+            dom.networkSelector.disabled = false;
+            
+            allFeaturesLayer.clearLayers().addLayer(L.geoJSON(rawGeojsonData));
+            map.addLayer(allFeaturesLayer).fitBounds(allFeaturesLayer.getBounds().pad(0.1));
+        }
+
+        function handleNetworkSelect() {
+            const selectedName = dom.networkSelector.value;
+            if (!selectedName) {
+                setControlsEnabled(false);
+                return;
+            }
+
+            if (!networks[selectedName]) {
+                console.time(`buildGraph:${selectedName}`);
+                networks[selectedName] = buildNetworkGraph(rawGeojsonData, selectedName);
+                console.timeEnd(`buildGraph:${selectedName}`);
+            }
+            
+            currentNetworkData = networks[selectedName];
+            populateStationSelectors(currentNetworkData.stations);
+            setControlsEnabled(true);
+        }
+
+        // --- Logika Inti (Sesuai Pilihan Anda) ---
+
+        function buildNetworkGraph(data, networkName) {
+            const graph = { adj: new Map() };
+            const networkStations = [];
+            const allNodes = new Map();
+
+            const relevantLines = data.features.filter(f => 
+                f.geometry?.type === 'LineString' &&
+                f.properties?.name === networkName &&
+                (f.properties?.usage === 'main' || !f.properties?.usage)
+            );
+
+            const relevantStations = data.features.filter(f =>
+                f.geometry?.type === 'Point' && f.properties?.name &&
+                (f.properties?.network === networkName || f.properties?.name.includes(networkName.split(' ')[1]))
+            );
+            
+            const p2s = (p) => `${p[0]},${p[1]}`;
+
+            relevantLines.forEach(line => {
+                const coords = line.geometry.coordinates;
+                for (let i = 0; i < coords.length - 1; i++) {
+                    const fromId = p2s(coords[i]);
+                    const toId = p2s(coords[i+1]);
+                    
+                    allNodes.set(fromId, L.latLng(coords[i][1], coords[i][0]));
+                    allNodes.set(toId, L.latLng(coords[i+1][1], coords[i+1][0]));
+
+                    if (!graph.adj.has(fromId)) graph.adj.set(fromId, []);
+                    if (!graph.adj.has(toId)) graph.adj.set(toId, []);
+                    
+                    // Membuat koneksi DUA ARAH (inilah logika yang Anda pilih)
+                    graph.adj.get(fromId).push(toId);
+                    graph.adj.get(toId).push(fromId);
+                }
+            });
+
+            relevantStations.forEach(s => {
+                networkStations.push({
+                    name: s.properties.name,
+                    latlng: L.latLng(s.geometry.coordinates[1], s.geometry.coordinates[0])
+                });
+            });
+
+            graph.nodes = allNodes;
+            return { graph, stations: networkStations };
+        }
+
+        function dijkstra(graph, startNode, endNode) {
+            const distances = new Map();
+            const prev = new Map();
+            const pq = new Map();
+
+            graph.nodes.forEach((_, node) => distances.set(node, Infinity));
+            distances.set(startNode, 0);
+            pq.set(startNode, 0);
+
+            while (pq.size > 0) {
+                const u = [...pq.entries()].sort((a,b) => a[1] - b[1])[0][0];
+                pq.delete(u);
+
+                if (u === endNode) break;
+
+                const neighbors = graph.adj.get(u) || [];
+                for (const v of neighbors) {
+                    const uCoords = graph.nodes.get(u);
+                    const vCoords = graph.nodes.get(v);
+                    const weight = uCoords.distanceTo(vCoords); // Bobot berdasarkan JARAK
+                    const alt = distances.get(u) + weight;
+
+                    if (alt < distances.get(v)) {
+                        distances.set(v, alt);
+                        prev.set(v, u);
+                        pq.set(v, alt);
+                    }
+                }
+            }
+            
+            const path = [];
+            let current = endNode;
+            while (current) {
+                path.unshift(current);
+                current = prev.get(current);
+            }
+            
+            return path[0] === startNode ? { path, distance: distances.get(endNode) } : { path: [], distance: Infinity };
+        }
+        
+        function generateAndAnimateRoute() {
+            stopAnimation();
+            dom.animationButton.disabled = true;
+            dom.animationButton.textContent = 'Mencari rute...';
+
+            // Menjalankan pencarian rute di luar event loop utama agar UI tidak freeze
+            setTimeout(() => {
+                const startStation = currentNetworkData.stations.find(s => s.name === dom.startStationSelector.value);
+                const endStation = currentNetworkData.stations.find(s => s.name === dom.endStationSelector.value);
+
+                if (!startStation || !endStation) {
+                    dom.animationButton.textContent = 'Stasiun tidak valid';
+                    return;
+                }
+                
+                const findClosestNode = (stationLatLng) => {
+                    let closestNode = null, minDistance = Infinity;
+                    currentNetworkData.graph.nodes.forEach((nodeLatLng, nodeStr) => {
+                        const d = stationLatLng.distanceTo(nodeLatLng);
+                        if (d < minDistance) { minDistance = d; closestNode = nodeStr; }
+                    });
+                    return closestNode;
+                };
+
+                const startNode = findClosestNode(startStation.latlng);
+                const endNode = findClosestNode(endStation.latlng);
+                
+                if (!startNode || !endNode) {
+                    alert("Tidak dapat menemukan titik stasiun di jaringan rel.");
+                    validateSelections();
+                    return;
+                }
+
+                console.time('dijkstra');
+                const { path, distance } = dijkstra(currentNetworkData.graph, startNode, endNode);
+                console.timeEnd('dijkstra');
+                
+                if (path.length === 0) {
+                    alert("Gagal menemukan rute antara stasiun yang dipilih.");
+                    validateSelections();
+                    return;
+                }
+                
+                const routeLatLngs = path.map(nodeStr => currentNetworkData.graph.nodes.get(nodeStr));
+                routeLatLngs[0] = startStation.latlng;
+                routeLatLngs[routeLatLngs.length - 1] = endStation.latlng;
+                
+                const speedKmh = parseFloat(dom.speedInput.value) || 80;
+                showRouteInfo(distance, speedKmh);
+                routeHighlightLayer.addLayer(L.polyline(routeLatLngs, {color: '#ff007f', weight: 6, opacity: 0.8}));
+                
+                const speedMps = speedKmh * 1000 / 3600;
+                const segmentDurations = routeLatLngs.map((p, i) => {
+                    if (i === 0) return 0;
+                    return p.distanceTo(routeLatLngs[i-1]) / speedMps;
+                }).slice(1);
+
+                animateMarker(routeLatLngs, segmentDurations);
+                animationState.isRunning = true;
+                dom.animationButton.textContent = 'Hentikan Animasi';
+                dom.animationButton.disabled = false;
+                dom.animationButton.classList.add('stop');
+                setControlsEnabled(true, true);
+            }, 50); // Jeda 50ms
+        }
+
+        // --- Fungsi Helper & UI ---
+        function showRouteInfo(distance, speedKmh) {
+            const distanceKm = (distance / 1000).toFixed(2);
+            const timeHours = distanceKm / speedKmh;
+            const totalSeconds = timeHours * 3600;
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = Math.round(totalSeconds % 60);
+            dom.routeInfo.innerHTML = `Jarak: <b>${distanceKm} km</b><br>Estimasi: <b>${minutes}m ${seconds}d</b> (at ${speedKmh} km/h)`;
+            dom.routeInfo.style.display = 'block';
+        }
+
+        function populateStationSelectors(stations) {
+            const placeholder = '<option value="">Pilih stasiun...</option>';
+            dom.startStationSelector.innerHTML = placeholder;
+            dom.endStationSelector.innerHTML = placeholder;
+            stations.sort((a,b) => a.name.localeCompare(b.name)).forEach(station => {
+                const optionHtml = `<option value="${station.name}">${station.name}</option>`;
+                dom.startStationSelector.innerHTML += optionHtml;
+                dom.endStationSelector.innerHTML += optionHtml;
+            });
+        }
+        
+        function validateSelections() {
+            routeHighlightLayer.clearLayers();
+            dom.routeInfo.style.display = 'none';
+            const start = dom.startStationSelector.value;
+            const end = dom.endStationSelector.value;
+            if (start && end && start !== end) {
+                dom.animationButton.disabled = false;
+                dom.animationButton.textContent = 'Mulai Animasi';
+            } else {
+                dom.animationButton.disabled = true;
+                dom.animationButton.textContent = start && start === end ? 'Stasiun tidak boleh sama' : 'Pilih Stasiun';
+            }
+        }
+
+        function setControlsEnabled(enabled, isAnimating = false) {
+             dom.networkSelector.disabled = !enabled || isAnimating;
+             dom.startStationSelector.disabled = !enabled || isAnimating;
+             dom.endStationSelector.disabled = !enabled || isAnimating;
+             dom.speedInput.disabled = !enabled || isAnimating;
+             dom.fileInput.disabled = isAnimating;
+             if (!isAnimating && enabled) validateSelections();
+             else dom.animationButton.disabled = !isAnimating ? !enabled : false;
+        }
+        
+        function handleAnimationToggle() {
+            if (animationState.isRunning) stopAnimation();
+            else generateAndAnimateRoute();
+        }
+        
+        function stopAnimation() {
+            animationState.isRunning = false;
+            if (animationState.id) cancelAnimationFrame(animationState.id);
+            if (animatedMarker) map.removeLayer(animatedMarker);
+            animatedMarker = null;
+            dom.animationButton.classList.remove('stop');
+            routeHighlightLayer.clearLayers();
+            dom.routeInfo.style.display = 'none';
+            setControlsEnabled(!!currentNetworkData);
+        }
+
+        function animateMarker(latlngs, durations) {
+            let startTime = performance.now(); let currentSegment = 0; let timeElapsedInSegment = 0;
+            const trainIcon = L.divIcon({ html: '<div class="rotated-icon">🚈</div>', className: '', iconSize: [24, 24], iconAnchor: [12, 12] });
+            animatedMarker = L.marker(latlngs[0], { icon: trainIcon }).addTo(map);
+            function animationStep(now) {
+                if(!animationState.isRunning) return;
+                const delta = (now - startTime) / 1000; startTime = now; timeElapsedInSegment += delta;
+                while (durations[currentSegment] !== undefined && timeElapsedInSegment >= durations[currentSegment]) {
+                    timeElapsedInSegment -= durations[currentSegment]; currentSegment++;
+                    if (currentSegment >= latlngs.length - 1) {
+                        animatedMarker.setLatLng(latlngs[latlngs.length - 1]);
+                        animatedMarker.bindPopup("<b>Selesai! 🎉</b>").openPopup();
+                        stopAnimation(); return;
+                    }
+                }
+                const progress = durations[currentSegment] > 0 ? timeElapsedInSegment / durations[currentSegment] : 1;
+                const startPoint = latlngs[currentSegment]; const endPoint = latlngs[currentSegment + 1];
+                if (!startPoint || !endPoint) { stopAnimation(); return; }
+                const newLat = startPoint.lat + (endPoint.lat - startPoint.lat) * progress;
+                const newLng = startPoint.lng + (endPoint.lng - startPoint.lng) * progress;
+                animatedMarker.setLatLng([newLat, newLng]);
+                const angle = Math.atan2(endPoint.lng - startPoint.lng, endPoint.lat - startPoint.lat) * 180 / Math.PI;
+                const iconElement = animatedMarker._icon.querySelector('.rotated-icon');
+                if (iconElement) iconElement.style.transform = `rotate(${angle}deg)`;
+                animationState.id = requestAnimationFrame(animationStep);
+            }
+            animationState.id = requestAnimationFrame(animationStep);
+        }
+
+        initializeMap();
+    })();
+    </script>
+</body>
+</html>

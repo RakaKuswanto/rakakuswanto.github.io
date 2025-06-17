@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi Animasi Peta dengan Kecepatan Dinamis</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        html, body { 
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        #map-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        #controls {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 1000;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            width: 230px;
+        }
+        #controls > * {
+            display: block;
+            margin-bottom: 10px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        #controls > *:last-child {
+            margin-bottom: 0;
+        }
+        #controls > label {
+            margin-bottom: 4px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        #controls > input, #controls > select, #controls > button {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #controls > button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        #controls > button:hover {
+            background-color: #0056b3;
+        }
+        #controls > button:disabled {
+            background-color: #a0a0a0;
+            cursor: not-allowed;
+        }
+        #controls > button.stop {
+            background-color: #dc3545;
+        }
+        #controls > button.stop:hover {
+            background-color: #c82333;
+        }
+        /* Style untuk ikon agar bisa berputar */
+        .rotated-icon {
+            transition: transform 0.1s linear; 
+        }
+    </style>
+</head>
+<body>
+    <div id="map-container">
+        <div id="controls">
+            <label for="file-input">1. Pilih File GeoJSON</label>
+            <input type="file" id="file-input" accept=".geojson, .json">
+            
+            <label for="route-selector">2. Pilih Rute</label>
+            <select id="route-selector" disabled></select>
+
+            <label for="speed-input">3. Atur Kecepatan (km/jam)</label>
+            <input type="number" id="speed-input" value="60" min="1">
+            
+            <button id="animation-button" disabled>Mulai Animasi</button>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <script>
+    // Self-invoking function untuk menghindari polusi global scope
+    (function() {
+        // --- Referensi Elemen DOM ---
+        const fileInput = document.getElementById('file-input');
+        const routeSelector = document.getElementById('route-selector');
+        const speedInput = document.getElementById('speed-input');
+        const animationButton = document.getElementById('animation-button');
+
+        // --- State Aplikasi ---
+        let map;
+        let geojsonData;
+        let allRoutesLayer = L.geoJSON();
+        let animatedMarker;
+        let animationState = {
+            id: null, // ID untuk requestAnimationFrame
+            isRunning: false
+        };
+
+        // --- Inisialisasi ---
+        function initializeMap() {
+            map = L.map('map').setView([-6.2088, 106.8456], 12); // Center di Jakarta
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Event Listeners
+            fileInput.addEventListener('change', handleFileSelect);
+            animationButton.addEventListener('click', handleAnimationToggle);
+        }
+
+        // --- Logika Aplikasi ---
+
+        /**
+         * 1. Menangani pemilihan file GeoJSON dari pengguna.
+         */
+        function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    geojsonData = JSON.parse(e.target.result);
+                    processGeojsonData();
+                } catch (error) {
+                    alert("Error: Format file tidak valid atau bukan GeoJSON.");
+                    console.error("Gagal mem-parsing GeoJSON:", error);
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        /**
+         * 2. Memproses data GeoJSON yang telah dimuat.
+         */
+        function processGeojsonData() {
+            stopAnimation(); // Hentikan animasi sebelumnya jika ada
+            allRoutesLayer.clearLayers();
+            routeSelector.innerHTML = '';
+
+            const lineStringFeatures = geojsonData.features.filter(f => 
+                f.geometry && f.geometry.type === 'LineString' && f.geometry.coordinates.length > 1
+            );
+
+            if (lineStringFeatures.length === 0) {
+                alert("Tidak ditemukan fitur rute (LineString dengan minimal 2 titik) di dalam file.");
+                setControlsEnabled(false);
+                return;
+            }
+            
+            allRoutesLayer = L.geoJSON(lineStringFeatures, {
+                style: () => ({ color: 'grey', weight: 5, opacity: 0.6 })
+            }).addTo(map);
+
+            lineStringFeatures.forEach((feature, index) => {
+                const option = document.createElement('option');
+                option.value = index;
+                const routeName = feature.properties?.name || `Rute ${index + 1}`;
+                option.text = `${routeName} (${feature.geometry.coordinates.length} titik)`;
+                routeSelector.appendChild(option);
+            });
+
+            map.fitBounds(allRoutesLayer.getBounds().pad(0.1));
+            setControlsEnabled(true);
+        }
+        
+        /**
+         * Mengatur status aktif/nonaktif kontrol UI.
+         */
+        function setControlsEnabled(enabled, isAnimating = false) {
+             routeSelector.disabled = !enabled || isAnimating;
+             speedInput.disabled = !enabled || isAnimating;
+             fileInput.disabled = isAnimating; // Nonaktifkan upload file saat animasi berjalan
+             animationButton.disabled = !enabled;
+        }
+
+        /**
+         * 3. Mengatur tombol start/stop animasi.
+         */
+        function handleAnimationToggle() {
+            if (animationState.isRunning) {
+                stopAnimation();
+            } else {
+                startAnimation();
+            }
+        }
+        
+        /**
+         * Menghentikan animasi yang sedang berjalan.
+         */
+        function stopAnimation() {
+            if (animationState.id) {
+                cancelAnimationFrame(animationState.id);
+            }
+            if (animatedMarker) {
+                map.removeLayer(animatedMarker);
+                animatedMarker = null;
+            }
+            animationState.isRunning = false;
+            animationButton.textContent = 'Mulai Animasi';
+            animationButton.classList.remove('stop');
+            setControlsEnabled(true);
+        }
+
+        /**
+         * 4. Memulai animasi pada rute yang dipilih.
+         */
+        function startAnimation() {
+            const selectedIndex = routeSelector.value;
+            const lineStringFeatures = geojsonData.features.filter(f => f.geometry && f.geometry.type === 'LineString');
+            const selectedFeature = lineStringFeatures[selectedIndex];
+            
+            if (!selectedFeature) return;
+            
+            // GeoJSON: [lng, lat], Leaflet: [lat, lng]
+            const routeLatLngs = selectedFeature.geometry.coordinates.map(coord => L.latLng(coord[1], coord[0]));
+            
+            let speedKmh = parseFloat(speedInput.value);
+            if (isNaN(speedKmh) || speedKmh <= 0) {
+                alert("Kecepatan tidak valid. Menggunakan nilai default 60 km/jam.");
+                speedKmh = 60;
+                speedInput.value = 60;
+            }
+            
+            const speedMps = speedKmh * 1000 / 3600; // meter per detik
+
+            // Hitung durasi setiap segmen berdasarkan jarak dan kecepatan
+            const segmentDurations = [];
+            for (let i = 0; i < routeLatLngs.length - 1; i++) {
+                const distance = routeLatLngs[i].distanceTo(routeLatLngs[i + 1]); // Jarak dalam meter
+                const duration = distance / speedMps; // Durasi dalam detik
+                segmentDurations.push(duration);
+            }
+
+            // --- Logika Animasi Baru ---
+            animateMarker(routeLatLngs, segmentDurations);
+            animationState.isRunning = true;
+            animationButton.textContent = 'Hentikan Animasi';
+            animationButton.classList.add('stop');
+            setControlsEnabled(true, true); // Aktifkan tombol, nonaktifkan input lain
+        }
+        
+        /**
+         * 5. Melakukan animasi pergerakan marker sepanjang rute.
+         * Ini adalah perbaikan utama dari logika sebelumnya.
+         */
+        function animateMarker(latlngs, durations) {
+            let startTime = performance.now();
+            let currentSegment = 0;
+            let timeElapsedInSegment = 0;
+
+            const trainIcon = L.divIcon({ 
+                html: '<div class="rotated-icon">🚈</div>', 
+                className: '', // Kosongkan agar tidak ada style default Leaflet
+                iconSize: [24, 24], 
+                iconAnchor: [12, 12] 
+            });
+            animatedMarker = L.marker(latlngs[0], { icon: trainIcon }).addTo(map);
+
+            function animationStep(now) {
+                const delta = (now - startTime) / 1000; // Waktu berlalu dalam detik
+                startTime = now;
+                timeElapsedInSegment += delta;
+                
+                // Pindah ke segmen berikutnya jika durasi saat ini terlampaui
+                while (timeElapsedInSegment > durations[currentSegment]) {
+                    timeElapsedInSegment -= durations[currentSegment];
+                    currentSegment++;
+
+                    // Cek jika animasi sudah selesai
+                    if (currentSegment >= latlngs.length - 1) {
+                        animatedMarker.setLatLng(latlngs[latlngs.length - 1]);
+                        animatedMarker.bindPopup("<b>Selesai! 🎉</b>").openPopup();
+                        stopAnimation();
+                        return;
+                    }
+                }
+                
+                const segmentProgress = timeElapsedInSegment / durations[currentSegment];
+                const startPoint = latlngs[currentSegment];
+                const endPoint = latlngs[currentSegment + 1];
+
+                // Interpolasi posisi
+                const newLat = startPoint.lat + (endPoint.lat - startPoint.lat) * segmentProgress;
+                const newLng = startPoint.lng + (endPoint.lng - startPoint.lng) * segmentProgress;
+                animatedMarker.setLatLng([newLat, newLng]);
+                
+                // Rotasi marker
+                const angle = calculateAngle(startPoint, endPoint);
+                const iconElement = animatedMarker._icon.querySelector('.rotated-icon');
+                if (iconElement) {
+                    iconElement.style.transform = `rotate(${angle}deg)`;
+                }
+
+                animationState.id = requestAnimationFrame(animationStep);
+            }
+            animationState.id = requestAnimationFrame(animationStep);
+        }
+
+        /**
+         * Menghitung sudut (bearing) antara dua titik untuk rotasi marker.
+         */
+        function calculateAngle(start, end) {
+            const dy = end.lat - start.lat;
+            const dx = Math.cos(Math.PI / 180 * start.lat) * (end.lng - start.lng);
+            const angle = Math.atan2(dx, dy) * 180 / Math.PI;
+            return angle;
+        }
+
+        // --- Mulai Aplikasi ---
+        initializeMap();
+    })();
+    </script>
+</body>
+</html>

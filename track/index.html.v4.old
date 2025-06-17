@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tracking Kereta Berbasis Jadwal dengan Animasi Mulus</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <style>
+        html, body { height: 100%; margin: 0; padding: 0; font-family: sans-serif; }
+        #map-container { width: 100%; height: 100%; position: relative; }
+        #map { width: 100%; height: 100%; }
+        #controls {
+            position: absolute; top: 10px; right: 10px; z-index: 1000; background: white;
+            padding: 15px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); width: 250px;
+        }
+        #controls > * { display: block; margin-bottom: 10px; width: 100%; box-sizing: border-box; }
+        #controls > label { margin-bottom: 4px; font-weight: bold; font-size: 14px; }
+        #controls > input, #controls > select, #controls > button { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; }
+        .rotated-icon { transition: transform 0.5s linear; }
+        #clock { font-size: 16px; font-weight: bold; text-align: center; padding: 5px; background: #f0f0f0; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="map-container">
+        <div id="controls">
+            <label for="file-input">1. Muat GeoJSON Jalur</label>
+            <input type="file" id="file-input" accept=".geojson, .json">
+            
+            <label for="network-selector">2. Pilih Jaringan</label>
+            <select id="network-selector" disabled></select>
+            
+            <label>3. Status Tracking</label>
+            <div id="clock">Memuat...</div>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <script>
+    (function() {
+        const dom = {
+            fileInput: document.getElementById('file-input'),
+            networkSelector: document.getElementById('network-selector'),
+            clock: document.getElementById('clock')
+        };
+        
+        let map;
+        let rawGeojsonData;
+        let networks = {};
+        let currentNetworkData;
+        let allFeaturesLayer = L.featureGroup();
+        
+        // State untuk tracking dan animasi
+        let trainMarkers = {}; 
+        let trainStates = {}; // Menyimpan state { currentLatLng, targetLatLng, rotation }
+        let logicInterval;
+        let animationFrameId;
+
+        // --- DATA JADWAL (GAPEKA Sederhana) ---
+        const gapekaData = {
+            "LRT Jabodebek": [
+                {
+                    "nomor_ka": "J101", "KA Pagi": "Harjamukti -> Dukuh Atas",
+                    "perjalanan": [
+                        { "stasiun": "Harjamukti", "berangkat": "06:59:00" },
+                        { "stasiun": "Dukuh Atas BNI", "tiba": "07:50:00" }
+                    ]
+                },
+                {
+                    "nomor_ka": "J102", "KA Pagi": "Harjamukti -> Dukuh Atas",
+                    "perjalanan": [
+                        { "stasiun": "Harjamukti", "berangkat": "11:32:00" },
+                        { "stasiun": "Dukuh Atas BNI", "tiba": "12:48:00" }
+                    ]
+                },
+                {
+                    "nomor_ka": "J103", "KA Pagi": "Harjamukti -> Dukuh Atas",
+                    "perjalanan": [
+                        { "stasiun": "Harjamukti", "berangkat": "12:34:00" },
+                        { "stasiun": "Dukuh Atas BNI", "tiba": "13:50:00" }
+                    ]
+                }, 
+                {
+                    "nomor_ka": "J104", "KA Pagi": "Harjamukti -> Dukuh Atas",
+                    "perjalanan": [
+                        { "stasiun": "Harjamukti", "berangkat": "12:47:00" },
+                        { "stasiun": "Dukuh Atas BNI", "tiba": "14:03:00" }
+                    ]
+                },
+                {
+                    "nomor_ka": "J105", "KA Pagi": "Harjamukti -> Dukuh Atas",
+                    "perjalanan": [
+                        { "stasiun": "Harjamukti", "berangkat": "12:59:00" },
+                        { "stasiun": "Dukuh Atas BNI", "tiba": "14:15:00" }
+                    ]
+                },   
+                {
+                    "nomor_ka": "J106", "KA Pagi": "Harjamukti -> Dukuh Atas",
+                    "perjalanan": [
+                        { "stasiun": "Harjamukti", "berangkat": "13:37:00" },
+                        { "stasiun": "Dukuh Atas BNI", "tiba": "14:50:00" }
+                    ]
+                }, 
+                {
+                    "nomor_ka": "J107", "KA Pagi": "Harjamukti -> Dukuh Atas",
+                    "perjalanan": [
+                        { "stasiun": "Harjamukti", "berangkat": "13:49:00" },
+                        { "stasiun": "Dukuh Atas BNI", "tiba": "15:05:00" }
+                    ]
+                },  
+                {
+                    "nomor_ka": "J2099", "nama_ka": "Jatimulya -> Dukuh Atas",
+                    "perjalanan": [
+                        { "stasiun": "Jatimulya", "berangkat": "10:25:00" },
+                        { "stasiun": "Bekasi Barat", "tiba": "10:30:00", "berangkat": "10:31:00" },
+                        { "stasiun": "Cikunir 2", "tiba": "10:35:00", "berangkat": "10:36:00" },
+                        { "stasiun": "Cawang", "tiba": "10:52:00", "berangkat": "10:53:00" },
+                        { "stasiun": "Dukuh Atas BNI", "tiba": "11:10:00" }
+                    ]
+                }
+            ]
+        };
+        
+        // --- Inisialisasi & Alur Kerja ---
+        function initializeMap() {
+            map = L.map('map').setView([-6.25, 106.88], 12);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19, attribution: '&copy; OpenStreetMap' }).addTo(map);
+            dom.fileInput.addEventListener('change', handleFileSelect);
+            dom.networkSelector.addEventListener('change', handleNetworkSelect);
+        }
+
+        function handleFileSelect(event) {
+            const file = event.target.files[0]; if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try { rawGeojsonData = JSON.parse(e.target.result); processGeojsonForNetworks(); } 
+                catch (error) { alert("Error parsing GeoJSON."); }
+            };
+            reader.readAsText(file);
+        }
+
+        function processGeojsonForNetworks() {
+            stopTracking();
+            networks = {};
+            const networkNames = new Set(Object.keys(gapekaData));
+            dom.networkSelector.innerHTML = '<option value="">Pilih jaringan...</option>';
+            networkNames.forEach(name => dom.networkSelector.innerHTML += `<option value="${name}">${name}</option>`);
+            dom.networkSelector.disabled = false;
+            allFeaturesLayer.clearLayers().addLayer(L.geoJSON(rawGeojsonData));
+            map.addLayer(allFeaturesLayer).fitBounds(allFeaturesLayer.getBounds().pad(0.1));
+        }
+        
+        function handleNetworkSelect() {
+            const selectedName = dom.networkSelector.value;
+            if (!selectedName) { stopTracking(); return; }
+            if (!networks[selectedName]) {
+                networks[selectedName] = buildNetworkGraph(rawGeojsonData, selectedName);
+            }
+            currentNetworkData = networks[selectedName];
+            startTracking(selectedName);
+        }
+
+        // --- INTI LOGIKA TRACKING & ANIMASI ---
+
+        function startTracking(networkName) {
+            stopTracking();
+            console.log(`Memulai tracking untuk jaringan ${networkName}...`);
+            
+            // 1. Mesin Logika: Update posisi target setiap detik
+            logicInterval = setInterval(() => {
+                const now = new Date();
+                dom.clock.textContent = now.toLocaleTimeString('id-ID');
+                const trips = gapekaData[networkName] || [];
+                
+                trips.forEach(trip => {
+                    const positionInfo = calculateTrainPosition(trip, now);
+                    updateTrainTarget(trip.nomor_ka, positionInfo);
+                });
+            }, 50); // Update logika setiap 1 detik
+            
+            // 2. Mesin Animasi: Render gerakan mulus
+            smoothAnimationLoop();
+        }
+        
+        function stopTracking() {
+            if (logicInterval) clearInterval(logicInterval);
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animationFrameId = null;
+            Object.values(trainMarkers).forEach(marker => map.removeLayer(marker));
+            trainMarkers = {};
+            trainStates = {};
+            dom.clock.textContent = "Tracking Berhenti";
+        }
+
+        function updateTrainTarget(trainId, positionInfo) {
+            if (!positionInfo) {
+                // Jika perjalanan selesai, hapus targetnya
+                if (trainStates[trainId]) delete trainStates[trainId];
+                return;
+            }
+
+            let targetLatLng, rotation = 0, info = positionInfo.info;
+
+            if (positionInfo.status === 'stopped' || positionInfo.status === 'finished') {
+                const station = currentNetworkData.stations.find(s => s.name === positionInfo.at);
+                if(station) targetLatLng = station.latlng;
+            } else if (positionInfo.status === 'moving') {
+                const path = getPathBetweenStations(positionInfo.from, positionInfo.to);
+                if (path && path.path.length > 0) {
+                    const interpolated = interpolatePositionAlongPath(path.path, positionInfo.progress);
+                    targetLatLng = interpolated.latlng;
+                    rotation = interpolated.rotation;
+                }
+            }
+
+            if (!targetLatLng) return;
+
+            // Inisialisasi atau update state target
+            if (!trainStates[trainId]) {
+                trainStates[trainId] = {
+                    currentLatLng: L.latLng(targetLatLng.lat, targetLatLng.lng), // Mulai dari posisi target
+                    targetLatLng: L.latLng(targetLatLng.lat, targetLatLng.lng),
+                    rotation,
+                    info
+                };
+            } else {
+                trainStates[trainId].targetLatLng = targetLatLng;
+                trainStates[trainId].rotation = rotation;
+                trainStates[trainId].info = info;
+            }
+        }
+
+        /**
+         * Mesin Animasi Mulus menggunakan requestAnimationFrame
+         */
+        function smoothAnimationLoop() {
+            for (const trainId in trainStates) {
+                const state = trainStates[trainId];
+                
+                // Buat marker jika belum ada
+                if (!trainMarkers[trainId]) {
+                    const trainIcon = L.divIcon({
+                        html: `<div class="rotated-icon">🚈</div>`,
+                        className: '', iconSize: [24, 24], iconAnchor: [12, 12]
+                    });
+                    trainMarkers[trainId] = L.marker(state.currentLatLng, { icon: trainIcon }).addTo(map);
+                    trainMarkers[trainId].bindTooltip(`${trainId}: ${state.info}`, { permanent: true, direction: 'top', offset: [0, -12] });
+                }
+                
+                // Interpolasi posisi (Lerp)
+                state.currentLatLng.lat += (state.targetLatLng.lat - state.currentLatLng.lat) * 0.1;
+                state.currentLatLng.lng += (state.targetLatLng.lng - state.currentLatLng.lng) * 0.1;
+                
+                trainMarkers[trainId].setLatLng(state.currentLatLng);
+                trainMarkers[trainId].setTooltipContent(`${trainId}: ${state.info}`);
+
+                const iconEl = trainMarkers[trainId]._icon.querySelector('.rotated-icon');
+                if (iconEl) iconEl.style.transform = `rotate(${state.rotation}deg)`;
+
+                // Hapus marker jika perjalanan selesai dan sudah dekat target
+                if(state.info === 'Perjalanan Selesai' && state.currentLatLng.distanceTo(state.targetLatLng) < 1) {
+                    map.removeLayer(trainMarkers[trainId]);
+                    delete trainMarkers[trainId];
+                    delete trainStates[trainId];
+                }
+            }
+            
+            animationFrameId = requestAnimationFrame(smoothAnimationLoop);
+        }
+
+        // --- Fungsi Helper (Kalkulasi, Rute, Interpolasi) ---
+        // calculateTrainPosition, getPathBetweenStations, interpolatePositionAlongPath,
+        // buildNetworkGraph, dan dijkstra SAMA PERSIS seperti kode sebelumnya.
+        // Cukup salin-tempel fungsi-fungsi tersebut ke sini.
+
+        function calculateTrainPosition(trip, currentTime) {
+            const todayStr = currentTime.toISOString().split('T')[0];
+            for (let i = 0; i < trip.perjalanan.length - 1; i++) {
+                const currentStop = trip.perjalanan[i]; const nextStop = trip.perjalanan[i+1];
+                const departureTime = new Date(`${todayStr}T${currentStop.berangkat}`);
+                const arrivalTime = new Date(`${todayStr}T${nextStop.tiba}`);
+                if (currentTime >= departureTime && currentTime <= arrivalTime) {
+                    const totalSegmentDuration = (arrivalTime - departureTime) / 1000;
+                    if (totalSegmentDuration <= 0) continue;
+                    const timeElapsedInSegment = (currentTime - departureTime) / 1000;
+                    const progress = timeElapsedInSegment / totalSegmentDuration;
+                    return { status: 'moving', progress: progress, from: currentStop.stasiun, to: nextStop.stasiun, info: `Menuju ${nextStop.stasiun}` };
+                }
+                if (currentStop.tiba && currentTime >= (new Date(`${todayStr}T${currentStop.tiba}`)) && currentTime < departureTime) {
+                    return { status: 'stopped', at: currentStop.stasiun, info: `Berhenti di ${currentStop.stasiun}` };
+                }
+            }
+            const lastStop = trip.perjalanan[trip.perjalanan.length-1];
+            if(lastStop.tiba && currentTime >= (new Date(`${todayStr}T${lastStop.tiba}`))) {
+                return { status: 'finished', at: lastStop.stasiun, info: `Perjalanan Selesai` };
+            }
+            return null;
+        }
+
+        function getPathBetweenStations(fromStationName, toStationName) {
+            const startStation = currentNetworkData.stations.find(s => s.name === fromStationName);
+            const endStation = currentNetworkData.stations.find(s => s.name === toStationName);
+            if (!startStation || !endStation) return null;
+            const findClosestNode = (stationLatLng) => {
+                let closestNode = null, minDistance = Infinity;
+                currentNetworkData.graph.nodes.forEach((nodeLatLng, nodeStr) => {
+                    const d = stationLatLng.distanceTo(nodeLatLng);
+                    if (d < minDistance) { minDistance = d; closestNode = nodeStr; }
+                });
+                return closestNode;
+            };
+            const startNode = findClosestNode(startStation.latlng);
+            const endNode = findClosestNode(endStation.latlng);
+            if (!startNode || !endNode) return null;
+            const { path } = dijkstra(currentNetworkData.graph, startNode, endNode);
+            if (path.length === 0) return null;
+            const routeLatLngs = path.map(nodeStr => currentNetworkData.graph.nodes.get(nodeStr));
+            routeLatLngs[0] = startStation.latlng;
+            routeLatLngs[routeLatLngs.length - 1] = endStation.latlng;
+            return { path: routeLatLngs };
+        }
+        
+        function interpolatePositionAlongPath(path, progress) {
+            const totalDistance = path.reduce((sum, p, i) => i > 0 ? sum + p.distanceTo(path[i-1]) : 0, 0);
+            const targetDistance = totalDistance * progress;
+            let traveledDistance = 0;
+            for (let i = 0; i < path.length - 1; i++) {
+                const startPoint = path[i]; const endPoint = path[i+1];
+                const segmentDistance = startPoint.distanceTo(endPoint);
+                if (traveledDistance + segmentDistance >= targetDistance) {
+                    const distanceIntoSegment = targetDistance - traveledDistance;
+                    const segmentProgress = segmentDistance > 0 ? distanceIntoSegment / segmentDistance : 0;
+                    const lat = startPoint.lat + (endPoint.lat - startPoint.lat) * segmentProgress;
+                    const lng = startPoint.lng + (endPoint.lng - startPoint.lng) * segmentProgress;
+                    const angle = Math.atan2(endPoint.lng - startPoint.lng, startPoint.lat - endPoint.lat) * 180 / Math.PI + 180;
+                    return { latlng: L.latLng(lat, lng), rotation: angle };
+                }
+                traveledDistance += segmentDistance;
+            }
+            const lastPoint = path[path.length-1], prevPoint = path[path.length-2] || lastPoint;
+            const angle = Math.atan2(lastPoint.lng - prevPoint.lng, prevPoint.lat - lastPoint.lat) * 180 / Math.PI + 180;
+            return { latlng: lastPoint, rotation: angle };
+        }
+
+        function buildNetworkGraph(data, networkName) {
+            const graph = { adj: new Map() };
+            const networkStations = [];
+            const allNodes = new Map();
+            const relevantLines = data.features.filter(f => f.geometry?.type === 'LineString' && f.properties?.name === networkName && (f.properties?.usage === 'main' || !f.properties?.usage));
+            const relevantStations = data.features.filter(f => f.geometry?.type === 'Point' && f.properties?.name && (f.properties?.network === networkName || f.properties?.name.includes(networkName.split(' ')[1])));
+            const p2s = (p) => `${p[0]},${p[1]}`;
+            relevantLines.forEach(line => {
+                const coords = line.geometry.coordinates;
+                for (let i = 0; i < coords.length - 1; i++) {
+                    const fromId = p2s(coords[i]), toId = p2s(coords[i+1]);
+                    allNodes.set(fromId, L.latLng(coords[i][1], coords[i][0]));
+                    allNodes.set(toId, L.latLng(coords[i+1][1], coords[i+1][0]));
+                    if (!graph.adj.has(fromId)) graph.adj.set(fromId, []);
+                    if (!graph.adj.has(toId)) graph.adj.set(toId, []);
+                    graph.adj.get(fromId).push(toId);
+                    graph.adj.get(toId).push(fromId);
+                }
+            });
+            relevantStations.forEach(s => {
+                networkStations.push({ name: s.properties.name, latlng: L.latLng(s.geometry.coordinates[1], s.geometry.coordinates[0]) });
+            });
+            graph.nodes = allNodes;
+            return { graph, stations: networkStations };
+        }
+
+        function dijkstra(graph, startNode, endNode) {
+            const distances = new Map(); const prev = new Map(); const pq = new Map();
+            graph.nodes.forEach((_, node) => distances.set(node, Infinity));
+            distances.set(startNode, 0); pq.set(startNode, 0);
+            while (pq.size > 0) {
+                const u = [...pq.entries()].sort((a,b) => a[1] - b[1])[0][0];
+                pq.delete(u);
+                if (u === endNode) break;
+                const neighbors = graph.adj.get(u) || [];
+                for (const v of neighbors) {
+                    const weight = graph.nodes.get(u).distanceTo(graph.nodes.get(v));
+                    const alt = distances.get(u) + weight;
+                    if (alt < distances.get(v)) {
+                        distances.set(v, alt); prev.set(v, u); pq.set(v, alt);
+                    }
+                }
+            }
+            const path = []; let current = endNode;
+            while (current) { path.unshift(current); current = prev.get(current); }
+            return path[0] === startNode ? { path, distance: distances.get(endNode) } : { path: [], distance: Infinity };
+        }
+        
+        initializeMap();
+    })();
+    </script>
+</body>
+</html>

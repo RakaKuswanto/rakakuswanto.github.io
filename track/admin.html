@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin GAPEKA</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f9; margin: 0; padding: 20px; color: #333; }
+        .container { display: flex; gap: 20px; max-width: 1200px; margin: auto; }
+        .panel { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .list-panel { flex: 1; }
+        .form-panel { flex: 2; }
+        h1, h2 { border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        
+        /* List Perjalanan */
+        #trip-list { list-style: none; padding: 0; margin: 0; }
+        #trip-list li { display: flex; justify-content: space-between; align-items: center; padding: 10px; border-bottom: 1px solid #eee; cursor: pointer; transition: background-color 0.2s; }
+        #trip-list li:hover { background-color: #f9f9f9; }
+        #trip-list li.selected { background-color: #e0eaff; }
+        
+        /* Tombol */
+        button { padding: 8px 12px; border-radius: 4px; border: none; cursor: pointer; font-size: 14px; }
+        .btn { background-color: #007bff; color: white; }
+        .btn:hover { background-color: #0056b3; }
+        .btn-delete { background-color: #dc3545; color: white; font-size: 12px; padding: 4px 8px; }
+        .btn-delete:hover { background-color: #c82333; }
+        .btn-new { width: 100%; margin-bottom: 15px; }
+
+        /* Formulir */
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        
+        /* Stops Repeater */
+        #stops-container .stop-item { display: flex; gap: 10px; align-items: center; padding: 10px; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 10px; }
+        #stops-container .stop-item .stop-sequence { font-weight: bold; font-size: 18px; color: #999; }
+        #stops-container .stop-item > div { flex: 1; }
+        .btn-add-stop { background-color: #28a745; color: white; }
+        .btn-add-stop:hover { background-color: #218838; }
+
+    </style>
+</head>
+<body>
+
+    <h1>Admin Jadwal Perjalanan Kereta Api (GAPEKA)</h1>
+
+    <div class="container">
+        <div class="panel list-panel">
+            <h2>Daftar Perjalanan</h2>
+            <button id="btn-new-trip" class="btn btn-new">Buat Perjalanan Baru</button>
+            <ul id="trip-list">
+                </ul>
+        </div>
+
+        <div class="panel form-panel">
+            <h2 id="form-title">Pilih Perjalanan untuk Diedit</h2>
+            <form id="trip-form" style="display:none;">
+                <input type="hidden" id="trip-id">
+
+                <div class="form-group">
+                    <label for="network-name">Jaringan</label>
+                    <select id="network-name" required></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="trip-number">Nomor Perjalanan (KA)</label>
+                    <input type="text" id="trip-number" required placeholder="Contoh: J101">
+                </div>
+
+                <div class="form-group">
+                    <label for="trip-name">Nama Perjalanan</label>
+                    <input type="text" id="trip-name" required placeholder="Contoh: Harjamukti -> Dukuh Atas">
+                </div>
+
+                <hr>
+                <h3>Rute & Jadwal Perhentian</h3>
+                <div id="stops-container">
+                    </div>
+                <button type="button" id="btn-add-stop" class="btn btn-add-stop">Tambah Stop</button>
+                <hr>
+
+                <button type="submit" id="btn-save" class="btn">Simpan Perubahan</button>
+            </form>
+        </div>
+    </div>
+
+<script>
+(async function() {
+    // --- KONFIGURASI SUPABASE ---
+    const SUPABASE_URL = 'https://mgdbpvtjurzizedpxzam.supabase.co'; 
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nZGJwdnRqdXJ6aXplZHB4emFtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTAwNjM5NzIsImV4cCI6MjA2NTYzOTk3Mn0.Anzq5bbchTCijNdT2ulJ1Z4lI1tal0J_lue9yuFRR-c';
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // --- State & DOM Elements ---
+    let allStations = [];
+    let allNetworks = [];
+    let currentEditingTripId = null;
+
+    const dom = {
+        tripList: document.getElementById('trip-list'),
+        form: document.getElementById('trip-form'),
+        formTitle: document.getElementById('form-title'),
+        tripIdInput: document.getElementById('trip-id'),
+        networkSelect: document.getElementById('network-name'),
+        tripNumberInput: document.getElementById('trip-number'),
+        tripNameInput: document.getElementById('trip-name'),
+        stopsContainer: document.getElementById('stops-container'),
+        btnAddStop: document.getElementById('btn-add-stop'),
+        btnNewTrip: document.getElementById('btn-new-trip'),
+        btnSave: document.getElementById('btn-save'),
+    };
+
+    /**
+     * Inisialisasi Aplikasi
+     */
+    async function initializeApp() {
+        try {
+            const geojsonData = await loadGeojsonData();
+            processGeojsonData(geojsonData);
+            await loadTripList();
+
+            dom.btnNewTrip.addEventListener('click', handleCreateNewTrip);
+            dom.btnAddStop.addEventListener('click', () => renderStopItem());
+            dom.form.addEventListener('submit', handleSaveTrip);
+
+        } catch (error) {
+            console.error("Initialization failed:", error);
+            alert("Gagal menginisialisasi aplikasi. Pastikan file GeoJSON ada dan Supabase terkonfigurasi.");
+        }
+    }
+
+    /**
+     * Memuat dan memproses data GeoJSON untuk mendapatkan daftar stasiun dan jaringan.
+     */
+    async function loadGeojsonData() {
+        const response = await fetch('export.geojson');
+        if (!response.ok) throw new Error("File export.geojson tidak ditemukan.");
+        return await response.json();
+    }
+
+    function processGeojsonData(data) {
+        const stationSet = new Set();
+        const networkSet = new Set();
+        data.features.forEach(f => {
+            if (f.geometry?.type === 'Point' && f.properties?.name) {
+                stationSet.add(f.properties.name);
+            }
+            if (f.geometry?.type === 'LineString' && f.properties?.name) {
+                networkSet.add(f.properties.name);
+            }
+        });
+        allStations = [...stationSet].sort();
+        allNetworks = [...networkSet].sort();
+
+        // Isi dropdown jaringan di formulir
+        dom.networkSelect.innerHTML = allNetworks.map(name => `<option value="${name}">${name}</option>`).join('');
+    }
+
+    /**
+     * READ: Memuat daftar perjalanan dari Supabase dan menampilkannya.
+     */
+    async function loadTripList() {
+        const { data, error } = await supabaseClient.from('trips').select('*').order('created_at', { ascending: false });
+        if (error) {
+            console.error("Gagal memuat daftar perjalanan:", error);
+            return;
+        }
+        
+        dom.tripList.innerHTML = ''; // Kosongkan list
+        data.forEach(trip => {
+            const li = document.createElement('li');
+            li.dataset.tripId = trip.id;
+            li.innerHTML = `
+                <span>
+                    <strong>${trip.trip_number}</strong><br>
+                    <small>${trip.trip_name}</small>
+                </span>
+                <button class="btn-delete" data-trip-id="${trip.id}">Hapus</button>
+            `;
+            // Event listener untuk edit
+            li.addEventListener('click', (e) => {
+                if(e.target.tagName === 'BUTTON') return; // Jangan trigger edit jika tombol hapus diklik
+                handleSelectTrip(trip.id);
+            });
+            // Event listener untuk hapus
+            li.querySelector('.btn-delete').addEventListener('click', () => handleDeleteTrip(trip.id, trip.trip_number));
+
+            dom.tripList.appendChild(li);
+        });
+    }
+
+    /**
+     * UPDATE (Mode): Memilih perjalanan untuk diedit.
+     */
+    async function handleSelectTrip(tripId) {
+        // Highlight item yang dipilih
+        document.querySelectorAll('#trip-list li').forEach(li => li.classList.remove('selected'));
+        document.querySelector(`#trip-list li[data-trip-id='${tripId}']`).classList.add('selected');
+
+        const { data, error } = await supabaseClient
+            .from('trips')
+            .select('*, trip_stops(*)')
+            .eq('id', tripId)
+            .order('stop_sequence', { referencedTable: 'trip_stops', ascending: true })
+            .single();
+
+        if (error) {
+            console.error("Gagal mengambil detail perjalanan:", error);
+            return;
+        }
+
+        currentEditingTripId = tripId;
+        dom.form.style.display = 'block';
+        dom.formTitle.textContent = `Edit Perjalanan: ${data.trip_number}`;
+        dom.btnSave.textContent = 'Simpan Perubahan';
+
+        // Isi form dengan data
+        dom.tripIdInput.value = data.id;
+        dom.networkSelect.value = data.network_name;
+        dom.tripNumberInput.value = data.trip_number;
+        dom.tripNameInput.value = data.trip_name;
+        
+        // Render stops
+        dom.stopsContainer.innerHTML = '';
+        data.trip_stops.forEach(stop => renderStopItem(stop));
+    }
+
+    /**
+     * CREATE (Mode): Menyiapkan form untuk perjalanan baru.
+     */
+    function handleCreateNewTrip() {
+        document.querySelectorAll('#trip-list li').forEach(li => li.classList.remove('selected'));
+        currentEditingTripId = null;
+        dom.form.reset();
+        dom.form.style.display = 'block';
+        dom.formTitle.textContent = 'Buat Perjalanan Baru';
+        dom.btnSave.textContent = 'Simpan Perjalanan Baru';
+        dom.stopsContainer.innerHTML = '';
+        renderStopItem(); // Tambahkan satu baris stop kosong
+    }
+
+    /**
+     * Render satu baris item stop di dalam form.
+     */
+    function renderStopItem(stopData = {}) {
+        const stopDiv = document.createElement('div');
+        stopDiv.className = 'stop-item';
+
+        const stationOptions = allStations.map(s => `<option value="${s}" ${stopData.station_name === s ? 'selected' : ''}>${s}</option>`).join('');
+
+        stopDiv.innerHTML = `
+            <span class="stop-sequence">#</span>
+            <div>
+                <label>Stasiun</label>
+                <select class="station-name-select" required>${stationOptions}</select>
+            </div>
+            <div>
+                <label>Waktu Tiba</label>
+                <input type="time" class="arrival-time-input" value="${stopData.arrival_time || ''}" step="1">
+            </div>
+            <div>
+                <label>Waktu Berangkat</label>
+                <input type="time" class="departure-time-input" value="${stopData.departure_time || ''}" step="1">
+            </div>
+            <button type="button" class="btn-delete btn-remove-stop">X</button>
+        `;
+        dom.stopsContainer.appendChild(stopDiv);
+        
+        stopDiv.querySelector('.btn-remove-stop').addEventListener('click', () => stopDiv.remove());
+        updateStopSequence();
+    }
+
+    function updateStopSequence() {
+        dom.stopsContainer.querySelectorAll('.stop-item').forEach((item, index) => {
+            item.querySelector('.stop-sequence').textContent = index + 1;
+        });
+    }
+
+    /**
+     * SAVE (Create/Update): Menyimpan data dari form ke Supabase.
+     */
+    async function handleSaveTrip(event) {
+        event.preventDefault();
+        dom.btnSave.disabled = true;
+        dom.btnSave.textContent = 'Menyimpan...';
+
+        const tripPayload = {
+            network_name: dom.networkSelect.value,
+            trip_number: dom.tripNumberInput.value,
+            trip_name: dom.tripNameInput.value,
+        };
+
+        const stopItems = [];
+        dom.stopsContainer.querySelectorAll('.stop-item').forEach((item, index) => {
+            stopItems.push({
+                station_name: item.querySelector('.station-name-select').value,
+                stop_sequence: index + 1,
+                arrival_time: item.querySelector('.arrival-time-input').value || null,
+                departure_time: item.querySelector('.departure-time-input').value || null
+            });
+        });
+        
+        if (currentEditingTripId) {
+            // --- LOGIKA UPDATE ---
+            const { error: tripError } = await supabaseClient.from('trips').update(tripPayload).eq('id', currentEditingTripId);
+            if (tripError) throw tripError;
+
+            // Hapus semua stop lama, lalu masukkan yang baru (cara paling sederhana)
+            const { error: deleteError } = await supabaseClient.from('trip_stops').delete().eq('trip_id', currentEditingTripId);
+            if (deleteError) throw deleteError;
+            
+            const stopsToInsert = stopItems.map(stop => ({ ...stop, trip_id: currentEditingTripId }));
+            const { error: insertError } = await supabaseClient.from('trip_stops').insert(stopsToInsert);
+            if (insertError) throw insertError;
+
+        } else {
+            // --- LOGIKA CREATE ---
+            const { data, error } = await supabaseClient.from('trips').insert(tripPayload).select().single();
+            if (error) throw error;
+            
+            const newTripId = data.id;
+            const stopsToInsert = stopItems.map(stop => ({ ...stop, trip_id: newTripId }));
+            const { error: insertError } = await supabaseClient.from('trip_stops').insert(stopsToInsert);
+            if (insertError) throw insertError;
+        }
+
+        alert('Data berhasil disimpan!');
+        dom.btnSave.disabled = false;
+        dom.form.style.display = 'none';
+        dom.formTitle.textContent = 'Pilih Perjalanan untuk Diedit';
+        await loadTripList();
+    }
+    
+    /**
+     * DELETE: Menghapus perjalanan.
+     */
+    async function handleDeleteTrip(tripId, tripNumber) {
+        if (!confirm(`Apakah Anda yakin ingin menghapus perjalanan ${tripNumber}?`)) {
+            return;
+        }
+        
+        const { error } = await supabaseClient.from('trips').delete().eq('id', tripId);
+        
+        if(error) {
+            alert('Gagal menghapus data: ' + error.message);
+        } else {
+            alert('Perjalanan berhasil dihapus.');
+            // Jika yang dihapus adalah yang sedang diedit, sembunyikan form
+            if (tripId === currentEditingTripId) {
+                dom.form.style.display = 'none';
+                dom.formTitle.textContent = 'Pilih Perjalanan untuk Diedit';
+            }
+            await loadTripList();
+        }
+    }
+
+    // --- Mulai Aplikasi ---
+    initializeApp();
+
+})();
+</script>
+
+</body>
+</html>
