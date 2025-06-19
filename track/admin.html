@@ -278,16 +278,55 @@
     }
 
     /**
-     * SAVE (Create/Update): Menyimpan data dari form ke Supabase.
+     * SAVE (Create/Update): Menyimpan data dari form ke Supabase dengan validasi duplikasi.
      */
     async function handleSaveTrip(event) {
         event.preventDefault();
         dom.btnSave.disabled = true;
+        dom.btnSave.textContent = 'Memvalidasi...';
+
+        const tripNumberFromForm = dom.tripNumberInput.value.trim();
+        if (!tripNumberFromForm) {
+            alert("Nomor perjalanan tidak boleh kosong.");
+            dom.btnSave.disabled = false;
+            dom.btnSave.textContent = 'Simpan';
+            return;
+        }
+
+        // --- VALIDASI DUPLIKASI (BAGIAN BARU) ---
+        // Cek apakah ada trip lain dengan nomor yang sama.
+        let query = supabaseClient
+            .from('trips')
+            .select('id')
+            .eq('trip_number', tripNumberFromForm);
+        
+        // Jika sedang mode edit, kecualikan ID trip yang sedang diedit dari pengecekan.
+        if (currentEditingTripId) {
+            query = query.not('id', 'eq', currentEditingTripId);
+        }
+
+        const { data: duplicate, error: checkError } = await query.maybeSingle();
+
+        if (checkError) {
+            alert("Gagal memvalidasi data: " + checkError.message);
+            dom.btnSave.disabled = false;
+            dom.btnSave.textContent = 'Simpan';
+            return;
+        }
+
+        if (duplicate) {
+            alert(`Error: Nomor perjalanan "${tripNumberFromForm}" sudah ada. Silakan gunakan nomor lain.`);
+            dom.btnSave.disabled = false;
+            dom.btnSave.textContent = currentEditingTripId ? 'Simpan Perubahan' : 'Simpan Perjalanan Baru';
+            return; // Hentikan proses jika duplikat ditemukan
+        }
+        
+        // --- PROSES SIMPAN (Jika Lolos Validasi) ---
         dom.btnSave.textContent = 'Menyimpan...';
 
         const tripPayload = {
             network_name: dom.networkSelect.value,
-            trip_number: dom.tripNumberInput.value,
+            trip_number: tripNumberFromForm,
             trip_name: dom.tripNameInput.value,
         };
 
@@ -301,37 +340,44 @@
             });
         });
         
-        if (currentEditingTripId) {
-            // --- LOGIKA UPDATE ---
-            const { error: tripError } = await supabaseClient.from('trips').update(tripPayload).eq('id', currentEditingTripId);
-            if (tripError) throw tripError;
+        try {
+            if (currentEditingTripId) {
+                // --- LOGIKA UPDATE ---
+                const { error: tripError } = await supabaseClient.from('trips').update(tripPayload).eq('id', currentEditingTripId);
+                if (tripError) throw tripError;
 
-            // Hapus semua stop lama, lalu masukkan yang baru (cara paling sederhana)
-            const { error: deleteError } = await supabaseClient.from('trip_stops').delete().eq('trip_id', currentEditingTripId);
-            if (deleteError) throw deleteError;
-            
-            const stopsToInsert = stopItems.map(stop => ({ ...stop, trip_id: currentEditingTripId }));
-            const { error: insertError } = await supabaseClient.from('trip_stops').insert(stopsToInsert);
-            if (insertError) throw insertError;
+                const { error: deleteError } = await supabaseClient.from('trip_stops').delete().eq('trip_id', currentEditingTripId);
+                if (deleteError) throw deleteError;
+                
+                const stopsToInsert = stopItems.map(stop => ({ ...stop, trip_id: currentEditingTripId }));
+                const { error: insertError } = await supabaseClient.from('trip_stops').insert(stopsToInsert);
+                if (insertError) throw insertError;
 
-        } else {
-            // --- LOGIKA CREATE ---
-            const { data, error } = await supabaseClient.from('trips').insert(tripPayload).select().single();
-            if (error) throw error;
-            
-            const newTripId = data.id;
-            const stopsToInsert = stopItems.map(stop => ({ ...stop, trip_id: newTripId }));
-            const { error: insertError } = await supabaseClient.from('trip_stops').insert(stopsToInsert);
-            if (insertError) throw insertError;
+            } else {
+                // --- LOGIKA CREATE ---
+                const { data, error } = await supabaseClient.from('trips').insert(tripPayload).select().single();
+                if (error) throw error;
+                
+                const newTripId = data.id;
+                const stopsToInsert = stopItems.map(stop => ({ ...stop, trip_id: newTripId }));
+                const { error: insertError } = await supabaseClient.from('trip_stops').insert(stopsToInsert);
+                if (insertError) throw insertError;
+            }
+
+            alert('Data berhasil disimpan!');
+            dom.form.style.display = 'none';
+            dom.formTitle.textContent = 'Pilih Perjalanan untuk Diedit';
+            await loadTripList();
+
+        } catch(error) {
+            console.error("Gagal menyimpan data:", error);
+            alert("Terjadi kesalahan saat menyimpan: " + error.message);
+        } finally {
+            dom.btnSave.disabled = false;
+            dom.btnSave.textContent = 'Simpan';
         }
-
-        alert('Data berhasil disimpan!');
-        dom.btnSave.disabled = false;
-        dom.form.style.display = 'none';
-        dom.formTitle.textContent = 'Pilih Perjalanan untuk Diedit';
-        await loadTripList();
     }
-    
+        
     /**
      * DELETE: Menghapus perjalanan.
      */
