@@ -1,0 +1,23 @@
+{
+  "name": "Pipa Combate 3D WEB",
+  "icons": [
+    { "src": "icos/36x36.png", "sizes": "36x36", "type": "image/png" },
+    { "src": "icos/48x48.png", "sizes": "48x48", "type": "image/png" },
+    { "src": "icos/72x72.png", "sizes": "72x72", "type": "image/png" },
+    { "src": "icos/96x96.png", "sizes": "96x96", "type": "image/png" },
+    { "src": "icos/144x144.png", "sizes": "144x144", "type": "image/png" },
+    { "src": "icos/192x192.png", "sizes": "192x192", "type": "image/png" }
+  ],
+  "theme_color": "#000000",
+  "background_color": "#000000",
+  "start_url": "http://pipacombate.com/3d/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "related_applications":[
+    {
+      "platform": "play",
+      "id": "br.pipacombate3d.maiworm",
+      "url": "https://play.google.com/store/apps/details?id=br.pipacombate3d.maiworm"
+    }
+  ]
+}

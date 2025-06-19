@@ -1,0 +1,90 @@
+<?xml version='1.0' encoding='utf-8'?>
+<widget id="br.pipacombate3d.maiworm" version="9.0" xmlns:android="http://schemas.android.com/apk/res/android" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
+
+    <name>Pipa Combate 3D</name>
+    <description>Jogo de Pipa - Simulador real de pipas</description>
+    <author email="rafaelmayworm@gmail.com" href="http://pipacombate.com">Maiworm Digital Strategy</author>
+    <content src="index.html" />
+
+
+    <preference name="android-minSdkVersion" value="19" />
+    <preference name="android-targetSdkVersion" value="28" />
+    <preference name="android-build-tool" value="gradle" />
+    <preference name="KeepRunning" value="true" />
+    <preference name="orientation" value="landscape" />
+    <preference name="target-device" value="universal" />
+    <preference name="fullscreen" value="true" />
+    <preference name="prerendered-icon" value="true" />
+    <preference name="exit-on-suspend" value="true" />
+    <preference name="auto-hide-splash-screen" value="true" />
+    <preference name="SplashScreenDelay" value="0" />
+    <preference name="DisallowOverscroll" value="true" />
+    <preference name="HideKeyboardFormAccessoryBar" value="true" />
+    <preference name="phonegap-version" value="cli-9.0.0" /><!-- cli-7.1.0 or cli-9.0.0 -->
+    <preference name='pgb-builder-version' value='2' /><!-- 2 construtor novo - 1 construtor antigo -->
+
+    
+    <plugin name="cordova-plugin-fullscreen" source="npm" />
+    <gap:plugin name="cordova-plugin-whitelist" source="npm" />
+
+
+
+
+    <!--
+    baixar do dashboard do firebase o arquivo google-services.json esse deve ficar na mesma pasta do config.xml
+    https://console.firebase.google.com/u/0/project/pipa-combate-3d-91701/overview
+    * Não está funcionando por enquanto, vai compilar mas o código não executa, ao olhar log do phonegap, diz a msg:
+    Installing "cordova-plugin-firebase-analytics" at "4.0.1" for android
+    Plugin doesn't support this project's cordova version. cordova: 7.1.0, failed version requirement: >=9.0
+    -->    
+    <!--
+    <gap:plugin name="cordova-plugin-firebase-analytics" source="npm" />
+    
+    <gap:plugin name="cordova-support-google-services" source="npm" />
+    <platform name="android">
+        <resource-file src="google-services.json" target="app/google-services.json" />
+    </platform>
+    -->
+
+
+
+
+
+
+    <!--<plugin name="cordova-plugin-firebasex" spec="latest" />-->
+    
+    <!--<gap:plugin name="cordova-plugin-admobpro" source="npm" />OLD-->
+    <plugin name="cordova-plugin-admobpro" source="npm">
+        <!--<variable name="PLAY_SERVICES_VERSION" value="16.0.0" />-->
+        <variable name="ADMOB_APP_ID" value="ca-app-pub-4736032489372828~4747568105" /><!-- ID do APP - ADMOB - CONFIG -->
+    </plugin>
+
+    <plugin spec="https://github.com/lycwed/lycwed-cordova-plugin-admob-unityads.git" source="git" />
+
+
+
+
+    <!--<gap:plugin name="cordova-plugin-analytics" source="npm" />-->
+
+
+    
+    
+
+    <platform name="android">
+      <edit-config file="AndroidManifest.xml" target="/manifest/application" mode="merge">
+        <application android:usesCleartextTraffic="true" />
+      </edit-config>
+      <allow-intent href="*" />
+      <preference name="Orientation" value="sensorLandscape" />
+    </platform>
+
+    <allow-navigation href="*" />
+    <allow-intent href="*" />
+
+
+    <icon gap:density="ldpi" gap:platform="android" src="res/icon/android/icon-36-ldpi.png" />
+    <icon gap:density="mdpi" gap:platform="android" src="res/icon/android/icon-48-mdpi.png" />
+    <icon gap:density="hdpi" gap:platform="android" src="res/icon/android/icon-72-hdpi.png" />
+    <icon gap:density="xhdpi" gap:platform="android" src="res/icon/android/icon-96-xhdpi.png" />
+
+</widget>

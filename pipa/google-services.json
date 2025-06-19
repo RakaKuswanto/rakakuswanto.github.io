@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "382431900969",
+    "firebase_url": "https://pipa-combate-3d-91701.firebaseio.com",
+    "project_id": "pipa-combate-3d-91701",
+    "storage_bucket": "pipa-combate-3d-91701.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:382431900969:android:48273b14a66d3a14",
+        "android_client_info": {
+          "package_name": "br.pipacombate3d.maiworm"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "382431900969-81899ju9695g9n1poop7ob9cd9u9pc3e.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA3XFXU9n7ec-YfegBjG-oyIhAMSNkOQ8A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "382431900969-81899ju9695g9n1poop7ob9cd9u9pc3e.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
