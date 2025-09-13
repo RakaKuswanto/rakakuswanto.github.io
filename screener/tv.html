@@ -60,21 +60,35 @@
                     showLoader();
                     errorOverlay.classList.remove('visible');
 
-                    const { from, to, countBack, firstDataRequest } = periodParams;
+                    const { from, to, firstDataRequest } = periodParams;
 
                     const intervalMap = { '1D': '1d', '1W': '1wk', '1M': '1mo' };
                     const interval = intervalMap[resolution] || (/\d+/.test(resolution) ? resolution + 'm' : '1d');
                     
-                    const supabaseFunctionUrl = `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`;
+                    const supabaseFunctionUrl = `https://<ID_PROYEK_ANDA>.supabase.co/functions/v1/yahoo-finance-proxy`;
                     
                     const url = new URL(supabaseFunctionUrl);
                     url.searchParams.append('symbol', symbolInfo.ticker);
                     url.searchParams.append('interval', interval);
                     url.searchParams.append('to', to); 
 
-                    if (!firstDataRequest) {
-                        url.searchParams.append('from', from);
+                    // Logika ini memastikan rentang waktu permintaan sesuai dengan batasan Yahoo Finance.
+                    let requestFrom = from;
+                    if (firstDataRequest) {
+                        const isIntraday = interval.includes('m') || interval.includes('h');
+                        if (isIntraday) {
+                            // Untuk intraday, batasi permintaan hingga 729 hari untuk mematuhi batas Yahoo.
+                            const maxDays = 729;
+                            requestFrom = to - (maxDays * 24 * 60 * 60);
+                        } else {
+                            // Untuk harian ke atas, minta riwayat yang lebih panjang, misal 20 tahun.
+                            const maxYears = 20;
+                            requestFrom = to - (maxYears * 365 * 24 * 60 * 60);
+                        }
                     }
+                    // Selalu lampirkan parameter 'from' untuk menghindari ambiguitas.
+                    url.searchParams.append('from', Math.round(requestFrom));
+                    // --- AKHIR DARI PERBAIKAN ---
 
                     try {
                         const response = await fetch(url.toString());
