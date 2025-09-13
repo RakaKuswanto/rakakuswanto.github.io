@@ -1,118 +1,191 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Grafik TradingView - Menggunakan Supabase Edge Function</title>
-    <!-- Pastikan path ke charting_library ini benar relatif terhadap file HTML Anda -->
+    <title>Trading Chart with Local Storage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="text/javascript" src="./charting_library/charting_library.standalone.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: #131722;
+        }
+        #tv_chart_container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .ui-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(19, 23, 34, 0.85);
+            z-index: 1000;
+            text-align: center;
+            color: #d1d4dc;
+        }
+        .ui-overlay.visible {
+            display: flex;
+        }
+        .loader {
+            border: 5px solid #2a2e39;
+            border-top: 5px solid #2962ff;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        #error-message-box {
+            padding: 20px;
+            background-color: #2a2e39;
+            color: #d1d4dc;
+            border: 1px solid #ff4a4a;
+            border-radius: 8px;
+            max-width: 80%;
+        }
+    </style>
 </head>
-<body style="margin:0;">
-    <div id="tv_chart_container" style="width: 100%; height: 100vh;"></div>
+<body>
+    <div id="tv_chart_container"></div>
+    <div id="loading-overlay" class="ui-overlay visible">
+        <div class="loader"></div>
+    </div>
+    <div id="error-overlay" class="ui-overlay">
+        <div id="error-message-box">
+            <p><strong>Gagal Memuat Data</strong></p>
+            <p id="error-text"></p>
+        </div>
+    </div>
 
     <script type="text/javascript">
-        // Fungsi helper untuk mengubah resolusi TradingView ke format interval Yahoo Finance
-        function getYahooInterval(resolution) {
-            const periodMap = { '1D': '1d', '1W': '1wk', '1M': '1mo' };
-            // Jika resolusi adalah angka (misal: '60' untuk 60 menit)
-            if (/\d+/.test(resolution)) {
-                return resolution + 'm';
+        document.addEventListener('DOMContentLoaded', function() {
+            const loadingOverlay = document.getElementById('loading-overlay');
+            const errorOverlay = document.getElementById('error-overlay');
+            const errorText = document.getElementById('error-text');
+
+            function showLoader() { loadingOverlay.classList.add('visible'); }
+            function hideLoader() { loadingOverlay.classList.remove('visible'); }
+            function showError(message) {
+                hideLoader();
+                errorText.textContent = message;
+                errorOverlay.classList.add('visible');
             }
-            // Jika resolusi adalah 'D', 'W', atau 'M'
-            return periodMap[resolution] || '1d'; // Default ke '1d' jika tidak cocok
-        }
 
-        const datafeed = {
-            onReady: (callback) => {
-                console.log('[onReady]: Datafeed siap.');
-                setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0);
-            },
-            resolveSymbol: (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
-                console.log('[resolveSymbol]: Menyelesaikan simbol:', symbolName);
-                const symbolInfo = {
-                    ticker: symbolName,
-                    name: symbolName,
-                    description: symbolName,
-                    type: 'stock',
-                    session: '24x7',
-                    timezone: 'Etc/UTC',
-                    exchange: '',
-                    minmov: 1,
-                    pricescale: 100, // Sesuaikan jika perlu untuk harga desimal
-                    has_intraday: true,
-                    has_no_volume: false,
-                    supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'],
-                    format: 'price',
-                };
-                setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
-            },
-            // --- PENAMBAHAN FUNGSI UNTUK MEMPERBAIKI ERROR ---
-            searchSymbols: (userInput, exchange, symbolType, onResultReadyCallback) => {
-                console.log('[searchSymbols]: Mencari:', userInput);
-                // Karena kita tidak memiliki backend pencarian, kita kembalikan array kosong.
-                // Ini akan mencegah error 'searchSymbols is not a function'.
-                onResultReadyCallback([]);
-            },
-            getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
-                const interval = getYahooInterval(resolution);
-                console.log(`[getBars]: Meminta data untuk ${symbolInfo.ticker} dengan interval ${interval}`);
-
-                // Ganti '<ID_PROYEK_ANDA>' dengan Reference ID proyek Supabase Anda yang sebenarnya.
-                const supabaseFunctionUrl = `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`;
-                const url = `${supabaseFunctionUrl}?symbol=${symbolInfo.ticker}&from=${periodParams.from}&to=${periodParams.to}&interval=${interval}`;
-
-                try {
-                    const response = await fetch(url);
-                    if (!response.ok) {
-                        console.error('Error dari Edge Function:', response.statusText);
-                        onErrorCallback('Gagal memuat data dari server');
-                        return;
+            const datafeed = {
+                onReady: (callback) => {
+                    setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0);
+                },
+                resolveSymbol: (symbolName, onSymbolResolvedCallback) => {
+                    const symbolInfo = {
+                        ticker: symbolName, name: symbolName, description: symbolName, type: 'stock', session: '24x7',
+                        timezone: 'Asia/Jakarta', exchange: '', minmov: 1, pricescale: 100,
+                        has_intraday: true, has_no_volume: false, supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'],
+                        format: 'price',
+                    };
+                    setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
+                },
+                searchSymbols: (userInput, exchange, symbolType, onResultReadyCallback) => {
+                    onResultReadyCallback([]);
+                },
+                getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
+                    showLoader();
+                    errorOverlay.classList.remove('visible');
+                    const intervalMap = { '1D': '1d', '1W': '1wk', '1M': '1mo' };
+                    const interval = intervalMap[resolution] || (/\d+/.test(resolution) ? resolution + 'm' : '1d');
+                    const supabaseFunctionUrl = `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`;
+                    const url = `${supabaseFunctionUrl}?symbol=${symbolInfo.ticker}&from=${periodParams.from}&to=${periodParams.to}&interval=${interval}`;
+                    try {
+                        const response = await fetch(url);
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || `HTTP error! Status: ${response.status}`);
+                        }
+                        const data = await response.json();
+                        if (!data.chart?.result?.length || data.chart.error) {
+                            onHistoryCallback([], { noData: true }); return;
+                        }
+                        const result = data.chart.result[0];
+                        const quotes = result.indicators.quote[0];
+                        if (!result.timestamp || !quotes?.open) {
+                            onHistoryCallback([], { noData: true }); return;
+                        }
+                        const bars = result.timestamp.map((ts, index) => ({
+                            time: ts * 1000, open: quotes.open[index], high: quotes.high[index],
+                            low: quotes.low[index], close: quotes.close[index], volume: quotes.volume[index],
+                        })).filter(bar => bar.close !== null);
+                        onHistoryCallback(bars, { noData: bars.length === 0 });
+                    } catch (error) {
+                        onErrorCallback(error.message);
+                        showError(error.message);
+                    } finally {
+                        hideLoader();
                     }
+                },
+                subscribeBars: () => {},
+                unsubscribeBars: () => {},
+            };
+            
+            // =================== KONFIGURASI WIDGET DENGAN LOCAL STORAGE ===================
+            const widget = new TradingView.widget({
+                container: 'tv_chart_container',
+                library_path: './charting_library/',
+                datafeed: datafeed,
+                locale: 'id',
+                symbol: 'BBCA.JK',
+                interval: '1D',
+                theme: 'Dark',
+                autosize: true,
+                
+                // --- Fitur yang Diaktifkan ---
+                enabled_features: [
+                    'study_templates',
+                    'side_toolbar_in_fullscreen_mode',
+                ],
+                
+                // --- Fitur yang Dinonaktifkan (UI lebih bersih) ---
+                // 'use_localstorage_for_settings' dan 'header_saveload' DIHAPUS dari sini
+                // untuk MENGAKTIFKAN penyimpanan lokal dan tombol Save/Load.
+                disabled_features: [
+                    'header_compare', // Sembunyikan tombol "Compare" atau "Add Symbol"
+                ],
 
-                    const data = await response.json();
-                    
-                    if (!data.chart || !data.chart.result || data.chart.error) {
-                        console.warn('Tidak ada data chart yang valid dari API:', data.chart?.error?.description || 'Data kosong');
-                        onHistoryCallback([], { noData: true });
-                        return;
-                    }
+                // --- Pengaturan Lanjutan untuk Tampilan Profesional ---
+                timezone: 'Asia/Jakarta',
+                details: true,
+                hotkeys: true,
+                
+                // --- Blok Penyimpanan Server Dihapus ---
+                // Properti seperti charts_storage_url, client_id, dan user_id
+                // telah dihapus sepenuhnya. Ini memaksa widget untuk menggunakan
+                // penyimpanan lokal jika fitur tersebut diaktifkan.
 
-                    const result = data.chart.result[0];
-                    const quotes = result.indicators.quote[0];
-
-                    if (!result.timestamp || !quotes || !quotes.open) {
-                        console.warn('Format data tidak lengkap, timestamp atau quote tidak ditemukan.');
-                        onHistoryCallback([], { noData: true });
-                        return;
-                    }
-                    
-                    const bars = result.timestamp.map((ts, index) => ({
-                        time: ts * 1000, // Konversi ke milidetik
-                        open: quotes.open[index],
-                        high: quotes.high[index],
-                        low: quotes.low[index],
-                        close: quotes.close[index],
-                        volume: quotes.volume[index],
-                    })).filter(bar => bar.open && bar.high && bar.low && bar.close); // Filter data yang tidak lengkap
-                    
-                    console.log(`[getBars]: Ditemukan ${bars.length} bar data.`);
-                    onHistoryCallback(bars, { noData: bars.length === 0 });
-                } catch (error) {
-                    console.error('[getBars] Fetch error:', error);
-                    onErrorCallback('Gagal mengambil data. Periksa koneksi dan URL function.');
+                // --- Kustomisasi Warna & Tampilan (Overrides) ---
+                overrides: {
+                    "paneProperties.background": "#131722",
+                    "paneProperties.vertGridProperties.color": "#2a2e39",
+                    "paneProperties.horzGridProperties.color": "#2a2e39",
+                    "symbolWatermarkProperties.transparency": 90,
+                    "scalesProperties.textColor" : "#d1d4dc",
+                    "mainSeriesProperties.candleStyle.upColor": "#26a69a",
+                    "mainSeriesProperties.candleStyle.downColor": "#ef5350",
+                    "mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
+                    "mainSeriesProperties.candleStyle.wickDownColor": "#ef5350",
+                    "mainSeriesProperties.candleStyle.borderUpColor": "#26a69a",
+                    "mainSeriesProperties.candleStyle.borderDownColor": "#ef5350",
                 }
-            },
-            subscribeBars: () => {}, // Fungsi ini tidak digunakan dalam contoh ini
-            unsubscribeBars: () => {},
-        };
-
-        const widget = new TradingView.widget({
-            container: 'tv_chart_container',
-            library_path: './charting_library/',
-            datafeed: datafeed,
-            locale: 'id',
-            symbol: 'BBCA.JK', // Simbol default. Coba juga: TSLA, GOTO.JK, BTC-USD
-            interval: '1D',
-            autosize: true,
-            disabled_features: ["use_localstorage_for_settings"],
+            });
         });
     </script>
 </body>
