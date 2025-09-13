@@ -44,11 +44,19 @@
                 };
                 setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
             },
+            // --- PENAMBAHAN FUNGSI UNTUK MEMPERBAIKI ERROR ---
+            searchSymbols: (userInput, exchange, symbolType, onResultReadyCallback) => {
+                console.log('[searchSymbols]: Mencari:', userInput);
+                // Karena kita tidak memiliki backend pencarian, kita kembalikan array kosong.
+                // Ini akan mencegah error 'searchSymbols is not a function'.
+                onResultReadyCallback([]);
+            },
             getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
                 const interval = getYahooInterval(resolution);
                 console.log(`[getBars]: Meminta data untuk ${symbolInfo.ticker} dengan interval ${interval}`);
 
-                const supabaseFunctionUrl = `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`;
+                // Ganti '<ID_PROYEK_ANDA>' dengan Reference ID proyek Supabase Anda yang sebenarnya.
+                const supabaseFunctionUrl = `https://<ID_PROYEK_ANDA>.supabase.co/functions/v1/yahoo-finance-proxy`;
                 const url = `${supabaseFunctionUrl}?symbol=${symbolInfo.ticker}&from=${periodParams.from}&to=${periodParams.to}&interval=${interval}`;
 
                 try {
@@ -109,3 +117,4 @@
     </script>
 </body>
 </html>
+
