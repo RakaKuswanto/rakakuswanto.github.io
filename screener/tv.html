@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Grafik TradingView - Menggunakan Supabase Edge Function</title>
+    <!-- Pastikan path ke charting_library ini benar relatif terhadap file HTML Anda -->
+    <script type="text/javascript" src="/charting_library/charting_library.standalone.js"></script>
+</head>
+<body style="margin:0;">
+    <div id="tv_chart_container" style="width: 100%; height: 100vh;"></div>
+
+    <script type="text/javascript">
+        // Fungsi helper untuk mengubah resolusi TradingView ke format interval Yahoo Finance
+        function getYahooInterval(resolution) {
+            const periodMap = { '1D': '1d', '1W': '1wk', '1M': '1mo' };
+            // Jika resolusi adalah angka (misal: '60' untuk 60 menit)
+            if (/\d+/.test(resolution)) {
+                return resolution + 'm';
+            }
+            // Jika resolusi adalah 'D', 'W', atau 'M'
+            return periodMap[resolution] || '1d'; // Default ke '1d' jika tidak cocok
+        }
+
+        const datafeed = {
+            onReady: (callback) => {
+                console.log('[onReady]: Datafeed siap.');
+                setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0);
+            },
+            resolveSymbol: (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
+                console.log('[resolveSymbol]: Menyelesaikan simbol:', symbolName);
+                const symbolInfo = {
+                    ticker: symbolName,
+                    name: symbolName,
+                    description: symbolName,
+                    type: 'stock',
+                    session: '24x7',
+                    timezone: 'Etc/UTC',
+                    exchange: '',
+                    minmov: 1,
+                    pricescale: 100, // Sesuaikan jika perlu untuk harga desimal
+                    has_intraday: true,
+                    has_no_volume: false,
+                    supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'],
+                    format: 'price',
+                };
+                setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
+            },
+            getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
+                const interval = getYahooInterval(resolution);
+                console.log(`[getBars]: Meminta data untuk ${symbolInfo.ticker} dengan interval ${interval}`);
+
+                const supabaseFunctionUrl = `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`;
+                const url = `${supabaseFunctionUrl}?symbol=${symbolInfo.ticker}&from=${periodParams.from}&to=${periodParams.to}&interval=${interval}`;
+
+                try {
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        console.error('Error dari Edge Function:', response.statusText);
+                        onErrorCallback('Gagal memuat data dari server');
+                        return;
+                    }
+
+                    const data = await response.json();
+                    
+                    if (!data.chart || !data.chart.result || data.chart.error) {
+                        console.warn('Tidak ada data chart yang valid dari API:', data.chart?.error?.description || 'Data kosong');
+                        onHistoryCallback([], { noData: true });
+                        return;
+                    }
+
+                    const result = data.chart.result[0];
+                    const quotes = result.indicators.quote[0];
+
+                    if (!result.timestamp || !quotes || !quotes.open) {
+                        console.warn('Format data tidak lengkap, timestamp atau quote tidak ditemukan.');
+                        onHistoryCallback([], { noData: true });
+                        return;
+                    }
+                    
+                    const bars = result.timestamp.map((ts, index) => ({
+                        time: ts * 1000, // Konversi ke milidetik
+                        open: quotes.open[index],
+                        high: quotes.high[index],
+                        low: quotes.low[index],
+                        close: quotes.close[index],
+                        volume: quotes.volume[index],
+                    })).filter(bar => bar.open && bar.high && bar.low && bar.close); // Filter data yang tidak lengkap
+                    
+                    console.log(`[getBars]: Ditemukan ${bars.length} bar data.`);
+                    onHistoryCallback(bars, { noData: bars.length === 0 });
+                } catch (error) {
+                    console.error('[getBars] Fetch error:', error);
+                    onErrorCallback('Gagal mengambil data. Periksa koneksi dan URL function.');
+                }
+            },
+            subscribeBars: () => {}, // Fungsi ini tidak digunakan dalam contoh ini
+            unsubscribeBars: () => {},
+        };
+
+        const widget = new TradingView.widget({
+            container: 'tv_chart_container',
+            library_path: '/charting_library/',
+            datafeed: datafeed,
+            locale: 'id',
+            symbol: 'BBCA.JK', // Simbol default. Coba juga: TSLA, GOTO.JK, BTC-USD
+            interval: '1D',
+            autosize: true,
+            disabled_features: ["use_localstorage_for_settings"],
+        });
+    </script>
+</body>
+</html>
