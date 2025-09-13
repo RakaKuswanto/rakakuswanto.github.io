@@ -56,7 +56,7 @@
                 console.log(`[getBars]: Meminta data untuk ${symbolInfo.ticker} dengan interval ${interval}`);
 
                 // Ganti '<ID_PROYEK_ANDA>' dengan Reference ID proyek Supabase Anda yang sebenarnya.
-                const supabaseFunctionUrl = `https://<ID_PROYEK_ANDA>.supabase.co/functions/v1/yahoo-finance-proxy`;
+                const supabaseFunctionUrl = `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`;
                 const url = `${supabaseFunctionUrl}?symbol=${symbolInfo.ticker}&from=${periodParams.from}&to=${periodParams.to}&interval=${interval}`;
 
                 try {
