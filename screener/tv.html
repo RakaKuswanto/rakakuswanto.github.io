@@ -46,9 +46,7 @@
                 errorOverlay.classList.add('visible');
             }
 
-            // Konfigurasi sederhana, tanpa daftar saham manual
             const CONFIG = {
-                // PENTING: Ganti dengan URL Edge Function Anda
                 supabaseFunctionUrl: `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`,
                 defaultSymbol: 'BBCA.JK',
             };
@@ -58,7 +56,6 @@
                     setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0);
                 },
                 resolveSymbol: (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
-                    // Membuat info simbol generik karena detailnya akan muncul dari pencarian dinamis
                     const symbolInfo = {
                         ticker: symbolName,
                         name: symbolName,
@@ -77,9 +74,8 @@
                     setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
                 },
                 
-                // Fungsi pencarian sekarang memanggil Edge Function secara dinamis
                 searchSymbols: async (userInput, exchange, symbolType, onResultReadyCallback) => {
-                    if (userInput.length < 2) { // Tidak mencari jika input terlalu pendek
+                    if (userInput.length < 2) {
                         onResultReadyCallback([]);
                         return;
                     }
@@ -96,7 +92,7 @@
                         onResultReadyCallback(results);
                     } catch (error) {
                         console.error('Search error:', error);
-                        onResultReadyCallback([]); // Kembalikan array kosong jika terjadi error
+                        onResultReadyCallback([]);
                     }
                 },
                 getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
@@ -109,11 +105,12 @@
                     const interval = intervalMap[resolution] || (/\d+/.test(resolution) ? `${resolution}m` : '1d');
                     
                     const url = new URL(CONFIG.supabaseFunctionUrl);
-                    url.searchParams.append('endpoint', 'bars'); // Eksplisit tentukan endpoint bars
+                    url.searchParams.append('endpoint', 'bars');
                     url.searchParams.append('symbol', symbolInfo.ticker);
                     url.searchParams.append('interval', interval);
                     url.searchParams.append('from', Math.round(from));
-                    url.searchPams.append('to', to);
+                    // --- PERBAIKAN DI SINI ---
+                    url.searchParams.append('to', to);
                    
                     try {
                         const response = await fetch(url.toString());
