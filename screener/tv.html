@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Grafik Saham Indonesia</title>
+    <title>Grafik Saham Indonesia Dinamis</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="text/javascript" src="./charting_library/charting_library.standalone.js"></script>
     <style>
@@ -36,7 +36,6 @@
             function hideLoader() { loadingOverlay.classList.remove('visible'); }
             function showError(message) {
                 hideLoader();
-                // DIUBAH: Pesan error lebih deskriptif
                 let friendlyMessage = message;
                 if (message.toLowerCase().includes('failed to fetch') || message.toLowerCase().includes('networkerror')) {
                     friendlyMessage = "Gagal terhubung ke server data. Periksa koneksi internet Anda.";
@@ -46,51 +45,30 @@
                 errorText.textContent = friendlyMessage;
                 errorOverlay.classList.add('visible');
             }
-            
-            // BARU: Konfigurasi di satu tempat agar mudah diubah
+
+            // Konfigurasi sederhana, tanpa daftar saham manual
             const CONFIG = {
+                // PENTING: Ganti dengan URL Edge Function Anda
                 supabaseFunctionUrl: `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`,
                 defaultSymbol: 'BBCA.JK',
-                // BARU: Daftar saham untuk fitur pencarian. Bisa diperbanyak sesuai kebutuhan.
-                // Ini adalah daftar singkat saham LQ45 per Q3 2025 sebagai contoh.
-                indonesianStocks: [
-                    { symbol: 'BBCA.JK', fullName: 'Bank Central Asia Tbk.', description: 'Bank Central Asia' },
-                    { symbol: 'BBRI.JK', fullName: 'Bank Rakyat Indonesia (Persero) Tbk.', description: 'Bank Rakyat Indonesia' },
-                    { symbol: 'BMRI.JK', fullName: 'Bank Mandiri (Persero) Tbk.', description: 'Bank Mandiri' },
-                    { symbol: 'TLKM.JK', fullName: 'Telkom Indonesia (Persero) Tbk.', description: 'Telkom Indonesia' },
-                    { symbol: 'ASII.JK', fullName: 'Astra International Tbk.', description: 'Astra International' },
-                    { symbol: 'GOTO.JK', fullName: 'GoTo Gojek Tokopedia Tbk.', description: 'GoTo' },
-                    { symbol: 'BBNI.JK', fullName: 'Bank Negara Indonesia (Persero) Tbk.', description: 'Bank Negara Indonesia' },
-                    { symbol: 'AMMN.JK', fullName: 'Amman Mineral Internasional Tbk.', description: 'Amman Mineral' },
-                    { symbol: 'BYAN.JK', fullName: 'Bayan Resources Tbk.', description: 'Bayan Resources' },
-                    { symbol: 'ADRO.JK', fullName: 'Adaro Energy Indonesia Tbk.', description: 'Adaro Energy' },
-                ]
             };
-            
-            // BARU: Helper function untuk mencari info saham dari daftar
-            function findStockInfo(symbol) {
-                return CONFIG.indonesianStocks.find(stock => stock.symbol === symbol);
-            }
             
             const datafeed = {
                 onReady: (callback) => {
                     setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0);
                 },
                 resolveSymbol: (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
-                    const stockInfo = findStockInfo(symbolName) || { fullName: symbolName, description: symbolName };
-
-                    // DIUBAH: Metadata saham disesuaikan dengan bursa Indonesia (IDX)
+                    // Membuat info simbol generik karena detailnya akan muncul dari pencarian dinamis
                     const symbolInfo = {
                         ticker: symbolName,
                         name: symbolName,
-                        full_name: stockInfo.fullName,
-                        description: stockInfo.description,
+                        description: symbolName,
                         type: 'stock',
-                        session: '0900-1515', // Sesi perdagangan BEI
+                        session: '0900-1515',
                         timezone: 'Asia/Jakarta',
-                        exchange: 'IDX', // Bursa Efek Indonesia
+                        exchange: 'IDX',
                         minmov: 1,
-                        pricescale: 100, // Sesuaikan jika perlu untuk saham tertentu
+                        pricescale: 100,
                         has_intraday: true,
                         has_no_volume: false,
                         supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'],
@@ -98,55 +76,45 @@
                     };
                     setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
                 },
-                // DIUBAH: Mengaktifkan fungsi pencarian saham
-                searchSymbols: (userInput, exchange, symbolType, onResultReadyCallback) => {
-                    const query = userInput.toLowerCase();
-                    const results = CONFIG.indonesianStocks
-                        .filter(stock => 
-                            stock.symbol.toLowerCase().includes(query) || 
-                            stock.fullName.toLowerCase().includes(query)
-                        )
-                        .map(stock => ({
-                            symbol: stock.symbol,
-                            full_name: stock.fullName,
-                            description: stock.description,
-                            exchange: 'IDX',
-                            type: 'stock',
-                        }));
-                    onResultReadyCallback(results);
+                
+                // Fungsi pencarian sekarang memanggil Edge Function secara dinamis
+                searchSymbols: async (userInput, exchange, symbolType, onResultReadyCallback) => {
+                    if (userInput.length < 2) { // Tidak mencari jika input terlalu pendek
+                        onResultReadyCallback([]);
+                        return;
+                    }
+                    try {
+                        const url = new URL(CONFIG.supabaseFunctionUrl);
+                        url.searchParams.append('endpoint', 'search');
+                        url.searchParams.append('query', userInput);
+                        
+                        const response = await fetch(url.toString());
+                        if (!response.ok) {
+                            throw new Error(`Pencarian gagal: ${response.statusText}`);
+                        }
+                        const results = await response.json();
+                        onResultReadyCallback(results);
+                    } catch (error) {
+                        console.error('Search error:', error);
+                        onResultReadyCallback([]); // Kembalikan array kosong jika terjadi error
+                    }
                 },
                 getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
                     showLoader();
                     errorOverlay.classList.remove('visible');
 
-                    const { from, to, firstDataRequest } = periodParams;
+                    const { from, to } = periodParams;
                     
                     const intervalMap = { '1D': '1d', '1W': '1wk', '1M': '1mo' };
                     const interval = intervalMap[resolution] || (/\d+/.test(resolution) ? `${resolution}m` : '1d');
                     
                     const url = new URL(CONFIG.supabaseFunctionUrl);
-                    // DIUBAH: Tambahkan suffix .JK jika belum ada untuk memastikan kompatibilitas Yahoo Finance
-                    const ticker = symbolInfo.ticker.toUpperCase().endsWith('.JK') ? symbolInfo.ticker : `${symbolInfo.ticker}.JK`;
-                    url.searchParams.append('symbol', ticker);
+                    url.searchParams.append('endpoint', 'bars'); // Eksplisit tentukan endpoint bars
+                    url.searchParams.append('symbol', symbolInfo.ticker);
                     url.searchParams.append('interval', interval);
-                    url.searchParams.append('to', to);
-
-                    let requestFrom = from;
-                    // Logika untuk permintaan data pertama tetap sama, sudah cukup baik
-                    if (firstDataRequest) {
-                        const isIntraday = interval.includes('m') || interval.includes('h');
-                        if (isIntraday) {
-                            // Yahoo Finance membatasi data intraday hingga 729 hari terakhir
-                            const maxDays = 729; 
-                            requestFrom = to - (maxDays * 24 * 60 * 60);
-                        } else {
-                            // Untuk data harian/mingguan/bulanan, ambil data 20 tahun terakhir
-                            const maxYears = 20; 
-                            requestFrom = to - (maxYears * 365 * 24 * 60 * 60);
-                        }
-                    }
-                    url.searchParams.append('from', Math.round(requestFrom));
-
+                    url.searchParams.append('from', Math.round(from));
+                    url.searchPams.append('to', to);
+                   
                     try {
                         const response = await fetch(url.toString());
                         if (!response.ok) {
@@ -169,7 +137,7 @@
                         
                         const bars = result.timestamp
                             .map((ts, index) => ({
-                                time: ts * 1000, // JavaScript butuh milidetik
+                                time: ts * 1000,
                                 open: quotes.open[index],
                                 high: quotes.high[index],
                                 low: quotes.low[index],
@@ -178,12 +146,7 @@
                             }))
                             .filter(bar => bar.open !== null && bar.high !== null && bar.low !== null && bar.close !== null);
                         
-                        if (bars.length === 0 && firstDataRequest) {
-                           showError(`Tidak ada data ditemukan untuk simbol ${ticker} pada rentang waktu yang diminta.`);
-                           onHistoryCallback([], { noData: true });
-                        } else {
-                           onHistoryCallback(bars, { noData: bars.length === 0 });
-                        }
+                        onHistoryCallback(bars, { noData: bars.length === 0 });
 
                     } catch (error) {
                         onErrorCallback(error.message);
@@ -201,22 +164,21 @@
                 library_path: './charting_library/',
                 datafeed: datafeed,
                 locale: 'id',
-                symbol: CONFIG.defaultSymbol, // DIUBAH: Menggunakan simbol default dari konfigurasi
+                symbol: CONFIG.defaultSymbol,
                 interval: '1D',
                 theme: 'Dark',
                 autosize: true,
                 
-                disabled_features: [
-                    'header_compare',
-                    'study_templates',
-                    'header_symbol_search', // Kita pakai pencarian internal, jadi bisa nonaktifkan tombol utama
-                    'symbol_search_hot_key'
-                ],
                 enabled_features: [
                     'side_toolbar_in_fullscreen_mode',
-                    'allow_symbol_change', // BARU: Memungkinkan perubahan simbol dari dalam chart
+                    'allow_symbol_change',
                 ],
-
+                disabled_features: [
+                    'use_localstorage_for_settings',
+                    'study_templates',
+                    'header_compare',
+                ],
+                
                 timezone: 'Asia/Jakarta',
                 details: true,
                 hotkeys: true,
