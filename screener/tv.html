@@ -65,30 +65,29 @@
                     const intervalMap = { '1D': '1d', '1W': '1wk', '1M': '1mo' };
                     const interval = intervalMap[resolution] || (/\d+/.test(resolution) ? resolution + 'm' : '1d');
                     
-                    const supabaseFunctionUrl = `https://<ID_PROYEK_ANDA>.supabase.co/functions/v1/yahoo-finance-proxy`;
+                    // ==============================================================================
+                    // PENTING: Ganti '<ID_PROYEK_ANDA>' di bawah dengan Reference ID proyek Supabase Anda.
+                    // Contoh: 'abcdefghijklmnopqrst'
+                    // ==============================================================================
+                    const supabaseFunctionUrl = `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`;
                     
                     const url = new URL(supabaseFunctionUrl);
                     url.searchParams.append('symbol', symbolInfo.ticker);
                     url.searchParams.append('interval', interval);
-                    url.searchParams.append('to', to); 
+                    url.searchParams.append('to', to);
 
-                    // Logika ini memastikan rentang waktu permintaan sesuai dengan batasan Yahoo Finance.
                     let requestFrom = from;
                     if (firstDataRequest) {
                         const isIntraday = interval.includes('m') || interval.includes('h');
                         if (isIntraday) {
-                            // Untuk intraday, batasi permintaan hingga 729 hari untuk mematuhi batas Yahoo.
                             const maxDays = 729;
                             requestFrom = to - (maxDays * 24 * 60 * 60);
                         } else {
-                            // Untuk harian ke atas, minta riwayat yang lebih panjang, misal 20 tahun.
                             const maxYears = 20;
                             requestFrom = to - (maxYears * 365 * 24 * 60 * 60);
                         }
                     }
-                    // Selalu lampirkan parameter 'from' untuk menghindari ambiguitas.
                     url.searchParams.append('from', Math.round(requestFrom));
-                    // --- AKHIR DARI PERBAIKAN ---
 
                     try {
                         const response = await fetch(url.toString());
@@ -142,19 +141,18 @@
                 theme: 'Dark',
                 autosize: true,
                 
-                // --- MENGAKTIFKAN PENYIMPANAN LOKAL & MEMUTUS KONEKSI SERVER ---
-                // 'use_localstorage_for_settings' dihapus dari disabled_features untuk MENGAKTIFKAN local storage.
-                // Tombol Save/Load akan muncul secara otomatis.
+                // --- KONEKSI KE SERVER TRADINGVIEW DIPUTUS TOTAL ---
                 disabled_features: [
-                    'header_compare' 
+                    'header_compare',
+                    'study_templates' // Menonaktifkan fitur template indikator
                 ],
                 enabled_features: [
-                    'study_templates',
                     'side_toolbar_in_fullscreen_mode'
                 ],
 
-                // Properti charts_storage_url, client_id, dan user_id telah dihapus sepenuhnya
-                // untuk memastikan tidak ada koneksi ke server TradingView.
+                // Blok 'charts_storage_url' dan sejenisnya telah dihapus sepenuhnya.
+                // Grafik sekarang 100% mandiri. Tombol Save/Load utama akan tetap
+                // berfungsi untuk menyimpan gambar & indikator ke localStorage.
 
                 timezone: 'Asia/Jakarta',
                 details: true,
