@@ -100,7 +100,12 @@
                 const res = await fetch(url);
                 if (!res.ok) throw new Error(`Proxy error: ${res.status}`);
                 const data = await res.json();
-                const result = { price: data.currentPrice ?? null, name: data.name ?? ticker, historical: data.historical ?? [] };
+                const result = { 
+                    price: data.currentPrice ?? null, 
+                    dayHigh: data.dayHigh ?? null,
+                    name: data.name ?? ticker, 
+                    historical: data.historical ?? [] 
+                };
                 allPriceData[ticker] = result;
                 return result;
             } catch (error) { return { price: null, name: ticker, historical: [] }; }
@@ -130,7 +135,13 @@
                         <table class="min-w-full text-xs">
                             <thead class="bg-slate-800/50 text-slate-400 uppercase">
                                 <tr class="border-b border-slate-800">
-                                    <th class="text-left p-3">Saham</th><th class="text-left p-3 hidden lg:table-cell">Screener</th><th class="text-right p-3 hidden md:table-cell">Hari</th><th class="text-right p-3">Harga Beli</th><th class="text-right p-3">Harga Sekarang</th><th class="text-left p-3 hidden sm:table-cell">Trend (3bln)</th><th class="text-right p-3">P/L (%)</th>
+                                    <th class="text-left p-3">Saham</th>
+                                    <th class="text-left p-3 hidden lg:table-cell">Screener</th>
+                                    <th class="text-right p-3 hidden md:table-cell">Hari</th>
+                                    <th class="text-right p-3">Harga Beli</th>
+                                    <th class="text-right p-3">Harga Tertinggi</th>
+                                    <th class="text-left p-3 hidden sm:table-cell">Trend (3bln)</th>
+                                    <th class="text-right p-3">Potensi P/L (%)</th>
                                 </tr>
                             </thead>
                             <tbody id="stock-table-body"></tbody>
@@ -183,16 +194,31 @@
             if (!tableBody) return;
             
             const rowsHTML = records.map(r => {
-                const { price: cur } = allPriceData[r.stock_code] || {};
+                const { price: cur, dayHigh } = allPriceData[r.stock_code] || {};
                 const entry = r.entry_price, days = getDaysHeld(r.scan_date);
                 let pnl = 0, cls = 'text-slate-400', icon = '−';
-                if (cur && entry) {
-                    pnl = ((cur - entry) / entry) * 100;
+                
+                // Gunakan dayHigh untuk kalkulasi jika ada, jika tidak, gunakan harga saat ini
+                const comparisonPrice = dayHigh || cur;
+
+                if (comparisonPrice && entry) {
+                    pnl = ((comparisonPrice - entry) / entry) * 100;
                     if (pnl > 0.01) { cls = 'text-emerald-400'; icon = '▲'; } 
                     else if (pnl < -0.01) { cls = 'text-red-400'; icon = '▼'; }
                 }
+                
                 const hasChart = allPriceData[r.stock_code]?.historical?.length > 0;
-                return `<tr class="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/50"><td class="p-3"><a href="https://stockbit.com/symbol/${r.stock_code}" target="_blank" class="hover:text-emerald-400"><div class="font-semibold text-white">${r.stock_code}</div></a></td><td class="p-3 text-slate-400 hidden lg:table-cell">${r.screener_name}</td><td class="p-3 text-right hidden md:table-cell">${days} hari</td><td class="p-3 text-right font-mono">${formatCurrency(entry)}</td><td class="p-3 text-right font-mono">${formatCurrency(cur)}</td><td class="p-3 w-40 hidden sm:table-cell">${hasChart ? `<div id="sparkline-${r.id}"></div>` : '<div class="text-center text-slate-600 text-xs">No Data</div>'}</td><td class="p-3 text-right font-semibold ${cls}"><div class="flex items-center justify-end gap-1.5"><span>${icon}</span><span>${pnl.toFixed(2)}%</span></div></td></tr>`;
+                return `<tr class="border-b border-slate-800 last:border-b-0 hover:bg-slate-800/50">
+                        <td class="p-3"><a href="https://stockbit.com/symbol/${r.stock_code}" target="_blank" class="hover:text-emerald-400"><div class="font-semibold text-white">${r.stock_code}</div></a></td>
+                        <td class="p-3 text-slate-400 hidden lg:table-cell">${r.screener_name}</td>
+                        <td class="p-3 text-right hidden md:table-cell">${days} hari</td>
+                        <td class="p-3 text-right font-mono">${formatCurrency(entry)}</td>
+                        
+                        <td class="p-3 text-right font-mono">${formatCurrency(dayHigh)}</td>
+
+                        <td class="p-3 w-40 hidden sm:table-cell">${hasChart ? `<div id="sparkline-${r.id}"></div>` : '<div class="text-center text-slate-600 text-xs">No Data</div>'}</td>
+                        <td class="p-3 text-right font-semibold ${cls}"><div class="flex items-center justify-end gap-1.5"><span>${icon}</span><span>${pnl.toFixed(2)}%</span></div></td>
+                    </tr>`;
             }).join('');
 
             tableBody.insertAdjacentHTML('beforeend', rowsHTML);
@@ -227,16 +253,29 @@
         function calculateStats(records) {
             let win = 0, totalPnl = 0, profit = 0, totalDays = 0;
             records.forEach(r => {
-                const cur = allPriceData[r.stock_code]?.price;
-                if (cur && r.entry_price) {
-                    const pnl = ((cur - r.entry_price) / r.entry_price) * 100;
-                    if (pnl > 0.01) { win++; profit += pnl; }
-                    totalPnl += pnl;
+                // AMBIL 'dayHigh' JUGA DI SINI
+                const { price: cur, dayHigh } = allPriceData[r.stock_code] || {};
+
+                // Gunakan 'dayHigh' sebagai prioritas untuk kalkulasi
+                const comparisonPrice = dayHigh || cur;
+
+                if (comparisonPrice && r.entry_price) {
+                    const pnl = ((comparisonPrice - r.entry_price) / r.entry_price) * 100;
+                    if (pnl > 0.01) { 
+                        win++; 
+                        profit += pnl; 
+                    }
+                    totalPnl += pnl; // Anda bisa gunakan ini nanti untuk 'Avg. P/L'
                     totalDays += getDaysHeld(r.scan_date);
                 }
             });
             const total = records.length;
-            return { total, winRate: total ? win / total * 100 : 0, avgGain: win ? profit / win : 0, avgDays: total ? totalDays / total : 0 };
+            return { 
+                total, 
+                winRate: total ? win / total * 100 : 0, 
+                avgGain: win ? profit / win : 0, 
+                avgDays: total ? totalDays / total : 0 
+            };
         }
 
         async function fetchAndRenderPage() {
