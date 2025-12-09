@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trading Plan Cloud - Mobile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: #e2e8f0;
+        }
+        /* Hide Scrollbar but allow scroll */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; }
+        
+        .loader { border: 2px solid #f3f3f3; border-top: 2px solid #10b981; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Smooth slide transition */
+        .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+    <script>
+        tailwind.config = { darkMode: 'class', theme: { extend: { colors: { slate: { 850: '#1e293b' } } } } }
+    </script>
+</head>
+<body class="h-screen flex flex-col overflow-hidden selection:bg-emerald-500 selection:text-white">
+
+    <header class="h-14 md:h-16 bg-slate-900/90 backdrop-blur-md border-b border-slate-800 flex items-center justify-between px-4 md:px-6 z-30 shrink-0 sticky top-0">
+        <div class="flex items-center gap-3">
+            <button onclick="toggleSidebar()" class="md:hidden text-slate-300 hover:text-white p-1">
+                <i class="fa-solid fa-bars text-xl"></i>
+            </button>
+
+            <div class="flex items-center gap-2 md:gap-3">
+                <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-900/20">
+                    <i class="fa-solid fa-cloud text-white text-sm"></i>
+                </div>
+                <h1 class="font-bold text-base md:text-lg tracking-tight text-white">Trading<span class="text-emerald-400">Plan</span></h1>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+             <button onclick="refreshData()" id="btn-refresh-all" class="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs md:text-sm border border-slate-700 transition-all active:scale-95">
+                <i class="fa-solid fa-arrows-rotate"></i> 
+                <span class="hidden sm:inline" id="refresh-text">Sync</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 overflow-hidden relative">
+        
+        <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/60 z-30 hidden md:hidden backdrop-blur-sm transition-opacity opacity-0"></div>
+
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-40 w-[85%] max-w-[320px] bg-slate-900 border-r border-slate-800 transform -translate-x-full md:translate-x-0 md:relative md:w-80 flex flex-col sidebar-transition shadow-2xl md:shadow-none">
+            
+            <div class="flex md:hidden items-center justify-between p-4 border-b border-slate-800 bg-slate-900">
+                <span class="font-bold text-white">Menu & Input</span>
+                <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1">
+                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-pen-to-square"></i> <span id="form-title">Input New Plan</span>
+                </h2>
+                
+                <form id="tradeForm" onsubmit="event.preventDefault(); handleSubmit();" class="space-y-4 pb-20 md:pb-0">
+                    <input type="hidden" id="edit-id">
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Tanggal</label>
+                        <input type="date" id="tgl-awal" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all" required>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Emiten</label>
+                        <input type="text" id="emiten" placeholder="BBCA" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white placeholder-slate-600 uppercase font-bold focus:outline-none focus:border-emerald-500 transition-all" required>
+                    </div>
+
+                    <div class="bg-slate-800/50 p-3 rounded-lg border border-slate-800">
+                        <label class="block text-xs font-medium text-slate-400 mb-2">Area Antri (Buy Range)</label>
+                        <div class="flex items-center gap-2">
+                            <input type="number" id="antri-min" placeholder="Low" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-sm text-white focus:border-emerald-500 outline-none" required>
+                            <span class="text-slate-500">-</span>
+                            <input type="number" id="antri-max" placeholder="High" class="w-full bg-slate-900 border border-slate-700 rounded px-2 py-2 text-sm text-white focus:border-emerald-500 outline-none" required>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-red-400 mb-1.5">Stop Loss <</label>
+                            <input type="number" id="cl-price" class="w-full bg-slate-800 border border-red-900/30 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-red-500 transition-all" required>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-emerald-400 mb-1.5">TP Min ></label>
+                            <input type="number" id="tp-price" class="w-full bg-slate-800 border border-emerald-900/30 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500 transition-all" required>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Status</label>
+                        <select id="status-trade" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2.5 text-sm text-white focus:outline-none focus:border-emerald-500">
+                            <option value="Masih Proses">⏳ Menunggu</option>
+                            <option value="Sempat naik">🚀 Running Profit</option>
+                            <option value="Sudah Kena TP">💰 Done TP</option>
+                            <option value="Kena CL">💀 Kena CL</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1.5">Catatan</label>
+                        <textarea id="keterangan" rows="2" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 transition-all"></textarea>
+                    </div>
+
+                    <div class="pt-2 flex flex-col gap-2">
+                        <button type="submit" id="btn-submit" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 md:py-2.5 rounded-lg shadow-lg shadow-emerald-900/40 transition-all flex justify-center items-center gap-2 active:scale-95">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> Simpan
+                        </button>
+                        <button type="button" id="btn-cancel" onclick="resetForm()" class="hidden w-full bg-slate-700 hover:bg-slate-600 text-white font-medium py-3 md:py-2 rounded-lg transition-all text-xs">
+                            Batal Edit
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </aside>
+
+        <main class="flex-1 overflow-y-auto p-4 md:p-8 scroll-smooth w-full">
+            
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mb-6">
+                <div class="bg-slate-800/50 border border-slate-700/50 p-3 md:p-4 rounded-xl">
+                    <p class="text-[10px] md:text-xs text-slate-400">Total Watchlist</p>
+                    <h3 class="text-xl md:text-2xl font-bold text-white mt-1" id="stat-total">...</h3>
+                </div>
+                <div class="bg-slate-800/50 border border-slate-700/50 p-3 md:p-4 rounded-xl">
+                    <p class="text-[10px] md:text-xs text-slate-400">Winning (TP)</p>
+                    <h3 class="text-xl md:text-2xl font-bold text-emerald-400 mt-1" id="stat-win">...</h3>
+                </div>
+                <div class="bg-slate-800/50 border border-slate-700/50 p-3 md:p-4 rounded-xl">
+                    <p class="text-[10px] md:text-xs text-slate-400">Process</p>
+                    <h3 class="text-xl md:text-2xl font-bold text-yellow-400 mt-1" id="stat-wait">...</h3>
+                </div>
+                 <div class="bg-slate-800/50 border border-slate-700/50 p-3 md:p-4 rounded-xl">
+                    <p class="text-[10px] md:text-xs text-slate-400">Status DB</p>
+                    <h3 class="text-sm md:text-xl font-bold text-blue-400 mt-2 md:mt-1 flex items-center gap-2">
+                        <span class="w-2 h-2 md:w-3 md:h-3 rounded-full bg-emerald-500 animate-pulse"></span> OK
+                    </h3>
+                </div>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl min-h-[400px] flex flex-col">
+                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/30">
+                    <h2 class="text-base md:text-lg font-semibold text-white">📊 Active Plans</h2>
+                    <span class="text-[10px] md:text-xs text-slate-500 italic" id="last-updated">Syncing...</span>
+                </div>
+                
+                <div class="overflow-x-auto flex-1 no-scrollbar">
+                    <table class="w-full text-left border-collapse min-w-[600px] md:min-w-full">
+                        <thead>
+                            <tr class="bg-slate-800/50 text-xs uppercase text-slate-400 border-b border-slate-700">
+                                <th class="p-3 md:p-4 sticky left-0 bg-slate-800/90 backdrop-blur z-10 w-24 md:w-auto">Saham</th>
+                                <th class="p-3 md:p-4 text-right">Harga Live</th>
+                                <th class="p-3 md:p-4 text-center">Area Buy</th>
+                                <th class="p-3 md:p-4 text-center">TP / CL</th>
+                                <th class="p-3 md:p-4 text-center">Status</th>
+                                <th class="p-3 md:p-4 text-center">Floating</th>
+                                <th class="p-3 md:p-4 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody" class="text-sm divide-y divide-slate-800">
+                            </tbody>
+                    </table>
+                     
+                     <div id="loading-state" class="py-12 text-center">
+                        <div class="loader mb-2"></div>
+                        <p class="text-xs text-slate-500">Menghubungkan ke Cloud...</p>
+                    </div>
+                     <div id="empty-state" class="hidden py-12 text-center">
+                        <div class="inline-block p-3 rounded-full bg-slate-800 mb-2">
+                            <i class="fa-solid fa-box-open text-slate-500"></i>
+                        </div>
+                        <p class="text-sm text-slate-500">Data kosong. Klik menu kiri atas untuk tambah.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="h-20 md:hidden"></div>
+        </main>
+    </div>
+
+    <script>
+        // --- KONFIGURASI SUPABASE ---
+        const SUPABASE_URL = 'https://yvmfenyirwzmgbzzrbfw.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bWZlbnlpcnd6bWdienpyYmZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1ODI0NDIsImV4cCI6MjA3MzE1ODQ0Mn0.i2Yjxa2LZbXEzi6amZpptPAnyLoeAirADdWsW47ZVcA';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // --- STATE ---
+        let plans = [];
+        let priceMap = {}; 
+        let isEditing = false;
+        let isSidebarOpen = false;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('tgl-awal').valueAsDate = new Date();
+            refreshData();
+        });
+
+        // --- MOBILE UX FUNCTIONS ---
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('mobile-overlay');
+            isSidebarOpen = !isSidebarOpen;
+
+            if (isSidebarOpen) {
+                sidebar.classList.remove('-translate-x-full');
+                overlay.classList.remove('hidden');
+                setTimeout(() => overlay.classList.remove('opacity-0'), 10);
+            } else {
+                sidebar.classList.add('-translate-x-full');
+                overlay.classList.add('opacity-0');
+                setTimeout(() => overlay.classList.add('hidden'), 300);
+            }
+        }
+
+        // --- CORE FUNCTIONS (CRUD) ---
+        async function refreshData() {
+            setLoading(true);
+            try {
+                const { data, error } = await supabase.from('trading_plans').select('*').order('created_at', { ascending: false });
+                if (error) throw error;
+                plans = data || [];
+
+                if (plans.length > 0) {
+                    const tickers = [...new Set(plans.map(p => p.emiten))].join(',');
+                    try {
+                        const response = await fetch(`${SUPABASE_URL}/functions/v1/get-price?tickers=${tickers}`, {
+                             headers: { 'Authorization': `Bearer ${SUPABASE_KEY}` }
+                        });
+                        if (response.ok) {
+                            const priceData = await response.json();
+                            priceData.forEach(item => { priceMap[item.ticker] = item.price; });
+                        }
+                    } catch (err) { console.error("Fetch price error", err); }
+                }
+                renderTable();
+                document.getElementById('last-updated').innerText = new Date().toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+            } catch (err) {
+                alert("Error: " + err.message);
+            } finally {
+                setLoading(false);
+            }
+        }
+
+        async function handleSubmit() {
+            const btn = document.getElementById('btn-submit');
+            btn.innerHTML = '<div class="loader"></div>';
+            btn.disabled = true;
+
+            const id = document.getElementById('edit-id').value;
+            const payload = {
+                tgl: document.getElementById('tgl-awal').value,
+                emiten: document.getElementById('emiten').value.toUpperCase().trim(),
+                antri_min: Number(document.getElementById('antri-min').value),
+                antri_max: Number(document.getElementById('antri-max').value),
+                cl: Number(document.getElementById('cl-price').value),
+                tp: Number(document.getElementById('tp-price').value),
+                status: document.getElementById('status-trade').value,
+                ket: document.getElementById('keterangan').value
+            };
+
+            try {
+                if (isEditing && id) {
+                    const { error } = await supabase.from('trading_plans').update(payload).eq('id', id);
+                    if (error) throw error;
+                } else {
+                    const { error } = await supabase.from('trading_plans').insert([payload]);
+                    if (error) throw error;
+                }
+                resetForm();
+                if(window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile
+                await refreshData();
+            } catch (err) {
+                alert("Gagal simpan: " + err.message);
+            } finally {
+                btn.innerHTML = '<i class="fa-solid fa-cloud-arrow-up"></i> Simpan';
+                btn.disabled = false;
+            }
+        }
+
+        async function deletePlan(id) {
+            if (!confirm('Hapus data?')) return;
+            try {
+                const { error } = await supabase.from('trading_plans').delete().eq('id', id);
+                if (error) throw error;
+                await refreshData();
+            } catch (err) { alert(err.message); }
+        }
+
+        // --- HELPER & UI ---
+        function formatRupiah(num) { return num ? Number(num).toLocaleString('id-ID') : "-"; }
+        
+        function editPlan(id) {
+            const plan = plans.find(p => p.id === id);
+            if (!plan) return;
+            
+            // Open sidebar if closed (mobile)
+            if(window.innerWidth < 768 && !isSidebarOpen) toggleSidebar();
+
+            isEditing = true;
+            document.getElementById('edit-id').value = plan.id;
+            document.getElementById('form-title').innerText = "Edit: " + plan.emiten;
+            document.getElementById('btn-submit').classList.replace('bg-emerald-600', 'bg-blue-600');
+            document.getElementById('btn-cancel').classList.remove('hidden');
+
+            document.getElementById('tgl-awal').value = plan.tgl;
+            document.getElementById('emiten').value = plan.emiten;
+            document.getElementById('antri-min').value = plan.antri_min;
+            document.getElementById('antri-max').value = plan.antri_max;
+            document.getElementById('cl-price').value = plan.cl;
+            document.getElementById('tp-price').value = plan.tp;
+            document.getElementById('status-trade').value = plan.status;
+            document.getElementById('keterangan').value = plan.ket;
+        }
+
+        function resetForm() {
+            isEditing = false;
+            document.getElementById('tradeForm').reset();
+            document.getElementById('edit-id').value = '';
+            document.getElementById('form-title').innerText = "Input New Plan";
+            document.getElementById('btn-submit').classList.replace('bg-blue-600', 'bg-emerald-600');
+            document.getElementById('btn-cancel').classList.add('hidden');
+        }
+
+        function setLoading(bool) {
+            const loadingState = document.getElementById('loading-state');
+            const emptyState = document.getElementById('empty-state');
+            const tableBody = document.getElementById('tableBody');
+            
+            if (bool) {
+                loadingState.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                tableBody.innerHTML = ''; 
+            } else {
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            // Stats
+            document.getElementById('stat-total').innerText = plans.length;
+            document.getElementById('stat-win').innerText = plans.filter(p => p.status.includes('TP')).length;
+            document.getElementById('stat-wait').innerText = plans.filter(p => p.status.includes('Proses')).length;
+
+            if (plans.length === 0) {
+                document.getElementById('empty-state').classList.remove('hidden');
+                return;
+            } else {
+                document.getElementById('empty-state').classList.add('hidden');
+            }
+
+            plans.forEach(plan => {
+                const currentPrice = priceMap[plan.emiten];
+                let avgBuy = (plan.antri_min + plan.antri_max) / 2;
+                let calcPrice = currentPrice || avgBuy;
+                let pnlPercent = ((calcPrice - avgBuy) / avgBuy) * 100;
+                
+                let pnlClass = pnlPercent >= 0 ? 'text-emerald-400' : 'text-red-400';
+                if(!currentPrice) { pnlClass = 'text-slate-500'; pnlPercent = 0; }
+
+                let statusBadge = '';
+                if(plan.status.includes('naik')) statusBadge = 'bg-emerald-500/20 text-emerald-400';
+                else if(plan.status.includes('CL')) statusBadge = 'bg-red-500/20 text-red-400';
+                else statusBadge = 'bg-slate-700 text-slate-300';
+
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-800/50 transition-colors group border-b border-slate-800 last:border-0";
+                tr.innerHTML = `
+                    <td class="p-3 md:p-4 sticky left-0 bg-slate-900 md:bg-transparent z-10 border-r border-slate-800 md:border-0">
+                        <div class="flex items-center gap-2 md:gap-3">
+                            <div class="w-8 h-8 md:w-10 md:h-10 rounded bg-slate-800 flex items-center justify-center font-bold text-white text-xs md:text-sm border border-slate-700">
+                                ${plan.emiten.substring(0,1)}
+                            </div>
+                            <div>
+                                <div class="font-bold text-white text-sm md:text-base">${plan.emiten}</div>
+                                <div class="text-[10px] md:text-xs text-slate-500">${plan.tgl.split('-').reverse().join('-').substring(0,5)}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="p-3 md:p-4 text-right">
+                        <div class="font-bold text-white text-sm md:text-base">
+                            ${currentPrice ? formatRupiah(currentPrice) : '<span class="text-[10px] text-slate-500">...</span>'}
+                        </div>
+                    </td>
+                    <td class="p-3 md:p-4 text-center">
+                        <span class="text-[10px] md:text-xs font-mono text-slate-400 whitespace-nowrap">
+                            ${formatRupiah(plan.antri_min)}-${formatRupiah(plan.antri_max)}
+                        </span>
+                    </td>
+                    <td class="p-3 md:p-4 text-center">
+                         <div class="text-[10px] md:text-xs font-mono flex flex-col items-center">
+                            <span class="text-emerald-400">${formatRupiah(plan.tp)}</span>
+                            <span class="text-red-400">${formatRupiah(plan.cl)}</span>
+                        </div>
+                    </td>
+                    <td class="p-3 md:p-4 text-center">
+                        <span class="px-2 py-1 rounded text-[10px] font-semibold whitespace-nowrap ${statusBadge}">${plan.status}</span>
+                    </td>
+                    <td class="p-3 md:p-4 text-center">
+                        <span class="font-bold text-xs md:text-sm ${pnlClass}">${pnlPercent > 0 ? '+' : ''}${pnlPercent.toFixed(1)}%</span>
+                    </td>
+                    <td class="p-3 md:p-4 text-center">
+                        <div class="flex items-center justify-center gap-2">
+                            <button onclick="editPlan(${plan.id})" class="text-blue-400 p-1"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deletePlan(${plan.id})" class="text-red-400 p-1"><i class="fa-solid fa-trash"></i></button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+    </script>
+</body>
+</html>
