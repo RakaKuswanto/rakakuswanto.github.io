@@ -200,7 +200,7 @@
         // --- KONFIGURASI SUPABASE ---
         const SUPABASE_URL = 'https://yvmfenyirwzmgbzzrbfw.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bWZlbnlpcnd6bWdienpyYmZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1ODI0NDIsImV4cCI6MjA3MzE1ODQ0Mn0.i2Yjxa2LZbXEzi6amZpptPAnyLoeAirADdWsW47ZVcA';
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         // --- STATE ---
         let plans = [];
@@ -234,7 +234,7 @@
         async function refreshData() {
             setLoading(true);
             try {
-                const { data, error } = await supabase.from('trading_plans').select('*').order('created_at', { ascending: false });
+                const { data, error } = await supabaseClient.from('trading_plans').select('*').order('created_at', { ascending: false });
                 if (error) throw error;
                 plans = data || [];
 
@@ -278,10 +278,10 @@
 
             try {
                 if (isEditing && id) {
-                    const { error } = await supabase.from('trading_plans').update(payload).eq('id', id);
+                    const { error } = await supabaseClient.from('trading_plans').update(payload).eq('id', id);
                     if (error) throw error;
                 } else {
-                    const { error } = await supabase.from('trading_plans').insert([payload]);
+                    const { error } = await supabaseClient.from('trading_plans').insert([payload]);
                     if (error) throw error;
                 }
                 resetForm();
@@ -298,7 +298,7 @@
         async function deletePlan(id) {
             if (!confirm('Hapus data?')) return;
             try {
-                const { error } = await supabase.from('trading_plans').delete().eq('id', id);
+                const { error } = await supabaseClient.from('trading_plans').delete().eq('id', id);
                 if (error) throw error;
                 await refreshData();
             } catch (err) { alert(err.message); }
