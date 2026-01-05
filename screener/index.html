@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>Pro Screener Dashboard</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+
+    <style>
+        :root {
+            --bg-dark: #0b1120;
+            --card-dark: #1e293b;
+            --accent-green: #10b981;
+            --accent-red: #ef4444;
+        }
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-dark);
+            color: #e2e8f0;
+            -webkit-font-smoothing: antialiased;
+        }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { height: 4px; width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        
+        /* Hide Scrollbar but allow scroll */
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+
+        /* Animations */
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .skeleton {
+            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background-size: 200% 100%;
+            animation: shimmer 2s infinite;
+        }
+        
+        /* Date Input Styling */
+        input[type="date"] {
+            color-scheme: dark;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20">
+                        <svg class="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
+                    </div>
+                    Belajar Saham Dari Nol
+                </h1>
+                <p class="text-slate-400 text-sm mt-1 ml-14">Monitoring performa sinyal saham secara real-time</p>
+            </div>
+            
+            <div class="flex items-center gap-3">
+                <span id="last-updated" class="text-xs font-mono text-slate-500 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-800">Updating...</span>
+                <button id="refresh-btn" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-700 transition-all active:scale-95">
+                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                </button>
+            </div>
+        </header>
+
+        <div id="summary-container" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="skeleton h-28 rounded-2xl border border-slate-800/50"></div>
+            <div class="skeleton h-28 rounded-2xl border border-slate-800/50"></div>
+            <div class="skeleton h-28 rounded-2xl border border-slate-800/50"></div>
+            <div class="skeleton h-28 rounded-2xl border border-slate-800/50"></div>
+        </div>
+
+        <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-1 mb-6 sticky top-2 z-30 shadow-2xl shadow-black/50">
+            <div class="flex flex-col sm:flex-row items-center gap-1">
+                
+                <div class="flex items-center gap-2 p-2 w-full sm:w-auto border-b sm:border-b-0 sm:border-r border-slate-800/50 pr-4">
+                    <div class="relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-slate-400 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        </div>
+                        <input type="date" id="manual-date-picker" class="pl-10 pr-3 py-2 bg-slate-950/50 border border-slate-800 rounded-lg text-sm text-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 block w-full outline-none transition-all cursor-pointer hover:bg-slate-900">
+                    </div>
+                </div>
+
+                <div class="flex-1 w-full overflow-hidden px-2 py-2 sm:py-0">
+                    <div id="date-list-container" class="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth">
+                        </div>
+                </div>
+
+                <div class="hidden md:flex border-l border-slate-800/50 pl-2" id="screener-filter-container">
+                    </div>
+            </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-800 bg-slate-900/95">
+                            <th class="px-6 py-4 font-semibold">Emiten</th>
+                            <th class="px-6 py-4 font-semibold hidden sm:table-cell">Strategi</th>
+                            <th class="px-6 py-4 font-semibold text-right hidden md:table-cell">Hold</th>
+                            <th class="px-6 py-4 font-semibold text-right">Entry</th>
+                            <th class="px-6 py-4 font-semibold text-right">Harga Kini</th>
+                            <th class="px-6 py-4 font-semibold text-center hidden sm:table-cell w-32">Trend</th>
+                            <th class="px-6 py-4 font-semibold text-right">Profit/Loss</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-table-body" class="divide-y divide-slate-800 text-sm">
+                        </tbody>
+                </table>
+            </div>
+            
+            <div id="load-more-container" class="p-6 text-center border-t border-slate-800"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        const CONFIG = {
+            SUPABASE_URL: 'https://yvmfenyirwzmgbzzrbfw.supabase.co',
+            SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bWZlbnlpcnd6bWdienpyYmZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1ODI0NDIsImV4cCI6MjA3MzE1ODQ0Mn0.i2Yjxa2LZbXEzi6amZpptPAnyLoeAirADdWsW47ZVcA',
+            ITEMS_PER_PAGE: 50
+        };
+
+        const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+        
+        // ================= APP STATE =================
+        const state = {
+            data: [],
+            priceCache: {},
+            filters: { date: null, screener: null },
+            page: 1,
+            loading: false,
+            hasMore: true,
+            totalDisplayed: 0
+        };
+
+        // ================= UI ELEMENTS =================
+        const el = {
+            tableBody: document.getElementById('stock-table-body'),
+            dateContainer: document.getElementById('date-list-container'),
+            screenerContainer: document.getElementById('screener-filter-container'),
+            loadMore: document.getElementById('load-more-container'),
+            summary: document.getElementById('summary-container'),
+            datePicker: document.getElementById('manual-date-picker'),
+            lastUpdated: document.getElementById('last-updated')
+        };
+
+        // ================= HELPERS =================
+        const formatIDR = (n) => n ? new Intl.NumberFormat('id-ID').format(n) : '-';
+        const formatPct = (n) => `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
+        const formatDateShort = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+        const getDaysHeld = (d) => Math.max(0, Math.floor((new Date() - new Date(d)) / (86400000)));
+
+        // ================= LOGIC START =================
+
+        // 1. FILTER LOGIC (SYNC DATE PICKER & CAPSULES)
+        async function initFilters() {
+            try {
+                const { data, error } = await supabaseClient.rpc('get_distinct_screener_filters');
+                if (error) throw error;
+
+                // Process Dates
+                const dates = data.distinct_dates.map(i => i.scan_date).sort((a, b) => new Date(b) - new Date(a));
+                
+                if (dates.length > 0) {
+                    // Default to latest date if not set
+                    if (!state.filters.date) {
+                        state.filters.date = dates[0];
+                        el.datePicker.value = dates[0];
+                    }
+                    renderDateCapsules(dates);
+                }
+
+                // Process Screeners
+                const screeners = data.distinct_screeners.map(i => i.screener_name).sort();
+                renderScreenerFilters(screeners);
+
+            } catch (e) {
+                console.error("Filter init failed:", e);
+            }
+        }
+
+        function renderDateCapsules(allDates) {
+            // Show only last 10 days
+            const recentDates = allDates.slice(0, 10); 
+            
+            el.dateContainer.innerHTML = recentDates.map(date => {
+                const isActive = state.filters.date === date;
+                const activeClass = isActive 
+                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 border-emerald-400' 
+                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-white';
+                
+                return `
+                <button onclick="handleDateClick('${date}')" 
+                    class="shrink-0 px-4 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${activeClass}">
+                    ${formatDateShort(date)}
+                </button>`;
+            }).join('');
+        }
+
+        function renderScreenerFilters(screeners) {
+            const html = `
+                <select onchange="handleScreenerChange(this.value)" class="bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded-lg px-3 py-2 outline-none focus:border-emerald-500">
+                    <option value="">Semua Strategi</option>
+                    ${screeners.map(s => `<option value="${s}" ${state.filters.screener === s ? 'selected' : ''}>${s}</option>`).join('')}
+                </select>
+            `;
+            el.screenerContainer.innerHTML = html;
+        }
+
+        // 2. EVENT HANDLERS
+        window.handleDateClick = (date) => {
+            el.datePicker.value = date;
+            applyFilter('date', date);
+        };
+
+        el.datePicker.addEventListener('change', (e) => {
+            applyFilter('date', e.target.value);
+        });
+
+        window.handleScreenerChange = (val) => {
+            applyFilter('screener', val === "" ? null : val);
+        };
+
+        async function applyFilter(type, value) {
+            if (state.filters[type] === value) return;
+            state.filters[type] = value;
+            
+            // Re-render capsules to update active state
+            if(type === 'date') initFilters(); 
+            
+            resetData();
+            await fetchData();
+        }
+
+        // 3. DATA FETCHING
+        async function fetchData() {
+            if (state.loading || !state.hasMore) return;
+            state.loading = true;
+            renderLoadMore();
+
+            try {
+                const from = (state.page - 1) * CONFIG.ITEMS_PER_PAGE;
+                const to = from + CONFIG.ITEMS_PER_PAGE - 1;
+
+                let query = supabaseClient.from('screener_results')
+                    .select('*')
+                    .order('scan_date', { ascending: false })
+                    .order('stock_code')
+                    .range(from, to);
+
+                if (state.filters.date) query = query.eq('scan_date', state.filters.date);
+                if (state.filters.screener) query = query.eq('screener_name', state.filters.screener);
+
+                const { data, error } = await query;
+                if (error) throw error;
+
+                if (data.length < CONFIG.ITEMS_PER_PAGE) state.hasMore = false;
+
+                state.data.push(...data);
+                state.totalDisplayed += data.length;
+                state.page++;
+
+                // Render Skeleton Rows
+                renderRows(data);
+                
+                // Fetch Prices & Update
+                fetchPricesForRows(data);
+                
+                // Initial Summary (using Entry Data only first)
+                updateSummary();
+
+            } catch (e) {
+                console.error(e);
+                el.loadMore.innerHTML = `<span class="text-red-500 text-sm">Gagal memuat data</span>`;
+            } finally {
+                state.loading = false;
+                renderLoadMore();
+            }
+        }
+
+        // 4. PRICE FETCHING (BATCHED)
+        async function fetchPricesForRows(items) {
+            const BATCH_SIZE = 5;
+            for (let i = 0; i < items.length; i += BATCH_SIZE) {
+                const batch = items.slice(i, i + BATCH_SIZE);
+                await Promise.all(batch.map(async (item) => {
+                    const priceData = await getPrice(item.stock_code);
+                    updateRowUI(item, priceData);
+                }));
+                // Check if table was cleared while fetching
+                if (el.tableBody.innerHTML === '') break;
+                updateSummary(); // Update stats progressively
+            }
+        }
+
+        async function getPrice(ticker) {
+            if (state.priceCache[ticker]) return state.priceCache[ticker];
+            try {
+                const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/yahoo-proxy?ticker=${ticker}`);
+                const data = await res.json();
+                const result = {
+                    price: data.currentPrice || 0,
+                    dayHigh: data.dayHigh || 0,
+                    history: data.historical || []
+                };
+                state.priceCache[ticker] = result;
+                return result;
+            } catch {
+                return { price: 0, dayHigh: 0, history: [] };
+            }
+        }
+
+        // 5. RENDERING
+        function renderRows(items) {
+            const html = items.map(item => `
+                <tr id="row-${item.id}" class="group hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center">
+                            <div>
+                                <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="font-bold text-white hover:text-emerald-400 hover:underline decoration-emerald-400 decoration-2 underline-offset-4 transition-all">
+                                    ${item.stock_code}
+                                </a>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 hidden sm:table-cell">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
+                            ${item.screener_name}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-right hidden md:table-cell text-slate-400 text-sm">
+                        ${getDaysHeld(item.scan_date)} Hari
+                    </td>
+                    <td class="px-6 py-4 text-right font-mono text-slate-300">
+                        ${formatIDR(item.entry_price)}
+                    </td>
+                    <td class="px-6 py-4 text-right" id="price-cell-${item.id}">
+                        <div class="skeleton h-5 w-20 ml-auto rounded"></div>
+                    </td>
+                    <td class="px-6 py-4 hidden sm:table-cell p-0" id="chart-cell-${item.id}">
+                         <div class="skeleton h-8 w-24 mx-auto rounded opacity-50"></div>
+                    </td>
+                    <td class="px-6 py-4 text-right" id="pnl-cell-${item.id}">
+                        <div class="skeleton h-8 w-16 ml-auto rounded"></div>
+                    </td>
+                </tr>
+            `).join('');
+            el.tableBody.insertAdjacentHTML('beforeend', html);
+        }
+
+        // --- FIXED FUNCTION ---
+        function updateRowUI(item, data) {
+            // SAFETY CHECK: Check if element exists before modifying
+            const priceCell = document.getElementById(`price-cell-${item.id}`);
+            if (!priceCell) return; // Stop if row has been removed from DOM
+
+            // CALCS
+            const current = data.price || item.entry_price;
+            const high = data.dayHigh || current;
+            const comparePrice = high > 0 ? high : current;
+            const pnlPct = item.entry_price ? ((comparePrice - item.entry_price) / item.entry_price) * 100 : 0;
+            const isProfit = pnlPct > 0;
+            const colorClass = isProfit ? 'text-emerald-400' : (pnlPct < 0 ? 'text-red-400' : 'text-slate-400');
+            const bgClass = isProfit ? 'bg-emerald-500/10 border-emerald-500/20' : (pnlPct < 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-slate-800 border-slate-700');
+            const icon = isProfit ? '▲' : (pnlPct < 0 ? '▼' : '−');
+
+            // UPDATE PRICE
+            priceCell.innerHTML = `
+                <div class="font-mono text-white font-medium">${formatIDR(current)}</div>
+                ${data.dayHigh ? `<div class="text-[10px] text-slate-500 mt-1">H: ${formatIDR(data.dayHigh)}</div>` : ''}
+            `;
+
+            // UPDATE PNL (Check existence just in case, though priceCell check usually covers it)
+            const pnlCell = document.getElementById(`pnl-cell-${item.id}`);
+            if (pnlCell) {
+                pnlCell.innerHTML = `
+                    <div class="inline-flex items-center justify-end gap-2 px-3 py-1.5 rounded-lg border ${bgClass} min-w-[90px]">
+                        <span class="text-[10px] ${colorClass}">${icon}</span>
+                        <span class="font-mono font-bold text-sm ${colorClass}">${Math.abs(pnlPct).toFixed(2)}%</span>
+                    </div>
+                `;
+            }
+
+            // RENDER CHART
+            const chartEl = document.getElementById(`chart-cell-${item.id}`);
+            if (chartEl) {
+                if (data.history.length > 2) {
+                    chartEl.innerHTML = '';
+                    new ApexCharts(chartEl, {
+                        chart: { type: 'area', height: 40, width: 120, sparkline: { enabled: true }, animations: { enabled: false } },
+                        stroke: { curve: 'smooth', width: 2 },
+                        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.0, stops: [0, 100] } },
+                        series: [{ data: data.history.map(h => h.y) }],
+                        colors: [isProfit ? '#10b981' : '#ef4444'],
+                        tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
+                    }).render();
+                } else {
+                    chartEl.innerHTML = '<span class="text-[10px] text-slate-600">-</span>';
+                }
+            }
+        }
+
+        // 6. SUMMARY STATS
+        function updateSummary() {
+            let win = 0, totalPnl = 0, count = 0;
+            
+            state.data.forEach(item => {
+                const priceInfo = state.priceCache[item.stock_code];
+                if (priceInfo && priceInfo.price > 0) {
+                    const compare = priceInfo.dayHigh || priceInfo.price;
+                    const pnl = ((compare - item.entry_price) / item.entry_price) * 100;
+                    if (pnl > 0.5) win++; // Threshold small noise
+                    totalPnl += pnl;
+                    count++;
+                }
+            });
+
+            const winRate = count ? (win / count) * 100 : 0;
+            const avgPnl = count ? totalPnl / count : 0;
+            const totalItems = state.totalDisplayed;
+
+            // Render Cards
+            const createCard = (title, value, sub, color) => `
+                <div class="bg-slate-900/50 backdrop-blur border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full hover:border-slate-700 transition-colors">
+                    <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">${title}</div>
+                    <div class="flex items-end gap-2">
+                        <div class="text-2xl lg:text-3xl font-bold text-white">${value}</div>
+                        <div class="text-xs font-medium mb-1.5 ${color}">${sub}</div>
+                    </div>
+                </div>
+            `;
+
+            el.summary.innerHTML = `
+                ${createCard('Total Sinyal', totalItems, 'Emiten Terdeteksi', 'text-slate-500')}
+                ${createCard('Win Rate', `${winRate.toFixed(0)}%`, winRate >= 50 ? 'Strong' : 'Weak', winRate >= 50 ? 'text-emerald-400' : 'text-red-400')}
+                ${createCard('Rata-rata Gain', `${avgPnl > 0 ? '+' : ''}${avgPnl.toFixed(2)}%`, 'Per Trade', avgPnl >= 0 ? 'text-emerald-400' : 'text-red-400')}
+                ${createCard('Tanggal Scan', state.filters.date ? formatDateShort(state.filters.date) : '7 Hari Terakhir', 'Filter Aktif', 'text-blue-400')}
+            `;
+        }
+
+        function renderLoadMore() {
+            if (state.loading) {
+                el.loadMore.innerHTML = `<div class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-600 border-r-emerald-500"></div>`;
+            } else if (state.hasMore) {
+                el.loadMore.innerHTML = `<button onclick="fetchData()" class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 px-6 py-2.5 rounded-full transition-all shadow-lg shadow-emerald-900/20">Muat Lebih Banyak</button>`;
+            } else {
+                el.loadMore.innerHTML = `<span class="text-xs text-slate-600 font-medium uppercase tracking-widest">Semua Data Ditampilkan</span>`;
+            }
+        }
+
+        function resetData() {
+            state.data = [];
+            state.page = 1;
+            state.hasMore = true;
+            state.totalDisplayed = 0;
+            el.tableBody.innerHTML = '';
+            el.loadMore.innerHTML = '';
+            el.summary.innerHTML = `<div class="col-span-4 text-center py-4 text-slate-500">Memuat statistik...</div>`;
+        }
+
+        // INIT
+        (async function init() {
+            el.lastUpdated.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
+            await initFilters();
+            await fetchData();
+            
+            // Auto refresh listener
+            document.getElementById('refresh-btn').addEventListener('click', () => {
+                resetData();
+                fetchData();
+                el.lastUpdated.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
+            });
+        })();
+
+    </script>
+</body>
+</html>
