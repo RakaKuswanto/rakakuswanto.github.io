@@ -28,6 +28,11 @@
 
         /* Smooth slide transition */
         .sidebar-transition { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Tab Active State */
+        .tab-active { background-color: #334155; color: #fff; font-weight: 600; }
+        .tab-inactive { color: #94a3b8; }
+        .tab-inactive:hover { color: #e2e8f0; }
     </style>
     <script>
         tailwind.config = { darkMode: 'class', theme: { extend: { colors: { slate: { 850: '#1e293b' } } } } }
@@ -157,8 +162,17 @@
             </div>
 
             <div class="bg-slate-900 border border-slate-800 rounded-xl shadow-2xl min-h-[400px] flex flex-col">
-                <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/30">
-                    <h2 class="text-base md:text-lg font-semibold text-white">📊 Active Plans</h2>
+                <div class="p-3 border-b border-slate-800 flex flex-col md:flex-row justify-between items-center bg-slate-800/30 gap-3 md:gap-0">
+                    
+                    <div class="flex p-1 bg-slate-950/50 rounded-lg border border-slate-800/50">
+                        <button onclick="setTab('active')" id="tab-active" class="px-4 py-1.5 rounded-md text-xs md:text-sm transition-all tab-active">
+                            🔥 Active
+                        </button>
+                        <button onclick="setTab('archive')" id="tab-archive" class="px-4 py-1.5 rounded-md text-xs md:text-sm transition-all tab-inactive">
+                            📦 Archive
+                        </button>
+                    </div>
+
                     <span class="text-[10px] md:text-xs text-slate-500 italic" id="last-updated">Syncing...</span>
                 </div>
                 
@@ -171,7 +185,6 @@
                                 <th class="p-3 md:p-4 text-center">Area Buy</th>
                                 <th class="p-3 md:p-4 text-center">TP / CL</th>
                                 <th class="p-3 md:p-4 text-center">Status</th>
-                                <!-- <th class="p-3 md:p-4 text-center">Floating</th> -->
                                 <th class="p-3 md:p-4 text-center">Aksi</th>
                             </tr>
                         </thead>
@@ -187,7 +200,7 @@
                         <div class="inline-block p-3 rounded-full bg-slate-800 mb-2">
                             <i class="fa-solid fa-box-open text-slate-500"></i>
                         </div>
-                        <p class="text-sm text-slate-500">Data kosong. Klik menu kiri atas untuk tambah.</p>
+                        <p class="text-sm text-slate-500" id="empty-msg">Data kosong.</p>
                     </div>
                 </div>
             </div>
@@ -207,11 +220,31 @@
         let priceMap = {}; 
         let isEditing = false;
         let isSidebarOpen = false;
+        let currentTab = 'active'; // 'active' atau 'archive'
 
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('tgl-awal').valueAsDate = new Date();
             refreshData();
         });
+
+        // --- TAB FUNCTION ---
+        function setTab(tabName) {
+            currentTab = tabName;
+            
+            // Update Button Styles
+            const btnActive = document.getElementById('tab-active');
+            const btnArchive = document.getElementById('tab-archive');
+            
+            if (tabName === 'active') {
+                btnActive.className = "px-4 py-1.5 rounded-md text-xs md:text-sm transition-all tab-active";
+                btnArchive.className = "px-4 py-1.5 rounded-md text-xs md:text-sm transition-all tab-inactive";
+            } else {
+                btnActive.className = "px-4 py-1.5 rounded-md text-xs md:text-sm transition-all tab-inactive";
+                btnArchive.className = "px-4 py-1.5 rounded-md text-xs md:text-sm transition-all tab-active";
+            }
+            
+            renderTable();
+        }
 
         // --- MOBILE UX FUNCTIONS ---
         function toggleSidebar() {
@@ -285,7 +318,7 @@
                     if (error) throw error;
                 }
                 resetForm();
-                if(window.innerWidth < 768) toggleSidebar(); // Close sidebar on mobile
+                if(window.innerWidth < 768) toggleSidebar(); 
                 await refreshData();
             } catch (err) {
                 alert("Gagal simpan: " + err.message);
@@ -296,7 +329,7 @@
         }
 
         async function deletePlan(id) {
-            if (!confirm('Hapus data?')) return;
+            if (!confirm('Hapus data permanen?')) return;
             try {
                 const { error } = await supabaseClient.from('trading_plans').delete().eq('id', id);
                 if (error) throw error;
@@ -311,7 +344,6 @@
             const plan = plans.find(p => p.id === id);
             if (!plan) return;
             
-            // Open sidebar if closed (mobile)
             if(window.innerWidth < 768 && !isSidebarOpen) toggleSidebar();
 
             isEditing = true;
@@ -357,30 +389,42 @@
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
             
-            // Stats
+            // Stats Calculation (Always Global)
             document.getElementById('stat-total').innerText = plans.length;
             document.getElementById('stat-win').innerText = plans.filter(p => p.status.includes('TP')).length;
             document.getElementById('stat-wait').innerText = plans.filter(p => p.status.includes('Proses')).length;
 
-            if (plans.length === 0) {
+            // Filter logic based on Tab
+            const filteredPlans = plans.filter(plan => {
+                const isCompleted = plan.status === 'Sudah Kena TP' || plan.status === 'Kena CL';
+                if (currentTab === 'active') {
+                    // Show only Active (Not TP and Not CL)
+                    return !isCompleted;
+                } else {
+                    // Show only Archive (TP or CL)
+                    return isCompleted;
+                }
+            });
+
+            if (filteredPlans.length === 0) {
+                const emptyMsg = document.getElementById('empty-msg');
+                emptyMsg.innerText = currentTab === 'active' 
+                    ? "Tidak ada plan aktif." 
+                    : "Belum ada history (TP/CL).";
                 document.getElementById('empty-state').classList.remove('hidden');
                 return;
             } else {
                 document.getElementById('empty-state').classList.add('hidden');
             }
 
-            plans.forEach(plan => {
+            filteredPlans.forEach(plan => {
                 const currentPrice = priceMap[plan.emiten];
                 let avgBuy = (plan.antri_min + plan.antri_max) / 2;
-                let calcPrice = currentPrice || avgBuy;
-                let pnlPercent = ((calcPrice - avgBuy) / avgBuy) * 100;
                 
-                let pnlClass = pnlPercent >= 0 ? 'text-emerald-400' : 'text-red-400';
-                if(!currentPrice) { pnlClass = 'text-slate-500'; pnlPercent = 0; }
-
                 let statusBadge = '';
                 if(plan.status.includes('naik')) statusBadge = 'bg-emerald-500/20 text-emerald-400';
-                else if(plan.status.includes('CL')) statusBadge = 'bg-red-500/20 text-red-400';
+                else if(plan.status.includes('TP')) statusBadge = 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+                else if(plan.status.includes('CL')) statusBadge = 'bg-red-500/20 text-red-400 border border-red-500/30';
                 else statusBadge = 'bg-slate-700 text-slate-300';
 
                 const tr = document.createElement('tr');
@@ -416,11 +460,6 @@
                     <td class="p-3 md:p-4 text-center">
                         <span class="px-2 py-1 rounded text-[10px] font-semibold whitespace-nowrap ${statusBadge}">${plan.status}</span>
                     </td>
-                        <!--
-                    <td class="p-3 md:p-4 text-center">
-                        <span class="font-bold text-xs md:text-sm ${pnlClass}">${pnlPercent > 0 ? '+' : ''}${pnlPercent.toFixed(1)}%</span>
-                    </td> 
-                        -->
                     <td class="p-3 md:p-4 text-center">
                         <div class="flex items-center justify-center gap-2">
                             <button onclick="editPlan(${plan.id})" class="text-blue-400 p-1"><i class="fa-solid fa-pen"></i></button>
