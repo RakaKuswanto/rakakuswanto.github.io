@@ -432,9 +432,16 @@
                 tr.innerHTML = `
                     <td class="p-3 md:p-4 sticky left-0 bg-slate-900 md:bg-transparent z-10 border-r border-slate-800 md:border-0">
                         <div class="flex items-center gap-2 md:gap-3">
-                            <div class="w-8 h-8 md:w-10 md:h-10 rounded bg-slate-800 flex items-center justify-center font-bold text-white text-xs md:text-sm border border-slate-700">
-                                ${plan.emiten.substring(0,1)}
-                            </div>
+                            <img
+                                src="https://assets.stockbit.com/logos/companies/${plan.emiten}.png"
+                                alt="${plan.emiten}"
+                                class="w-8 h-8 md:w-10 md:h-10 rounded bg-slate-800 border border-slate-700 object-contain"
+                                onerror="this.outerHTML = \`
+                                    <div class='w-8 h-8 md:w-10 md:h-10 rounded bg-slate-800 flex items-center justify-center font-bold text-white text-xs md:text-sm border border-slate-700'>
+                                        ${plan.emiten.substring(0,1)}
+                                    </div>
+                                \`"
+                            />
                             <div>
                                 <div class="font-bold text-white text-sm md:text-base">${plan.emiten}</div>
                                 <div class="text-[10px] md:text-xs text-slate-500">${plan.tgl.split('-').reverse().join('-').substring(0,5)}</div>
