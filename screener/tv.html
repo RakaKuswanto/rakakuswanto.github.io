@@ -49,10 +49,8 @@
     </div>
 
     <script type="text/javascript">
-        // BRANKAS DATA GLOBAL
         window.radDataStore = {};
 
-        // Fungsi Helper untuk Sanitasi Angka Mutlak (Mencegah undefined)
         function safeNum(val) {
             if (val === undefined || val === null) return NaN;
             let n = Number(val);
@@ -147,7 +145,6 @@
                         const bars = result.timestamp.map((ts, index) => {
                             let timeMs = ts * 1000;
                             
-                            // Ekstrak data server ke brankas global, tambahkan Low dan High
                             if (radData) {
                                 window.radDataStore[timeMs] = {
                                     xWAD: radData.xWAD[index],
@@ -192,7 +189,7 @@
                 
                 custom_indicators_getter: function(PineJS) {
                     return Promise.resolve([
-                        // --- A. RAD Overlay (Warna & Panah Sinyal) ---
+                        // --- A. RAD Overlay ---
                         {
                             name: "RAD_Overlay",
                             metainfo: {
@@ -215,7 +212,8 @@
                                     }
                                 },
                                 plots: [
-                                    { id: "plot_color", type: "colorer", target: "series", palette: "barColors" },
+                                    // 🚀 PERBAIKAN: Gunakan bar_colorer, bukan colorer + target
+                                    { id: "plot_color", type: "bar_colorer", palette: "barColors" },
                                     { id: "plot_buy", type: "shapes" },
                                     { id: "plot_sell", type: "shapes" }
                                 ],
@@ -236,7 +234,8 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    if (!d) return [4, NaN, NaN]; // Jika data belum ada, warnai Abu-abu, jangan render panah
+                                    // Cegah TV Autoscale Crash dengan melempar NaN absolut
+                                    if (!d) return [NaN, NaN, NaN];
 
                                     let cIdx = 4;
                                     if(d.color === "lime") cIdx = 0;
@@ -244,7 +243,6 @@
                                     else if(d.color === "aqua") cIdx = 2;
                                     else if(d.color === "fuchsia") cIdx = 3;
 
-                                    // Posisi sinyal diletakkan tepat di high/low candle
                                     let buyPos = (d.buy) ? safeNum(d.low) : NaN;
                                     let sellPos = (d.sell) ? safeNum(d.high) : NaN;
 
@@ -253,7 +251,7 @@
                             }
                         },
 
-                        // --- B. RAD Oscillator (Garis Bawah) ---
+                        // --- B. RAD Oscillator ---
                         {
                             name: "RAD_Oscillator",
                             metainfo: {
@@ -291,7 +289,6 @@
                                     
                                     if (!d) return [NaN, NaN, NaN, 0];
                                     
-                                    // PENGAMANAN MUTLAK: Null/Undefined dihancurkan menjadi NaN
                                     return [
                                         safeNum(d.xWAD), 
                                         safeNum(d.pelopor), 
@@ -305,7 +302,6 @@
                 }
             });
 
-            // Auto-load indikator ketika chart selesai dipasang
             widget.onChartReady(() => {
                 widget.chart().createStudy("RAD_Overlay", false, false);
                 widget.chart().createStudy("RAD_Oscillator", false, false);
