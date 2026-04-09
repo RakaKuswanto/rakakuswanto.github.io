@@ -1,24 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Grafik Saham Indonesia Dinamis</title>
+    <title>Grafik Saham & RAD Indicator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script type="text/javascript" src="./charting_library/charting_library.standalone.js"></script>
     <style>
-        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #131722; }
+        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #131722; overflow: hidden; }
         #tv_chart_container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+        
+        /* Overlays & Loaders */
         .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: center; background-color: rgba(19, 23, 34, 0.85); z-index: 1000; text-align: center; color: #d1d4dc; }
         .ui-overlay.visible { display: flex; }
         .loader { border: 5px solid #2a2e39; border-top: 5px solid #2962ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #error-message-box { padding: 20px; background-color: #2a2e39; color: #d1d4dc; border: 1px solid #ff4a4a; border-radius: 8px; max-width: 80%; }
+        
+        /* RAD Dashboard (Pengganti Tabel Pine Script) */
+        #rad-dashboard {
+            position: absolute; top: 60px; right: 20px; z-index: 999;
+            background-color: rgba(19, 23, 34, 0.9); border: 1px solid #363c4e;
+            border-radius: 6px; padding: 10px; color: #d1d4dc;
+            font-size: 12px; pointer-events: none; /* Agar klik tembus ke chart */
+            display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        #rad-dashboard table { border-collapse: collapse; width: 100%; }
+        #rad-dashboard th, #rad-dashboard td { border: 1px solid #363c4e; padding: 4px 8px; text-align: right; }
+        #rad-dashboard th { background-color: #2a2e39; color: #fff; text-align: left; }
+        .dash-lime { background-color: rgba(0, 255, 0, 0.2); color: #0f0; }
+        .dash-red { background-color: rgba(255, 0, 0, 0.2); color: #f00; }
+        .dash-aqua { background-color: rgba(0, 255, 255, 0.2); color: #0ff; }
+        .dash-fuch { background-color: rgba(255, 0, 255, 0.2); color: #f0f; }
     </style>
 </head>
 <body>
     <div id="tv_chart_container"></div>
-    <div id="loading-overlay" class="ui-overlay visible">
-        <div class="loader"></div>
+    
+    <div id="rad-dashboard">
+        <table>
+            <tr><th colspan="3" id="rad-status" style="text-align: center; font-weight: bold; font-size: 14px;">Memuat RAD...</th></tr>
+            <tr><th>Timeframe</th><th>Net Volume</th><th>Signal</th></tr>
+            <tr><td>ST (5)</td><td id="rad-st-net">0</td><td id="rad-st-sig">0</td></tr>
+            <tr><td>MT (20)</td><td id="rad-mt-net">0</td><td id="rad-mt-sig">0</td></tr>
+            <tr><td>LT (200)</td><td id="rad-lt-net">0</td><td id="rad-lt-sig">0</td></tr>
+        </table>
     </div>
+
+    <div id="loading-overlay" class="ui-overlay visible"><div class="loader"></div></div>
     <div id="error-overlay" class="ui-overlay">
         <div id="error-message-box">
             <p><strong>Gagal Memuat Data</strong></p>
@@ -27,80 +54,72 @@
     </div>
 
     <script type="text/javascript">
+        // 1. GLOBAL STORE: Untuk menyimpan data RAD yang akan dibaca oleh Custom Indicator
+        window.radDataStore = {};
+
         document.addEventListener('DOMContentLoaded', function() {
             const loadingOverlay = document.getElementById('loading-overlay');
             const errorOverlay = document.getElementById('error-overlay');
             const errorText = document.getElementById('error-text');
+            const dashboard = document.getElementById('rad-dashboard');
 
             function showLoader() { loadingOverlay.classList.add('visible'); }
             function hideLoader() { loadingOverlay.classList.remove('visible'); }
-            function showError(message) {
-                hideLoader();
-                let friendlyMessage = message;
-                if (message.toLowerCase().includes('failed to fetch') || message.toLowerCase().includes('networkerror')) {
-                    friendlyMessage = "Gagal terhubung ke server data. Periksa koneksi internet Anda.";
-                } else if (message.includes('404')) {
-                    friendlyMessage = "Kode saham tidak ditemukan atau data tidak tersedia.";
-                }
-                errorText.textContent = friendlyMessage;
-                errorOverlay.classList.add('visible');
-            }
+            function showError(message) { hideLoader(); errorText.textContent = message; errorOverlay.classList.add('visible'); }
 
+            // URL Supabase Kamu
             const CONFIG = {
                 supabaseFunctionUrl: `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`,
                 defaultSymbol: 'BBCA.JK',
             };
             
+            // Format angka penyingkat (K, M, B)
+            function formatNumber(num) {
+                if(!num) return "0";
+                let absNum = Math.abs(num);
+                if(absNum >= 1e12) return (num / 1e12).toFixed(2) + "T";
+                if(absNum >= 1e9) return (num / 1e9).toFixed(2) + "B";
+                if(absNum >= 1e6) return (num / 1e6).toFixed(2) + "M";
+                if(absNum >= 1e3) return (num / 1e3).toFixed(2) + "K";
+                return num.toFixed(2);
+            }
+
+            // Update isi Dashboard
+            function updateDashboardUI(dashData) {
+                if (!dashData) return;
+                dashboard.style.display = "block";
+                document.getElementById('rad-status').innerText = dashData.statusText;
+                document.getElementById('rad-st-net').innerText = formatNumber(dashData.NetST);
+                document.getElementById('rad-st-sig').innerText = formatNumber(dashData.sigST);
+                document.getElementById('rad-mt-net').innerText = formatNumber(dashData.NetMT);
+                document.getElementById('rad-mt-sig').innerText = formatNumber(dashData.sigMT);
+                document.getElementById('rad-lt-net').innerText = formatNumber(dashData.NetLT);
+                document.getElementById('rad-lt-sig').innerText = formatNumber(dashData.sigLT);
+            }
+
             const datafeed = {
-                onReady: (callback) => {
-                    setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0);
-                },
+                onReady: (callback) => { setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0); },
                 resolveSymbol: (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
-                    const symbolInfo = {
-                        ticker: symbolName,
-                        name: symbolName,
-                        description: symbolName,
-                        type: 'stock',
-                        session: '0900-1515',
-                        timezone: 'Asia/Jakarta',
-                        exchange: 'IDX',
-                        minmov: 1,
-                        pricescale: 100,
-                        has_intraday: true,
-                        has_no_volume: false,
-                        supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'],
-                        format: 'price',
-                    };
-                    setTimeout(() => onSymbolResolvedCallback(symbolInfo), 0);
+                    setTimeout(() => onSymbolResolvedCallback({
+                        ticker: symbolName, name: symbolName, description: symbolName,
+                        type: 'stock', session: '0900-1515', timezone: 'Asia/Jakarta',
+                        exchange: 'IDX', minmov: 1, pricescale: 100,
+                        has_intraday: true, has_no_volume: false, supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'], format: 'price',
+                    }), 0);
                 },
-                
                 searchSymbols: async (userInput, exchange, symbolType, onResultReadyCallback) => {
-                    if (userInput.length < 2) {
-                        onResultReadyCallback([]);
-                        return;
-                    }
+                    if (userInput.length < 2) return onResultReadyCallback([]);
                     try {
                         const url = new URL(CONFIG.supabaseFunctionUrl);
                         url.searchParams.append('endpoint', 'search');
                         url.searchParams.append('query', userInput);
-                        
                         const response = await fetch(url.toString());
-                        if (!response.ok) {
-                            throw new Error(`Pencarian gagal: ${response.statusText}`);
-                        }
-                        const results = await response.json();
-                        onResultReadyCallback(results);
-                    } catch (error) {
-                        console.error('Search error:', error);
-                        onResultReadyCallback([]);
-                    }
+                        onResultReadyCallback(await response.json());
+                    } catch (error) { onResultReadyCallback([]); }
                 },
                 getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
-                    showLoader();
-                    errorOverlay.classList.remove('visible');
-
+                    showLoader(); errorOverlay.classList.remove('visible');
                     const { from, to } = periodParams;
-                    
                     const intervalMap = { '1D': '1d', '1W': '1wk', '1M': '1mo' };
                     const interval = intervalMap[resolution] || (/\d+/.test(resolution) ? `${resolution}m` : '1d');
                     
@@ -109,51 +128,55 @@
                     url.searchParams.append('symbol', symbolInfo.ticker);
                     url.searchParams.append('interval', interval);
                     url.searchParams.append('from', Math.round(from));
-                    // --- PERBAIKAN DI SINI ---
-                    url.searchParams.append('to', to);
+                    url.searchParams.append('to', Math.round(to));
                    
                     try {
                         const response = await fetch(url.toString());
-                        if (!response.ok) {
-                            const errorData = await response.json().catch(() => null);
-                            throw new Error(errorData?.error || `HTTP error! Status: ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error("Gagal mengambil data server");
                         const data = await response.json();
                         
-                        if (!data.chart?.result?.length || data.chart.error) {
-                            onHistoryCallback([], { noData: true }); 
-                            return;
-                        }
-
+                        if (!data.chart?.result?.length || data.chart.error) return onHistoryCallback([], { noData: true }); 
+                        
                         const result = data.chart.result[0];
                         const quotes = result.indicators.quote[0];
-                        if (!result.timestamp || !quotes?.open) {
-                            onHistoryCallback([], { noData: true }); 
-                            return;
-                        }
+                        const radData = result.indicators.rad; // <--- Ambil data RAD dari server
                         
-                        const bars = result.timestamp
-                            .map((ts, index) => ({
-                                time: ts * 1000,
+                        // Ekstrak Dashboard UI baris terakhir
+                        if (radData && radData.dashboard) {
+                            updateDashboardUI(radData.dashboard);
+                        }
+
+                        const bars = result.timestamp.map((ts, index) => {
+                            let timeMs = ts * 1000;
+                            
+                            // Simpan data RAD ke Global Store berdasarkan Timestamp
+                            if (radData) {
+                                window.radDataStore[timeMs] = {
+                                    xWAD: radData.xWAD[index],
+                                    pelopor: radData.pelopor[index],
+                                    kunci: radData.kunci[index],
+                                    color: radData.bar_colors[index],
+                                    buy: radData.buy[index],
+                                    sell: radData.sell[index]
+                                };
+                            }
+
+                            return {
+                                time: timeMs,
                                 open: quotes.open[index],
                                 high: quotes.high[index],
                                 low: quotes.low[index],
                                 close: quotes.close[index],
                                 volume: quotes.volume[index],
-                            }))
-                            .filter(bar => bar.open !== null && bar.high !== null && bar.low !== null && bar.close !== null);
+                            };
+                        }).filter(bar => bar.open !== null);
                         
                         onHistoryCallback(bars, { noData: bars.length === 0 });
-
                     } catch (error) {
-                        onErrorCallback(error.message);
-                        showError(error.message);
-                    } finally {
-                        hideLoader();
-                    }
+                        onErrorCallback(error.message); showError(error.message);
+                    } finally { hideLoader(); }
                 },
-                subscribeBars: () => {},
-                unsubscribeBars: () => {},
+                subscribeBars: () => {}, unsubscribeBars: () => {},
             };
             
             const widget = new TradingView.widget({
@@ -165,35 +188,121 @@
                 interval: '1D',
                 theme: 'Dark',
                 autosize: true,
-                
-                enabled_features: [
-                    'side_toolbar_in_fullscreen_mode',
-                    'allow_symbol_change',
-                ],
-                disabled_features: [
-                    'use_localstorage_for_settings',
-                    'study_templates',
-                    'header_compare',
-                ],
-                
                 timezone: 'Asia/Jakarta',
-                details: true,
-                hotkeys: true,
                 
-                overrides: {
-                    "paneProperties.background": "#131722",
-                    "paneProperties.vertGridProperties.color": "#2a2e39",
-                    "paneProperties.horzGridProperties.color": "#2a2e39",
-                    "symbolWatermarkProperties.transparency": 90,
-                    "scalesProperties.textColor" : "#d1d4dc",
-                    "mainSeriesProperties.candleStyle.upColor": "#26a69a",
-                    "mainSeriesProperties.candleStyle.downColor": "#ef5350",
-                    "mainSeriesProperties.candleStyle.wickUpColor": "#26a69a",
-                    "mainSeriesProperties.candleStyle.wickDownColor": "#ef5350",
-                    "mainSeriesProperties.candleStyle.borderUpColor": "#26a69a",
-                    "mainSeriesProperties.candleStyle.borderDownColor": "#ef5350",
+                // 2. MENGINJEKSI CUSTOM INDICATORS RAD
+                custom_indicators_getter: function(PineJS) {
+                    return Promise.resolve([
+                        // --- A. RAD Overlay (Warna Bar & Panah Buy/Sell) ---
+                        {
+                            name: "RAD Overlay",
+                            metainfo: {
+                                _metainfoVersion: 51,
+                                id: "RAD_Overlay@tv-basicstudies-1",
+                                description: "RAD: Sinyal & Warna Bar",
+                                shortDescription: "RAD Sinyal",
+                                is_price_study: true, // Nempel di chart utama (Overlay)
+                                isCustomIndicator: true,
+                                format: { type: "price", precision: 4 },
+                                palettes: {
+                                    barColors: {
+                                        colors: {
+                                            0: { name: "Lime", color: "#00FF00" },
+                                            1: { name: "Red", color: "#FF0000" },
+                                            2: { name: "Aqua", color: "#00FFFF" },
+                                            3: { name: "Fuchsia", color: "#FF00FF" },
+                                            4: { name: "Gray", color: "#808080" }
+                                        }
+                                    }
+                                },
+                                plots: [
+                                    { id: "plot_color", type: "colorer", target: "series", palette: "barColors" },
+                                    { id: "plot_buy", type: "shapes" },
+                                    { id: "plot_sell", type: "shapes" }
+                                ],
+                                defaults: {
+                                    styles: {
+                                        plot_buy: { plottype: "shape_arrow_up", location: "BelowBar", color: "#00FF00", text: "BUY", textcolor: "#FFFFFF", size: "normal" },
+                                        plot_sell: { plottype: "shape_arrow_down", location: "AboveBar", color: "#FF0000", text: "SELL", textcolor: "#FFFFFF", size: "normal" }
+                                    },
+                                    inputs: {}
+                                },
+                                inputs: []
+                            },
+                            constructor: function() {
+                                this.init = function(context, inputCallback) {};
+                                this.main = function(context, inputCallback) {
+                                    let time = PineJS.Std.time(this._context);
+                                    let d = window.radDataStore[time];
+                                    if (!d) return [4, NaN, NaN]; // Default gray
+
+                                    // Mapping Index Warna
+                                    let cIdx = 4;
+                                    if(d.color === "lime") cIdx = 0;
+                                    else if(d.color === "red") cIdx = 1;
+                                    else if(d.color === "aqua") cIdx = 2;
+                                    else if(d.color === "fuchsia") cIdx = 3;
+
+                                    // Posisi Panah Buy/Sell
+                                    let lowPrice = PineJS.Std.low(this._context);
+                                    let highPrice = PineJS.Std.high(this._context);
+                                    let buyPos = d.buy ? lowPrice : NaN;
+                                    let sellPos = d.sell ? highPrice : NaN;
+
+                                    return [cIdx, buyPos, sellPos];
+                                };
+                            }
+                        },
+
+                        // --- B. RAD Oscillator (Garis xWAD, Pelopor, Kunci di Panel Bawah) ---
+                        {
+                            name: "RAD Oscillator",
+                            metainfo: {
+                                _metainfoVersion: 51,
+                                id: "RAD_Oscillator@tv-basicstudies-1",
+                                description: "RAD: Williams AD+EV Momentum",
+                                shortDescription: "RAD",
+                                is_price_study: false, // Terpisah di panel bawah
+                                isCustomIndicator: true,
+                                format: { type: "price", precision: 2 },
+                                plots: [
+                                    { id: "plot_xwad", type: "line" },
+                                    { id: "plot_pelopor", type: "line" },
+                                    { id: "plot_kunci", type: "line" },
+                                    { id: "plot_zero", type: "line" }
+                                ],
+                                defaults: {
+                                    styles: {
+                                        plot_xwad: { linestyle: 0, linewidth: 2, plottype: 1 /* histogram */, color: "rgba(169, 169, 169, 0.5)" },
+                                        plot_pelopor: { linestyle: 0, linewidth: 2, plottype: 0 /* line */, color: "#2962FF" }, // Biru
+                                        plot_kunci: { linestyle: 0, linewidth: 2, plottype: 0 /* line */, color: "#FF6D00" }, // Orange
+                                        plot_zero: { linestyle: 2 /* dashed */, linewidth: 1, plottype: 0, color: "#808080" }
+                                    },
+                                    inputs: {}
+                                },
+                                inputs: []
+                            },
+                            constructor: function() {
+                                this.init = function(context, inputCallback) {};
+                                this.main = function(context, inputCallback) {
+                                    let time = PineJS.Std.time(this._context);
+                                    let d = window.radDataStore[time];
+                                    if (!d) return [NaN, NaN, NaN, 0];
+                                    return [d.xWAD, d.pelopor, d.kunci, 0];
+                                };
+                            }
+                        }
+                    ]);
                 }
             });
+
+            // 3. AUTO-LOAD INDICATORS
+            // Setelah chart siap, otomatis pasang indikator Overlay dan Oscillator ke layar
+            widget.onChartReady(() => {
+                widget.chart().createStudy("RAD Overlay", false, false);
+                widget.chart().createStudy("RAD Oscillator", false, false);
+            });
+
         });
     </script>
 </body>
