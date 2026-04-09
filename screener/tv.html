@@ -1,27 +1,42 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
+    <meta charset="UTF-8">
     <title>Grafik Saham & RAD Indicator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <script type="text/javascript" src="./charting_library/charting_library.standalone.js"></script>
+    
     <style>
-        body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #131722; overflow: hidden; }
+        body { 
+            margin: 0; padding: 0; background-color: #131722; overflow: hidden;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+        }
         #tv_chart_container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
-        .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: center; background-color: rgba(19, 23, 34, 0.85); z-index: 1000; text-align: center; color: #d1d4dc; }
+        /* Overlays & Loader */
+        .ui-overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            display: none; justify-content: center; align-items: center; 
+            background-color: rgba(19, 23, 34, 0.85); z-index: 1000; color: #d1d4dc; 
+        }
         .ui-overlay.visible { display: flex; }
-        .loader { border: 5px solid #2a2e39; border-top: 5px solid #2962ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        .loader { 
+            border: 5px solid #2a2e39; border-top: 5px solid #2962ff; 
+            border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; 
+        }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
+        /* Dashboard RAD UI */
         #rad-dashboard {
             position: absolute; top: 60px; right: 20px; z-index: 999;
             background-color: rgba(19, 23, 34, 0.9); border: 1px solid #363c4e;
             border-radius: 6px; padding: 10px; color: #d1d4dc;
-            font-size: 12px; pointer-events: none; 
-            display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            font-size: 12px; pointer-events: none; /* Agar klik chart tidak terhalang */
+            display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.4);
         }
         #rad-dashboard table { border-collapse: collapse; width: 100%; }
-        #rad-dashboard th, #rad-dashboard td { border: 1px solid #363c4e; padding: 4px 8px; text-align: right; }
+        #rad-dashboard th, #rad-dashboard td { border: 1px solid #363c4e; padding: 5px 10px; text-align: right; }
         #rad-dashboard th { background-color: #2a2e39; color: #fff; text-align: left; }
     </style>
 </head>
@@ -30,7 +45,7 @@
     
     <div id="rad-dashboard">
         <table>
-            <tr><th colspan="3" id="rad-status" style="text-align: center; font-weight: bold; font-size: 14px;">Memuat RAD...</th></tr>
+            <tr><th colspan="3" id="rad-status" style="text-align: center; font-weight: bold; font-size: 14px; color: #fff;">Memuat Data...</th></tr>
             <tr><th>Timeframe</th><th>Net Volume</th><th>Signal</th></tr>
             <tr><td>ST (5)</td><td id="rad-st-net">0</td><td id="rad-st-sig">0</td></tr>
             <tr><td>MT (20)</td><td id="rad-mt-net">0</td><td id="rad-mt-sig">0</td></tr>
@@ -41,8 +56,14 @@
     <div id="loading-overlay" class="ui-overlay visible"><div class="loader"></div></div>
 
     <script type="text/javascript">
-        // BRANKAS DATA
+        // 1. GLOBAL STORE: Brankas data sinkronisasi antara server Deno dan TradingView
         window.radDataStore = {};
+
+        // 2. FUNGSI PENGAMAN MUTLAK: Mengubah nilai apapun menjadi Number atau NaN
+        function safeNum(val) {
+            if (val === undefined || val === null || isNaN(val)) return NaN;
+            return Number(val);
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const loadingOverlay = document.getElementById('loading-overlay');
@@ -51,13 +72,15 @@
             function showLoader() { loadingOverlay.classList.add('visible'); }
             function hideLoader() { loadingOverlay.classList.remove('visible'); }
 
+            // URL Endpoint Supabase/Deno Kamu
             const CONFIG = {
                 supabaseFunctionUrl: `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`,
                 defaultSymbol: 'BBCA.JK',
             };
             
+            // Format angka untuk dashboard (M, B, T)
             function formatNumber(num) {
-                if(num === undefined || num === null || isNaN(num)) return "0";
+                if(!num || isNaN(num)) return "0";
                 let absNum = Math.abs(num);
                 if(absNum >= 1e12) return (num / 1e12).toFixed(2) + "T";
                 if(absNum >= 1e9) return (num / 1e9).toFixed(2) + "B";
@@ -66,6 +89,7 @@
                 return num.toFixed(2);
             }
 
+            // Update UI Dashboard
             function updateDashboardUI(dashData) {
                 if (!dashData) return;
                 dashboard.style.display = "block";
@@ -78,6 +102,7 @@
                 document.getElementById('rad-lt-sig').innerText = formatNumber(dashData.sigLT);
             }
 
+            // 3. KONFIGURASI DATAFEED
             const datafeed = {
                 onReady: (callback) => { setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0); },
                 resolveSymbol: (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
@@ -113,23 +138,25 @@
                    
                     try {
                         const response = await fetch(url.toString());
-                        if (!response.ok) throw new Error("Gagal");
+                        if (!response.ok) throw new Error("Gagal terhubung ke API");
                         const data = await response.json();
                         
                         if (!data.chart?.result?.length || data.chart.error) return onHistoryCallback([], { noData: true }); 
                         
                         const result = data.chart.result[0];
                         const quotes = result.indicators.quote[0];
-                        const radData = result.indicators.rad; 
+                        const radData = result.indicators.rad; // Data injeksi dari Deno
                         
+                        // Perbarui Dashboard menggunakan data baris terakhir
                         if (radData && radData.dashboard) {
                             updateDashboardUI(radData.dashboard);
                         }
 
+                        // Ekstraksi data ke dalam brankas dan format TV
                         const bars = result.timestamp.map((ts, index) => {
-                            let timeMs = ts * 1000;
+                            let timeMs = ts * 1000; // Konversi ke Milidetik
                             
-                            // Simpan data ke brankas global
+                            // Simpan perhitungan RAD per-candle ke brankas global
                             if (radData) {
                                 window.radDataStore[timeMs] = {
                                     xWAD: radData.xWAD[index],
@@ -146,16 +173,18 @@
                                 close: quotes.close[index],
                                 volume: quotes.volume[index],
                             };
-                        }).filter(bar => bar.open !== null);
+                        }).filter(bar => bar.open !== null); // Buang candle cacat
                         
                         onHistoryCallback(bars, { noData: bars.length === 0 });
                     } catch (error) {
                         onErrorCallback(error.message);
+                        console.error("Datafeed Error:", error);
                     } finally { hideLoader(); }
                 },
                 subscribeBars: () => {}, unsubscribeBars: () => {},
             };
             
+            // 4. INSTANSIASI WIDGET TRADINGVIEW
             const widget = new TradingView.widget({
                 container: 'tv_chart_container',
                 library_path: './charting_library/',
@@ -167,6 +196,9 @@
                 autosize: true,
                 timezone: 'Asia/Jakarta',
                 
+                // Menonaktifkan fitur berbayar/lokal agar bersih
+                disabled_features: ['use_localstorage_for_settings', 'header_compare'],
+                
                 custom_indicators_getter: function(PineJS) {
                     return Promise.resolve([
                         // --- HANYA RAD OSCILLATOR (Aman 100%) ---
@@ -177,7 +209,7 @@
                                 id: "RAD_Oscillator@tv-basicstudies-1",
                                 description: "RAD Oscillator",
                                 shortDescription: "RAD",
-                                is_price_study: false, 
+                                is_price_study: false, // Terpisah di panel bawah
                                 isCustomIndicator: true,
                                 format: { type: "price", precision: 2 },
                                 // Hanya 3 plot murni
@@ -199,17 +231,21 @@
                             constructor: function() {
                                 this.init = function(context, inputCallback) { this._context = context; };
                                 this.main = function(context, inputCallback) {
+                                    // Ambil waktu dari candle saat ini
                                     let time = PineJS.Std.time(this._context);
+                                    
+                                    // Tarik data dari brankas
                                     let d = window.radDataStore[time];
                                     
-                                    // PENGAMANAN MUTLAK: Jika tidak ada data, lemparkan NaN murni bawaan Javascript
+                                    // Jika data kosong, lempar NaN (Mesin Autoscale akan melewati candle ini dengan damai)
                                     if (!d) return [NaN, NaN, NaN];
                                     
-                                    let xwad = (d.xWAD !== undefined && d.xWAD !== null) ? Number(d.xWAD) : NaN;
-                                    let pelopor = (d.pelopor !== undefined && d.pelopor !== null) ? Number(d.pelopor) : NaN;
-                                    let kunci = (d.kunci !== undefined && d.kunci !== null) ? Number(d.kunci) : NaN;
-
-                                    return [xwad, pelopor, kunci];
+                                    // Kembalikan data dengan urutan yang sama persis seperti plots (plot_0, plot_1, plot_2)
+                                    return [
+                                        safeNum(d.xWAD), 
+                                        safeNum(d.pelopor), 
+                                        safeNum(d.kunci)
+                                    ];
                                 };
                             }
                         }
@@ -217,10 +253,18 @@
                 }
             });
 
-            // Tampilkan Oscillator secara otomatis
-            widget.onChartReady(() => {
-                widget.chart().createStudy("RAD_Oscillator", false, false);
+            // 5. AUTO-LOAD INDICATOR SAAT CHART SIAP
+            widget.headerReady().then(function() {
+                widget.onChartReady(function() {
+                    // Gunakan setTimeout kecil untuk memberi nafas pada renderer sebelum memanggil Custom Study
+                    setTimeout(() => {
+                        widget.chart().createStudy("RAD_Oscillator", false, false).catch(e => {
+                            console.error("Gagal meload indikator:", e);
+                        });
+                    }, 300); 
+                });
             });
+            
         });
     </script>
 </body>
