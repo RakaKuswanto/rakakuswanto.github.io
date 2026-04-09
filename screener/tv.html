@@ -41,13 +41,8 @@
     <div id="loading-overlay" class="ui-overlay visible"><div class="loader"></div></div>
 
     <script type="text/javascript">
+        // BRANKAS DATA
         window.radDataStore = {};
-
-        // Pengaman Absolut: Memastikan hanya mengembalikan Angka Murni atau 0
-        function safeNum(val) {
-            if (val === undefined || val === null || isNaN(val)) return 0;
-            return Number(val);
-        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const loadingOverlay = document.getElementById('loading-overlay');
@@ -62,7 +57,7 @@
             };
             
             function formatNumber(num) {
-                if(!num || isNaN(num)) return "0";
+                if(num === undefined || num === null || isNaN(num)) return "0";
                 let absNum = Math.abs(num);
                 if(absNum >= 1e12) return (num / 1e12).toFixed(2) + "T";
                 if(absNum >= 1e9) return (num / 1e9).toFixed(2) + "B";
@@ -118,7 +113,7 @@
                    
                     try {
                         const response = await fetch(url.toString());
-                        if (!response.ok) throw new Error("Gagal mengambil data server");
+                        if (!response.ok) throw new Error("Gagal");
                         const data = await response.json();
                         
                         if (!data.chart?.result?.length || data.chart.error) return onHistoryCallback([], { noData: true }); 
@@ -134,7 +129,7 @@
                         const bars = result.timestamp.map((ts, index) => {
                             let timeMs = ts * 1000;
                             
-                            // Simpan data kalkulasi RAD ke Brankas Data
+                            // Simpan data ke brankas global
                             if (radData) {
                                 window.radDataStore[timeMs] = {
                                     xWAD: radData.xWAD[index],
@@ -174,18 +169,18 @@
                 
                 custom_indicators_getter: function(PineJS) {
                     return Promise.resolve([
-                        // --- RAD Oscillator Minimalis & Kuat ---
+                        // --- HANYA RAD OSCILLATOR (Aman 100%) ---
                         {
                             name: "RAD_Oscillator",
                             metainfo: {
                                 _metainfoVersion: 51,
                                 id: "RAD_Oscillator@tv-basicstudies-1",
-                                description: "RAD_Oscillator",
+                                description: "RAD Oscillator",
                                 shortDescription: "RAD",
                                 is_price_study: false, 
                                 isCustomIndicator: true,
                                 format: { type: "price", precision: 2 },
-                                // Format id array harus sederhana
+                                // Hanya 3 plot murni
                                 plots: [
                                     { id: "plot_0", type: "line" },
                                     { id: "plot_1", type: "line" },
@@ -193,40 +188,28 @@
                                 ],
                                 defaults: {
                                     styles: {
-                                        plot_0: { linestyle: 0, linewidth: 2, plottype: 1, color: "rgba(169, 169, 169, 0.5)" }, // Histogram
-                                        plot_1: { linestyle: 0, linewidth: 2, plottype: 0, color: "#2962FF" }, // Line Biru
-                                        plot_2: { linestyle: 0, linewidth: 2, plottype: 0, color: "#FF6D00" }  // Line Oranye
+                                        plot_0: { linestyle: 0, linewidth: 2, plottype: 1, color: "rgba(169, 169, 169, 0.5)", title: "xWAD" },
+                                        plot_1: { linestyle: 0, linewidth: 2, plottype: 0, color: "#2962FF", title: "Pelopor" },
+                                        plot_2: { linestyle: 0, linewidth: 2, plottype: 0, color: "#FF6D00", title: "Kunci" }
                                     },
                                     inputs: {}
                                 },
                                 inputs: []
                             },
                             constructor: function() {
-                                this.init = function(context, inputCallback) { this._context = context; this._input = inputCallback; };
+                                this.init = function(context, inputCallback) { this._context = context; };
                                 this.main = function(context, inputCallback) {
-                                    this._context = context; this._input = inputCallback;
-                                    
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    // PENGAMANAN ZONA WAKTU: Jika meleset, cari timestamp terdekat (maksimal 24 jam)
-                                    if (!d) {
-                                        for (let t in window.radDataStore) {
-                                            if (Math.abs(t - time) <= 86400000) {
-                                                d = window.radDataStore[t];
-                                                break;
-                                            }
-                                        }
-                                    }
+                                    // PENGAMANAN MUTLAK: Jika tidak ada data, lemparkan NaN murni bawaan Javascript
+                                    if (!d) return [NaN, NaN, NaN];
                                     
-                                    // PENGAMANAN AUTOSCALE: Jangan kirim undefined/NaN.
-                                    if (!d) return [0, 0, 0];
-                                    
-                                    return [
-                                        safeNum(d.xWAD), 
-                                        safeNum(d.pelopor), 
-                                        safeNum(d.kunci)
-                                    ];
+                                    let xwad = (d.xWAD !== undefined && d.xWAD !== null) ? Number(d.xWAD) : NaN;
+                                    let pelopor = (d.pelopor !== undefined && d.pelopor !== null) ? Number(d.pelopor) : NaN;
+                                    let kunci = (d.kunci !== undefined && d.kunci !== null) ? Number(d.kunci) : NaN;
+
+                                    return [xwad, pelopor, kunci];
                                 };
                             }
                         }
