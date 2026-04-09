@@ -8,28 +8,23 @@
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #131722; overflow: hidden; }
         #tv_chart_container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
-        /* Overlays & Loaders */
+        /* Overlays & Dashboard */
         .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: center; background-color: rgba(19, 23, 34, 0.85); z-index: 1000; text-align: center; color: #d1d4dc; }
         .ui-overlay.visible { display: flex; }
         .loader { border: 5px solid #2a2e39; border-top: 5px solid #2962ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         #error-message-box { padding: 20px; background-color: #2a2e39; color: #d1d4dc; border: 1px solid #ff4a4a; border-radius: 8px; max-width: 80%; }
         
-        /* RAD Dashboard (Pengganti Tabel Pine Script) */
         #rad-dashboard {
             position: absolute; top: 60px; right: 20px; z-index: 999;
             background-color: rgba(19, 23, 34, 0.9); border: 1px solid #363c4e;
             border-radius: 6px; padding: 10px; color: #d1d4dc;
-            font-size: 12px; pointer-events: none; /* Agar klik tembus ke chart */
+            font-size: 12px; pointer-events: none; 
             display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         #rad-dashboard table { border-collapse: collapse; width: 100%; }
         #rad-dashboard th, #rad-dashboard td { border: 1px solid #363c4e; padding: 4px 8px; text-align: right; }
         #rad-dashboard th { background-color: #2a2e39; color: #fff; text-align: left; }
-        .dash-lime { background-color: rgba(0, 255, 0, 0.2); color: #0f0; }
-        .dash-red { background-color: rgba(255, 0, 0, 0.2); color: #f00; }
-        .dash-aqua { background-color: rgba(0, 255, 255, 0.2); color: #0ff; }
-        .dash-fuch { background-color: rgba(255, 0, 255, 0.2); color: #f0f; }
     </style>
 </head>
 <body>
@@ -54,8 +49,15 @@
     </div>
 
     <script type="text/javascript">
-        // 1. GLOBAL STORE: Menyimpan data RAD dari backend
+        // BRANKAS DATA GLOBAL
         window.radDataStore = {};
+
+        // Fungsi Helper untuk Sanitasi Angka Mutlak (Mencegah undefined)
+        function safeNum(val) {
+            if (val === undefined || val === null) return NaN;
+            let n = Number(val);
+            return isNaN(n) ? NaN : n;
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const loadingOverlay = document.getElementById('loading-overlay');
@@ -67,14 +69,13 @@
             function hideLoader() { loadingOverlay.classList.remove('visible'); }
             function showError(message) { hideLoader(); errorText.textContent = message; errorOverlay.classList.add('visible'); }
 
-            // URL Supabase Kamu
             const CONFIG = {
                 supabaseFunctionUrl: `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`,
                 defaultSymbol: 'BBCA.JK',
             };
             
             function formatNumber(num) {
-                if(num === undefined || num === null) return "0";
+                if(num === undefined || num === null || isNaN(num)) return "0";
                 let absNum = Math.abs(num);
                 if(absNum >= 1e12) return (num / 1e12).toFixed(2) + "T";
                 if(absNum >= 1e9) return (num / 1e9).toFixed(2) + "B";
@@ -86,7 +87,7 @@
             function updateDashboardUI(dashData) {
                 if (!dashData) return;
                 dashboard.style.display = "block";
-                document.getElementById('rad-status').innerText = dashData.statusText;
+                document.getElementById('rad-status').innerText = dashData.statusText || "Netral";
                 document.getElementById('rad-st-net').innerText = formatNumber(dashData.NetST);
                 document.getElementById('rad-st-sig').innerText = formatNumber(dashData.sigST);
                 document.getElementById('rad-mt-net').innerText = formatNumber(dashData.NetMT);
@@ -146,6 +147,7 @@
                         const bars = result.timestamp.map((ts, index) => {
                             let timeMs = ts * 1000;
                             
+                            // Ekstrak data server ke brankas global, tambahkan Low dan High
                             if (radData) {
                                 window.radDataStore[timeMs] = {
                                     xWAD: radData.xWAD[index],
@@ -153,7 +155,9 @@
                                     kunci: radData.kunci[index],
                                     color: radData.bar_colors[index],
                                     buy: radData.buy[index],
-                                    sell: radData.sell[index]
+                                    sell: radData.sell[index],
+                                    low: quotes.low[index],
+                                    high: quotes.high[index]
                                 };
                             }
 
@@ -188,7 +192,7 @@
                 
                 custom_indicators_getter: function(PineJS) {
                     return Promise.resolve([
-                        // --- A. RAD Overlay ---
+                        // --- A. RAD Overlay (Warna & Panah Sinyal) ---
                         {
                             name: "RAD_Overlay",
                             metainfo: {
@@ -225,18 +229,14 @@
                                 inputs: []
                             },
                             constructor: function() {
-                                this.init = function(context, inputCallback) {
-                                    this._context = context;
-                                    this._input = inputCallback;
-                                };
+                                this.init = function(context, inputCallback) { this._context = context; this._input = inputCallback; };
                                 this.main = function(context, inputCallback) {
-                                    this._context = context;
-                                    this._input = inputCallback;
+                                    this._context = context; this._input = inputCallback;
                                     
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    if (!d) return [4, NaN, NaN];
+                                    if (!d) return [4, NaN, NaN]; // Jika data belum ada, warnai Abu-abu, jangan render panah
 
                                     let cIdx = 4;
                                     if(d.color === "lime") cIdx = 0;
@@ -244,20 +244,16 @@
                                     else if(d.color === "aqua") cIdx = 2;
                                     else if(d.color === "fuchsia") cIdx = 3;
 
-                                    // Gunakan fungsi bawaan PineJS agar aman dari undefined/null
-                                    let lowPrice = PineJS.Std.low(this._context);
-                                    let highPrice = PineJS.Std.high(this._context);
-                                    
-                                    // Sanitasi Posisi Panah: Wajib pastikan harga valid, kalau tidak paksa jadi NaN
-                                    let buyPos = (d.buy === true && lowPrice != null) ? lowPrice : NaN;
-                                    let sellPos = (d.sell === true && highPrice != null) ? highPrice : NaN;
+                                    // Posisi sinyal diletakkan tepat di high/low candle
+                                    let buyPos = (d.buy) ? safeNum(d.low) : NaN;
+                                    let sellPos = (d.sell) ? safeNum(d.high) : NaN;
 
                                     return [cIdx, buyPos, sellPos];
                                 };
                             }
                         },
 
-                        // --- B. RAD Oscillator ---
+                        // --- B. RAD Oscillator (Garis Bawah) ---
                         {
                             name: "RAD_Oscillator",
                             metainfo: {
@@ -286,25 +282,22 @@
                                 inputs: []
                             },
                             constructor: function() {
-                                this.init = function(context, inputCallback) {
-                                    this._context = context;
-                                    this._input = inputCallback;
-                                };
+                                this.init = function(context, inputCallback) { this._context = context; this._input = inputCallback; };
                                 this.main = function(context, inputCallback) {
-                                    this._context = context;
-                                    this._input = inputCallback;
+                                    this._context = context; this._input = inputCallback;
                                     
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
                                     if (!d) return [NaN, NaN, NaN, 0];
                                     
-                                    // 🚀 SANITASI UTAMA: Paksa ubah null/undefined menjadi NaN
-                                    let safe_xWAD = (d.xWAD != null) ? d.xWAD : NaN;
-                                    let safe_pelopor = (d.pelopor != null) ? d.pelopor : NaN;
-                                    let safe_kunci = (d.kunci != null) ? d.kunci : NaN;
-
-                                    return [safe_xWAD, safe_pelopor, safe_kunci, 0];
+                                    // PENGAMANAN MUTLAK: Null/Undefined dihancurkan menjadi NaN
+                                    return [
+                                        safeNum(d.xWAD), 
+                                        safeNum(d.pelopor), 
+                                        safeNum(d.kunci), 
+                                        0
+                                    ];
                                 };
                             }
                         }
@@ -312,14 +305,12 @@
                 }
             });
 
-            // 3. AUTO-LOAD (NAMA DISESUAIKAN)
+            // Auto-load indikator ketika chart selesai dipasang
             widget.onChartReady(() => {
                 widget.chart().createStudy("RAD_Overlay", false, false);
                 widget.chart().createStudy("RAD_Oscillator", false, false);
             });
-
         });
     </script>
-
 </body>
 </html>
