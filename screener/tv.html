@@ -8,12 +8,10 @@
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif; background-color: #131722; overflow: hidden; }
         #tv_chart_container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
         
-        /* Overlays & Dashboard */
         .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; justify-content: center; align-items: center; background-color: rgba(19, 23, 34, 0.85); z-index: 1000; text-align: center; color: #d1d4dc; }
         .ui-overlay.visible { display: flex; }
         .loader { border: 5px solid #2a2e39; border-top: 5px solid #2962ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #error-message-box { padding: 20px; background-color: #2a2e39; color: #d1d4dc; border: 1px solid #ff4a4a; border-radius: 8px; max-width: 80%; }
         
         #rad-dashboard {
             position: absolute; top: 60px; right: 20px; z-index: 999;
@@ -41,31 +39,22 @@
     </div>
 
     <div id="loading-overlay" class="ui-overlay visible"><div class="loader"></div></div>
-    <div id="error-overlay" class="ui-overlay">
-        <div id="error-message-box">
-            <p><strong>Gagal Memuat Data</strong></p>
-            <p id="error-text"></p>
-        </div>
-    </div>
 
     <script type="text/javascript">
         window.radDataStore = {};
 
-        // Pengaman absolut: Jika nilai cacat, kembalikan NaN (Not a Number) agar TradingView mengabaikannya
+        // Pengaman Absolut: Memastikan hanya mengembalikan Angka Murni atau 0
         function safeNum(val) {
-            if (val === undefined || val === null || isNaN(val)) return NaN;
+            if (val === undefined || val === null || isNaN(val)) return 0;
             return Number(val);
         }
 
         document.addEventListener('DOMContentLoaded', function() {
             const loadingOverlay = document.getElementById('loading-overlay');
-            const errorOverlay = document.getElementById('error-overlay');
-            const errorText = document.getElementById('error-text');
             const dashboard = document.getElementById('rad-dashboard');
 
             function showLoader() { loadingOverlay.classList.add('visible'); }
             function hideLoader() { loadingOverlay.classList.remove('visible'); }
-            function showError(message) { hideLoader(); errorText.textContent = message; errorOverlay.classList.add('visible'); }
 
             const CONFIG = {
                 supabaseFunctionUrl: `https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy`,
@@ -73,7 +62,7 @@
             };
             
             function formatNumber(num) {
-                if(num === undefined || num === null || isNaN(num)) return "0";
+                if(!num || isNaN(num)) return "0";
                 let absNum = Math.abs(num);
                 if(absNum >= 1e12) return (num / 1e12).toFixed(2) + "T";
                 if(absNum >= 1e9) return (num / 1e9).toFixed(2) + "B";
@@ -115,10 +104,10 @@
                     } catch (error) { onResultReadyCallback([]); }
                 },
                 getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
-                    showLoader(); errorOverlay.classList.remove('visible');
+                    showLoader();
                     const { from, to } = periodParams;
                     const intervalMap = { '1D': '1d', '1W': '1wk', '1M': '1mo' };
-                    const interval = intervalMap[resolution] || (/\d+/.test(resolution) ? `${resolution}m` : '1d');
+                    const interval = intervalMap[resolution] || '1d';
                     
                     const url = new URL(CONFIG.supabaseFunctionUrl);
                     url.searchParams.append('endpoint', 'bars');
@@ -145,15 +134,12 @@
                         const bars = result.timestamp.map((ts, index) => {
                             let timeMs = ts * 1000;
                             
+                            // Simpan data kalkulasi RAD ke Brankas Data
                             if (radData) {
                                 window.radDataStore[timeMs] = {
                                     xWAD: radData.xWAD[index],
                                     pelopor: radData.pelopor[index],
-                                    kunci: radData.kunci[index],
-                                    buy: radData.buy[index],
-                                    sell: radData.sell[index],
-                                    low: quotes.low[index],
-                                    high: quotes.high[index]
+                                    kunci: radData.kunci[index]
                                 };
                             }
 
@@ -169,7 +155,7 @@
                         
                         onHistoryCallback(bars, { noData: bars.length === 0 });
                     } catch (error) {
-                        onErrorCallback(error.message); showError(error.message);
+                        onErrorCallback(error.message);
                     } finally { hideLoader(); }
                 },
                 subscribeBars: () => {}, unsubscribeBars: () => {},
@@ -188,49 +174,7 @@
                 
                 custom_indicators_getter: function(PineJS) {
                     return Promise.resolve([
-                        // --- A. RAD Overlay (HANYA PANAH) ---
-                        {
-                            name: "RAD_Overlay",
-                            metainfo: {
-                                _metainfoVersion: 51,
-                                id: "RAD_Overlay@tv-basicstudies-1",
-                                description: "RAD_Overlay",
-                                shortDescription: "RAD_Sinyal",
-                                is_price_study: true, 
-                                isCustomIndicator: true,
-                                format: { type: "inherit" },
-                                plots: [
-                                    { id: "plot_buy", type: "shapes" },
-                                    { id: "plot_sell", type: "shapes" }
-                                ],
-                                defaults: {
-                                    styles: {
-                                        plot_buy: { plottype: "shape_arrow_up", location: "BelowBar", color: "#00FF00", text: "BUY", textcolor: "#FFFFFF", size: "normal" },
-                                        plot_sell: { plottype: "shape_arrow_down", location: "AboveBar", color: "#FF0000", text: "SELL", textcolor: "#FFFFFF", size: "normal" }
-                                    },
-                                    inputs: {}
-                                },
-                                inputs: []
-                            },
-                            constructor: function() {
-                                this.init = function(context, inputCallback) { this._context = context; this._input = inputCallback; };
-                                this.main = function(context, inputCallback) {
-                                    this._context = context; this._input = inputCallback;
-                                    
-                                    let time = PineJS.Std.time(this._context);
-                                    let d = window.radDataStore[time];
-                                    
-                                    if (!d) return [NaN, NaN];
-
-                                    let val_buy = (d.buy === true) ? safeNum(d.low) : NaN;
-                                    let val_sell = (d.sell === true) ? safeNum(d.high) : NaN;
-
-                                    return [val_buy, val_sell];
-                                };
-                            }
-                        },
-
-                        // --- B. RAD Oscillator (GARIS BAWAH) ---
+                        // --- RAD Oscillator Minimalis & Kuat ---
                         {
                             name: "RAD_Oscillator",
                             metainfo: {
@@ -241,18 +185,17 @@
                                 is_price_study: false, 
                                 isCustomIndicator: true,
                                 format: { type: "price", precision: 2 },
+                                // Format id array harus sederhana
                                 plots: [
-                                    { id: "plot_xwad", type: "line" },
-                                    { id: "plot_pelopor", type: "line" },
-                                    { id: "plot_kunci", type: "line" },
-                                    { id: "plot_zero", type: "line" }
+                                    { id: "plot_0", type: "line" },
+                                    { id: "plot_1", type: "line" },
+                                    { id: "plot_2", type: "line" }
                                 ],
                                 defaults: {
                                     styles: {
-                                        plot_xwad: { linestyle: 0, linewidth: 2, plottype: 1 /* histogram */, color: "rgba(169, 169, 169, 0.5)" },
-                                        plot_pelopor: { linestyle: 0, linewidth: 2, plottype: 0 /* line */, color: "#2962FF" },
-                                        plot_kunci: { linestyle: 0, linewidth: 2, plottype: 0 /* line */, color: "#FF6D00" },
-                                        plot_zero: { linestyle: 2 /* dashed */, linewidth: 1, plottype: 0, color: "#808080" }
+                                        plot_0: { linestyle: 0, linewidth: 2, plottype: 1, color: "rgba(169, 169, 169, 0.5)" }, // Histogram
+                                        plot_1: { linestyle: 0, linewidth: 2, plottype: 0, color: "#2962FF" }, // Line Biru
+                                        plot_2: { linestyle: 0, linewidth: 2, plottype: 0, color: "#FF6D00" }  // Line Oranye
                                     },
                                     inputs: {}
                                 },
@@ -266,13 +209,23 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    if (!d) return [NaN, NaN, NaN, 0];
+                                    // PENGAMANAN ZONA WAKTU: Jika meleset, cari timestamp terdekat (maksimal 24 jam)
+                                    if (!d) {
+                                        for (let t in window.radDataStore) {
+                                            if (Math.abs(t - time) <= 86400000) {
+                                                d = window.radDataStore[t];
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    
+                                    // PENGAMANAN AUTOSCALE: Jangan kirim undefined/NaN.
+                                    if (!d) return [0, 0, 0];
                                     
                                     return [
                                         safeNum(d.xWAD), 
                                         safeNum(d.pelopor), 
-                                        safeNum(d.kunci), 
-                                        0
+                                        safeNum(d.kunci)
                                     ];
                                 };
                             }
@@ -281,8 +234,8 @@
                 }
             });
 
+            // Tampilkan Oscillator secara otomatis
             widget.onChartReady(() => {
-                widget.chart().createStudy("RAD_Overlay", false, false);
                 widget.chart().createStudy("RAD_Oscillator", false, false);
             });
         });
