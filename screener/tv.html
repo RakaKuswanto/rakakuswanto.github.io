@@ -233,11 +233,10 @@
                                     this._context = context;
                                     this._input = inputCallback;
                                     
-                                    // BACA WAKTU (FIXED)
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    if (!d) return [4, NaN, NaN]; // Default abu-abu
+                                    if (!d) return [4, NaN, NaN];
 
                                     let cIdx = 4;
                                     if(d.color === "lime") cIdx = 0;
@@ -245,12 +244,13 @@
                                     else if(d.color === "aqua") cIdx = 2;
                                     else if(d.color === "fuchsia") cIdx = 3;
 
+                                    // Gunakan fungsi bawaan PineJS agar aman dari undefined/null
                                     let lowPrice = PineJS.Std.low(this._context);
                                     let highPrice = PineJS.Std.high(this._context);
                                     
-                                    // Render panah jika sinyal true
-                                    let buyPos = d.buy ? lowPrice : NaN;
-                                    let sellPos = d.sell ? highPrice : NaN;
+                                    // Sanitasi Posisi Panah: Wajib pastikan harga valid, kalau tidak paksa jadi NaN
+                                    let buyPos = (d.buy === true && lowPrice != null) ? lowPrice : NaN;
+                                    let sellPos = (d.sell === true && highPrice != null) ? highPrice : NaN;
 
                                     return [cIdx, buyPos, sellPos];
                                 };
@@ -298,7 +298,13 @@
                                     let d = window.radDataStore[time];
                                     
                                     if (!d) return [NaN, NaN, NaN, 0];
-                                    return [d.xWAD, d.pelopor, d.kunci, 0];
+                                    
+                                    // 🚀 SANITASI UTAMA: Paksa ubah null/undefined menjadi NaN
+                                    let safe_xWAD = (d.xWAD != null) ? d.xWAD : NaN;
+                                    let safe_pelopor = (d.pelopor != null) ? d.pelopor : NaN;
+                                    let safe_kunci = (d.kunci != null) ? d.kunci : NaN;
+
+                                    return [safe_xWAD, safe_pelopor, safe_kunci, 0];
                                 };
                             }
                         }
