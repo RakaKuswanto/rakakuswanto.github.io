@@ -6,7 +6,6 @@
     <title>Pro Screener Dashboard</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
@@ -15,8 +14,6 @@
         :root {
             --bg-dark: #0b1120;
             --card-dark: #1e293b;
-            --accent-green: #10b981;
-            --accent-red: #ef4444;
         }
         body {
             font-family: 'Plus Jakarta Sans', sans-serif;
@@ -26,16 +23,13 @@
         }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
         
-        /* Custom Scrollbar */
         ::-webkit-scrollbar { height: 4px; width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
         
-        /* Hide Scrollbar but allow scroll */
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* Animations */
         @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
         .skeleton {
             background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
@@ -43,7 +37,6 @@
             animation: shimmer 2s infinite;
         }
         
-        /* Date Input Styling */
         input[type="date"] {
             color-scheme: dark;
         }
@@ -107,12 +100,10 @@
                     <thead>
                         <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-800 bg-slate-900/95">
                             <th class="px-6 py-4 font-semibold">Emiten</th>
-                            <th class="px-6 py-4 font-semibold hidden sm:table-cell">Strategi</th>
+                            <th class="px-6 py-4 font-semibold hidden sm:table-cell">Fundamental</th>
                             <th class="px-6 py-4 font-semibold text-right hidden md:table-cell">Hold</th>
-                            <th class="px-6 py-4 font-semibold text-right">Entry</th>
-                            <th class="px-6 py-4 font-semibold text-right">Harga Kini</th>
-                            <th class="px-6 py-4 font-semibold text-center hidden sm:table-cell w-32">Trend</th>
-                            <th class="px-6 py-4 font-semibold text-right">Profit/Loss</th>
+                            <th class="px-6 py-4 font-semibold text-right">Harga</th>
+                            <th class="px-6 py-4 font-semibold text-right hidden sm:table-cell w-32">Volume</th>
                         </tr>
                     </thead>
                     <tbody id="stock-table-body" class="divide-y divide-slate-800 text-sm">
@@ -138,7 +129,6 @@
         // ================= APP STATE =================
         const state = {
             data: [],
-            priceCache: {},
             filters: { date: null, screener: null },
             page: 1,
             loading: false,
@@ -159,23 +149,38 @@
 
         // ================= HELPERS =================
         const formatIDR = (n) => n ? new Intl.NumberFormat('id-ID').format(n) : '-';
-        const formatPct = (n) => `${n > 0 ? '+' : ''}${n.toFixed(2)}%`;
         const formatDateShort = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
         const getDaysHeld = (d) => Math.max(0, Math.floor((new Date() - new Date(d)) / (86400000)));
 
+        const getStatusBadge = (status) => {
+            if (!status || status === 'N/A' || status === 'null') return `<span class="text-slate-500">-</span>`;
+            
+            if (status.includes('🔥') || status.includes('🟢')) {
+                return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+            }
+            if (status.includes('💎')) {
+                return `<span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+            }
+            if (status.includes('💡') || status.includes('🟡')) {
+                return `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+            }
+            if (status.includes('⛔') || status.includes('🚨') || status.includes('🔴')) {
+                return `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+            }
+            return `<span class="bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+        };
+
         // ================= LOGIC START =================
 
-        // 1. FILTER LOGIC (SYNC DATE PICKER & CAPSULES)
+        // 1. FILTER LOGIC
         async function initFilters() {
             try {
                 const { data, error } = await supabaseClient.rpc('get_distinct_screener_filters');
                 if (error) throw error;
 
-                // Process Dates
                 const dates = data.distinct_dates.map(i => i.scan_date).sort((a, b) => new Date(b) - new Date(a));
                 
                 if (dates.length > 0) {
-                    // Default to latest date if not set
                     if (!state.filters.date) {
                         state.filters.date = dates[0];
                         el.datePicker.value = dates[0];
@@ -183,7 +188,6 @@
                     renderDateCapsules(dates);
                 }
 
-                // Process Screeners
                 const screeners = data.distinct_screeners.map(i => i.screener_name).sort();
                 renderScreenerFilters(screeners);
 
@@ -193,20 +197,14 @@
         }
 
         function renderDateCapsules(allDates) {
-            // Show only last 10 days
             const recentDates = allDates.slice(0, 10); 
-            
             el.dateContainer.innerHTML = recentDates.map(date => {
                 const isActive = state.filters.date === date;
                 const activeClass = isActive 
                     ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 border-emerald-400' 
                     : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-white';
                 
-                return `
-                <button onclick="handleDateClick('${date}')" 
-                    class="shrink-0 px-4 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${activeClass}">
-                    ${formatDateShort(date)}
-                </button>`;
+                return `<button onclick="handleDateClick('${date}')" class="shrink-0 px-4 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${activeClass}">${formatDateShort(date)}</button>`;
             }).join('');
         }
 
@@ -220,32 +218,19 @@
             el.screenerContainer.innerHTML = html;
         }
 
-        // 2. EVENT HANDLERS
-        window.handleDateClick = (date) => {
-            el.datePicker.value = date;
-            applyFilter('date', date);
-        };
-
-        el.datePicker.addEventListener('change', (e) => {
-            applyFilter('date', e.target.value);
-        });
-
-        window.handleScreenerChange = (val) => {
-            applyFilter('screener', val === "" ? null : val);
-        };
+        window.handleDateClick = (date) => { el.datePicker.value = date; applyFilter('date', date); };
+        el.datePicker.addEventListener('change', (e) => applyFilter('date', e.target.value));
+        window.handleScreenerChange = (val) => applyFilter('screener', val === "" ? null : val);
 
         async function applyFilter(type, value) {
             if (state.filters[type] === value) return;
             state.filters[type] = value;
-            
-            // Re-render capsules to update active state
             if(type === 'date') initFilters(); 
-            
             resetData();
             await fetchData();
         }
 
-        // 3. DATA FETCHING
+        // 2. DATA FETCHING
         async function fetchData() {
             if (state.loading || !state.hasMore) return;
             state.loading = true;
@@ -273,13 +258,7 @@
                 state.totalDisplayed += data.length;
                 state.page++;
 
-                // Render Skeleton Rows
                 renderRows(data);
-                
-                // Fetch Prices & Update
-                fetchPricesForRows(data);
-                
-                // Initial Summary (using Entry Data only first)
                 updateSummary();
 
             } catch (e) {
@@ -291,150 +270,45 @@
             }
         }
 
-        // 4. PRICE FETCHING (BATCHED)
-        async function fetchPricesForRows(items) {
-            const BATCH_SIZE = 5;
-            for (let i = 0; i < items.length; i += BATCH_SIZE) {
-                const batch = items.slice(i, i + BATCH_SIZE);
-                await Promise.all(batch.map(async (item) => {
-                    const priceData = await getPrice(item.stock_code);
-                    updateRowUI(item, priceData);
-                }));
-                // Check if table was cleared while fetching
-                if (el.tableBody.innerHTML === '') break;
-                updateSummary(); // Update stats progressively
-            }
-        }
-
-        async function getPrice(ticker) {
-            if (state.priceCache[ticker]) return state.priceCache[ticker];
-            try {
-                const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/yahoo-proxy?ticker=${ticker}`);
-                const data = await res.json();
-                const result = {
-                    price: data.currentPrice || 0,
-                    dayHigh: data.dayHigh || 0,
-                    history: data.historical || []
-                };
-                state.priceCache[ticker] = result;
-                return result;
-            } catch {
-                return { price: 0, dayHigh: 0, history: [] };
-            }
-        }
-
-        // 5. RENDERING
+        // 3. RENDERING
         function renderRows(items) {
-            const html = items.map(item => `
+            const html = items.map(item => {
+                const priceFmt = formatIDR(item.entry_price);
+                const statusBadge = getStatusBadge(item.sector);
+                
+                const strategyLabel = item.screener_name === 'RADScreener' 
+                    ? `<span class="text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">RAD + V11</span>`
+                    : `<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${item.screener_name}</span>`;
+
+                return `
                 <tr id="row-${item.id}" class="group hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
                     <td class="px-6 py-4">
-                        <div class="flex items-center">
-                            <div>
-                                <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="font-bold text-white hover:text-emerald-400 hover:underline decoration-emerald-400 decoration-2 underline-offset-4 transition-all">
-                                    ${item.stock_code}
-                                </a>
-                            </div>
+                        <div class="flex items-center gap-2">
+                            <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="font-bold text-white text-base hover:text-emerald-400 transition-colors">
+                                ${item.stock_code}
+                            </a>
+                            ${strategyLabel}
                         </div>
                     </td>
-                    <td class="px-6 py-4 hidden sm:table-cell">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-800 text-slate-300 border border-slate-700">
-                            ${item.screener_name}
+                    <td class="px-6 py-4 hidden sm:table-cell">${statusBadge}</td>
+                    <td class="px-6 py-4 text-right hidden md:table-cell text-slate-400 text-sm">${getDaysHeld(item.scan_date)} Hari</td>
+                    <td class="px-6 py-4 text-right font-mono text-white font-medium">${priceFmt}</td>
+                    <td class="px-6 py-4 text-right hidden sm:table-cell">
+                        <span class="text-xs font-mono text-slate-400">
+                            ${item.volume_now ? (item.volume_now / 10000).toFixed(0) + 'K Lot' : '-'}
                         </span>
                     </td>
-                    <td class="px-6 py-4 text-right hidden md:table-cell text-slate-400 text-sm">
-                        ${getDaysHeld(item.scan_date)} Hari
-                    </td>
-                    <td class="px-6 py-4 text-right font-mono text-slate-300">
-                        ${formatIDR(item.entry_price)}
-                    </td>
-                    <td class="px-6 py-4 text-right" id="price-cell-${item.id}">
-                        <div class="skeleton h-5 w-20 ml-auto rounded"></div>
-                    </td>
-                    <td class="px-6 py-4 hidden sm:table-cell p-0" id="chart-cell-${item.id}">
-                         <div class="skeleton h-8 w-24 mx-auto rounded opacity-50"></div>
-                    </td>
-                    <td class="px-6 py-4 text-right" id="pnl-cell-${item.id}">
-                        <div class="skeleton h-8 w-16 ml-auto rounded"></div>
-                    </td>
                 </tr>
-            `).join('');
+                `;
+            }).join('');
             el.tableBody.insertAdjacentHTML('beforeend', html);
         }
 
-        // --- FIXED FUNCTION ---
-        function updateRowUI(item, data) {
-            // SAFETY CHECK: Check if element exists before modifying
-            const priceCell = document.getElementById(`price-cell-${item.id}`);
-            if (!priceCell) return; // Stop if row has been removed from DOM
-
-            // CALCS
-            const current = data.price || item.entry_price;
-            const high = data.dayHigh || current;
-            const comparePrice = high > 0 ? high : current;
-            const pnlPct = item.entry_price ? ((comparePrice - item.entry_price) / item.entry_price) * 100 : 0;
-            const isProfit = pnlPct > 0;
-            const colorClass = isProfit ? 'text-emerald-400' : (pnlPct < 0 ? 'text-red-400' : 'text-slate-400');
-            const bgClass = isProfit ? 'bg-emerald-500/10 border-emerald-500/20' : (pnlPct < 0 ? 'bg-red-500/10 border-red-500/20' : 'bg-slate-800 border-slate-700');
-            const icon = isProfit ? '▲' : (pnlPct < 0 ? '▼' : '−');
-
-            // UPDATE PRICE
-            priceCell.innerHTML = `
-                <div class="font-mono text-white font-medium">${formatIDR(current)}</div>
-                ${data.dayHigh ? `<div class="text-[10px] text-slate-500 mt-1">H: ${formatIDR(data.dayHigh)}</div>` : ''}
-            `;
-
-            // UPDATE PNL (Check existence just in case, though priceCell check usually covers it)
-            const pnlCell = document.getElementById(`pnl-cell-${item.id}`);
-            if (pnlCell) {
-                pnlCell.innerHTML = `
-                    <div class="inline-flex items-center justify-end gap-2 px-3 py-1.5 rounded-lg border ${bgClass} min-w-[90px]">
-                        <span class="text-[10px] ${colorClass}">${icon}</span>
-                        <span class="font-mono font-bold text-sm ${colorClass}">${Math.abs(pnlPct).toFixed(2)}%</span>
-                    </div>
-                `;
-            }
-
-            // RENDER CHART
-            const chartEl = document.getElementById(`chart-cell-${item.id}`);
-            if (chartEl) {
-                if (data.history.length > 2) {
-                    chartEl.innerHTML = '';
-                    new ApexCharts(chartEl, {
-                        chart: { type: 'area', height: 40, width: 120, sparkline: { enabled: true }, animations: { enabled: false } },
-                        stroke: { curve: 'smooth', width: 2 },
-                        fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.0, stops: [0, 100] } },
-                        series: [{ data: data.history.map(h => h.y) }],
-                        colors: [isProfit ? '#10b981' : '#ef4444'],
-                        tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
-                    }).render();
-                } else {
-                    chartEl.innerHTML = '<span class="text-[10px] text-slate-600">-</span>';
-                }
-            }
-        }
-
-        // 6. SUMMARY STATS
         function updateSummary() {
-            let win = 0, totalPnl = 0, count = 0;
-            
-            state.data.forEach(item => {
-                const priceInfo = state.priceCache[item.stock_code];
-                if (priceInfo && priceInfo.price > 0) {
-                    const compare = priceInfo.dayHigh || priceInfo.price;
-                    const pnl = ((compare - item.entry_price) / item.entry_price) * 100;
-                    if (pnl > 0.5) win++; // Threshold small noise
-                    totalPnl += pnl;
-                    count++;
-                }
-            });
-
-            const winRate = count ? (win / count) * 100 : 0;
-            const avgPnl = count ? totalPnl / count : 0;
             const totalItems = state.totalDisplayed;
-
-            // Render Cards
+            
             const createCard = (title, value, sub, color) => `
-                <div class="bg-slate-900/50 backdrop-blur border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full hover:border-slate-700 transition-colors">
+                <div class="bg-slate-900/50 backdrop-blur border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full">
                     <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">${title}</div>
                     <div class="flex items-end gap-2">
                         <div class="text-2xl lg:text-3xl font-bold text-white">${value}</div>
@@ -445,9 +319,9 @@
 
             el.summary.innerHTML = `
                 ${createCard('Total Sinyal', totalItems, 'Emiten Terdeteksi', 'text-slate-500')}
-                ${createCard('Win Rate', `${winRate.toFixed(0)}%`, winRate >= 50 ? 'Strong' : 'Weak', winRate >= 50 ? 'text-emerald-400' : 'text-red-400')}
-                ${createCard('Rata-rata Gain', `${avgPnl > 0 ? '+' : ''}${avgPnl.toFixed(2)}%`, 'Per Trade', avgPnl >= 0 ? 'text-emerald-400' : 'text-red-400')}
-                ${createCard('Tanggal Scan', state.filters.date ? formatDateShort(state.filters.date) : '7 Hari Terakhir', 'Filter Aktif', 'text-blue-400')}
+                ${createCard('Kondisi Pasar', 'Aktif', 'Live Database', 'text-emerald-400')}
+                ${createCard('Filter Aktif', state.filters.screener || 'Semua Strategi', '', 'text-blue-400')}
+                ${createCard('Tanggal Scan', state.filters.date ? formatDateShort(state.filters.date) : 'Terbaru', 'Sinkron', 'text-slate-400')}
             `;
         }
 
@@ -477,14 +351,12 @@
             await initFilters();
             await fetchData();
             
-            // Auto refresh listener
             document.getElementById('refresh-btn').addEventListener('click', () => {
                 resetData();
                 fetchData();
                 el.lastUpdated.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
             });
         })();
-
     </script>
 </body>
 </html>
