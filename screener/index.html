@@ -38,9 +38,7 @@
             animation: shimmer 2s infinite;
         }
         
-        input[type="date"] {
-            color-scheme: dark;
-        }
+        input[type="date"] { color-scheme: dark; }
     </style>
 </head>
 <body class="min-h-screen pb-12">
@@ -75,7 +73,6 @@
 
         <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-1 mb-6 sticky top-2 z-30 shadow-2xl shadow-black/50">
             <div class="flex flex-col sm:flex-row items-center gap-1">
-                
                 <div class="flex items-center gap-2 p-2 w-full sm:w-auto border-b sm:border-b-0 sm:border-r border-slate-800/50 pr-4">
                     <div class="relative group">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -84,11 +81,9 @@
                         <input type="date" id="manual-date-picker" class="pl-10 pr-3 py-2 bg-slate-950/50 border border-slate-800 rounded-lg text-sm text-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 block w-full outline-none transition-all cursor-pointer hover:bg-slate-900">
                     </div>
                 </div>
-
                 <div class="flex-1 w-full overflow-hidden px-2 py-2 sm:py-0">
                     <div id="date-list-container" class="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth"></div>
                 </div>
-
                 <div class="hidden md:flex border-l border-slate-800/50 pl-2" id="screener-filter-container"></div>
             </div>
         </div>
@@ -102,7 +97,7 @@
                             <th class="px-6 py-4 font-semibold hidden sm:table-cell">Fundamental</th>
                             <th class="px-6 py-4 font-semibold text-right hidden md:table-cell">Hold</th>
                             <th class="px-6 py-4 font-semibold text-right">Harga Live</th>
-                            <th class="px-6 py-4 font-semibold text-center hidden sm:table-cell w-32">Tren 5D</th>
+                            <th class="px-6 py-4 font-semibold text-center hidden sm:table-cell w-36">Candle 5D</th>
                             <th class="px-6 py-4 font-semibold text-right hidden sm:table-cell w-32">Volume Scan</th>
                         </tr>
                     </thead>
@@ -110,7 +105,6 @@
                         </tbody>
                 </table>
             </div>
-            
             <div id="load-more-container" class="p-6 text-center border-t border-slate-800"></div>
         </div>
 
@@ -167,7 +161,6 @@
             return `<span class="bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
         };
 
-        // Mengelompokkan sinyal ganda
         function getGroupedData(items) {
             const map = new Map();
             const result = [];
@@ -270,11 +263,9 @@
 
                 const groupedData = getGroupedData(state.data);
 
-                // 1. Render kerangka tabel dulu (dengan Skeleton loading untuk harga & chart)
                 renderRows(groupedData);
                 updateSummary(groupedData);
                 
-                // 2. Tarik Harga Live & Data Sparkline dari Edge Function
                 await fetchPricesFromEdge(groupedData);
 
             } catch (e) {
@@ -286,18 +277,16 @@
             }
         }
 
-        // ================= FETCH LIVE FROM EDGE FUNCTION =================
+        // ================= FETCH LIVE & CANDLESTICK =================
         async function fetchPricesFromEdge(groupedItems) {
             if (groupedItems.length === 0) return;
 
-            // Batching: Yahoo API bisa error jika URL terlalu panjang. Tarik per 20 saham.
             const BATCH_SIZE = 20;
             for (let i = 0; i < groupedItems.length; i += BATCH_SIZE) {
                 const batch = groupedItems.slice(i, i + BATCH_SIZE);
                 const tickers = batch.map(item => item.stock_code).join(',');
 
                 try {
-                    // Panggil nama Edge Function kamu sesuai yang dideploy (get-price)
                     const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/get-price?tickers=${tickers}`);
                     if (!res.ok) throw new Error('Gagal fetch edge function');
                     
@@ -306,7 +295,7 @@
                     liveData.forEach(data => {
                         if (data.error) return;
 
-                        // --- 1. Update Harga & PnL Sementara ---
+                        // 1. Update Harga
                         const priceCell = document.querySelector(`#price-cell-${data.ticker}`);
                         const originalItem = batch.find(b => b.stock_code === data.ticker);
                         
@@ -326,22 +315,36 @@
                              priceCell.innerHTML = `<span class="text-slate-500">-</span>`;
                         }
 
-                        // --- 2. Update Sparkline 5D Chart ---
+                        // 2. Update Candlestick Chart 5D
                         const chartEl = document.querySelector(`#chart-${data.ticker}`);
-                        if (chartEl && data.history5D && data.history5D.length > 1) {
-                            chartEl.innerHTML = ''; // Hapus kotak skeleton
-                            
-                            const history = data.history5D;
-                            const isUp = history[history.length - 1] >= history[0];
-                            const chartColor = isUp ? '#10b981' : '#ef4444';
+                        if (chartEl && data.historyOHLC && data.historyOHLC.length > 0) {
+                            chartEl.innerHTML = ''; 
 
                             new ApexCharts(chartEl, {
-                                chart: { type: 'area', height: 40, width: 90, sparkline: { enabled: true }, animations: { enabled: false } },
-                                stroke: { curve: 'smooth', width: 2 },
-                                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.0, stops: [0, 100] } },
-                                series: [{ data: history }],
-                                colors: [chartColor],
-                                tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
+                                chart: { 
+                                    type: 'candlestick', 
+                                    height: 45, 
+                                    width: 100, 
+                                    sparkline: { enabled: true }, 
+                                    animations: { enabled: false } 
+                                },
+                                series: [{ data: data.historyOHLC }],
+                                plotOptions: {
+                                    candlestick: {
+                                        colors: {
+                                            upward: '#10b981',   // Hijau untuk Bullish
+                                            downward: '#ef4444'  // Merah untuk Bearish
+                                        },
+                                        wick: { useFillColor: true }
+                                    }
+                                },
+                                tooltip: { 
+                                    theme: 'dark',
+                                    fixed: { enabled: false }, 
+                                    x: { show: false },
+                                    y: { title: { formatter: () => '' } },
+                                    marker: { show: false }
+                                }
                             }).render();
                         } else if (chartEl) {
                              chartEl.innerHTML = '<span class="text-[10px] text-slate-600 flex items-center justify-center h-full">-</span>';
@@ -351,7 +354,7 @@
                     console.error("Error fetching batch:", error);
                     batch.forEach(item => {
                         const cell = document.querySelector(`#price-cell-${item.stock_code}`);
-                        if (cell) cell.innerHTML = `<span class="text-xs text-rose-500">API Timeout</span>`;
+                        if (cell) cell.innerHTML = `<span class="text-xs text-rose-500">API Error</span>`;
                     });
                 }
             }
@@ -367,7 +370,6 @@
                     return `<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap shadow-sm">${name}</span>`;
                 }).join('<span class="w-1.5 inline-block"></span>');
 
-                // Volume Indicator
                 let volHtml = `<span class="text-xs font-mono text-slate-500">-</span>`;
                 if (item.volume_now) {
                     const volLot = (item.volume_now / 10000).toFixed(0) + 'K Lot';
@@ -399,8 +401,8 @@
                     </td>
                     
                     <td class="px-6 py-4 hidden sm:table-cell p-0 text-center">
-                        <div id="chart-${item.stock_code}" class="h-10 w-24 mx-auto opacity-80 group-hover:opacity-100 transition-opacity">
-                            <div class="skeleton h-full w-full rounded"></div>
+                        <div id="chart-${item.stock_code}" class="h-12 w-28 mx-auto opacity-90 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <div class="skeleton h-8 w-20 rounded"></div>
                         </div>
                     </td>
                     
