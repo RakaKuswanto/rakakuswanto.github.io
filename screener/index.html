@@ -164,7 +164,7 @@
             if (status.includes('💡') || status.includes('🟡')) {
                 return `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
             }
-            if (status.includes('⛔') || status.includes('🚨') || status.includes('🔴')) {
+            if (status.includes('⛔') || status.includes('🚨') || status.includes('🔴') || status.includes('Minus')) {
                 return `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
             }
             return `<span class="bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
@@ -274,7 +274,7 @@
         function renderRows(items) {
             const html = items.map(item => {
                 const priceFmt = formatIDR(item.entry_price);
-                const statusBadge = getStatusBadge(item.sector);
+                const statusBadge = getStatusBadge(item.sector); // Status Fundamental ditarik dari kolom 'sector'
                 
                 const strategyLabel = item.screener_name === 'RADScreener' 
                     ? `<span class="text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">RAD + V11</span>`
@@ -304,8 +304,21 @@
             el.tableBody.insertAdjacentHTML('beforeend', html);
         }
 
+        // --- FUNGSI BARU UNTUK SUMMARY KARTU FUNDAMENTAL ---
         function updateSummary() {
             const totalItems = state.totalDisplayed;
+            
+            // Hitung statistik fundamental
+            let strongBuyCount = 0;
+            let wonderfulCount = 0;
+            let avoidCount = 0;
+
+            state.data.forEach(item => {
+                const status = item.sector || "";
+                if (status.includes('🔥') || status.includes('Strong Buy') || status.includes('🟢')) strongBuyCount++;
+                if (status.includes('💎') || status.includes('WONDERFUL')) wonderfulCount++;
+                if (status.includes('⛔') || status.includes('🚨') || status.includes('Hindari') || status.includes('Laba Minus') || status.includes('🔴')) avoidCount++;
+            });
             
             const createCard = (title, value, sub, color) => `
                 <div class="bg-slate-900/50 backdrop-blur border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full">
@@ -317,11 +330,12 @@
                 </div>
             `;
 
+            // Tampilkan statistik fundamental sebagai pengganti win rate
             el.summary.innerHTML = `
                 ${createCard('Total Sinyal', totalItems, 'Emiten Terdeteksi', 'text-slate-500')}
-                ${createCard('Kondisi Pasar', 'Aktif', 'Live Database', 'text-emerald-400')}
-                ${createCard('Filter Aktif', state.filters.screener || 'Semua Strategi', '', 'text-blue-400')}
-                ${createCard('Tanggal Scan', state.filters.date ? formatDateShort(state.filters.date) : 'Terbaru', 'Sinkron', 'text-slate-400')}
+                ${createCard('Strong Buy 🔥', strongBuyCount, 'Valuasi Diskon', 'text-emerald-400')}
+                ${createCard('Wonderful 💎', wonderfulCount, 'Pertumbuhan Kuat', 'text-blue-400')}
+                ${createCard('Hindari ⛔', avoidCount, 'Red Flag / Rugi', 'text-rose-400')}
             `;
         }
 
