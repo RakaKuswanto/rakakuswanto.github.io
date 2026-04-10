@@ -86,12 +86,10 @@
                 </div>
 
                 <div class="flex-1 w-full overflow-hidden px-2 py-2 sm:py-0">
-                    <div id="date-list-container" class="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth">
-                        </div>
+                    <div id="date-list-container" class="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth"></div>
                 </div>
 
-                <div class="hidden md:flex border-l border-slate-800/50 pl-2" id="screener-filter-container">
-                    </div>
+                <div class="hidden md:flex border-l border-slate-800/50 pl-2" id="screener-filter-container"></div>
             </div>
         </div>
 
@@ -103,9 +101,9 @@
                             <th class="px-6 py-4 font-semibold">Emiten & Strategi</th>
                             <th class="px-6 py-4 font-semibold hidden sm:table-cell">Fundamental</th>
                             <th class="px-6 py-4 font-semibold text-right hidden md:table-cell">Hold</th>
-                            <th class="px-6 py-4 font-semibold text-right">Harga</th>
+                            <th class="px-6 py-4 font-semibold text-right">Harga Live</th>
                             <th class="px-6 py-4 font-semibold text-center hidden sm:table-cell w-32">Tren 5D</th>
-                            <th class="px-6 py-4 font-semibold text-right hidden sm:table-cell w-32">Volume</th>
+                            <th class="px-6 py-4 font-semibold text-right hidden sm:table-cell w-32">Volume Scan</th>
                         </tr>
                     </thead>
                     <tbody id="stock-table-body" class="divide-y divide-slate-800 text-sm">
@@ -128,7 +126,6 @@
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
         
-        // ================= APP STATE =================
         const state = {
             data: [],
             filters: { date: null, screener: null },
@@ -138,7 +135,6 @@
             totalDisplayed: 0
         };
 
-        // ================= UI ELEMENTS =================
         const el = {
             tableBody: document.getElementById('stock-table-body'),
             dateContainer: document.getElementById('date-list-container'),
@@ -156,7 +152,6 @@
 
         const getStatusBadge = (status) => {
             if (!status || status === 'N/A' || status === 'null') return `<span class="text-slate-500">-</span>`;
-            
             if (status.includes('🔥') || status.includes('Strong Buy') || status.includes('🟢')) {
                 return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
             }
@@ -172,11 +167,10 @@
             return `<span class="bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
         };
 
-        // Mengelompokkan sinyal ganda menjadi 1 baris
+        // Mengelompokkan sinyal ganda
         function getGroupedData(items) {
             const map = new Map();
             const result = [];
-
             items.forEach(item => {
                 const key = `${item.scan_date}_${item.stock_code}`;
                 if (!map.has(key)) {
@@ -198,9 +192,7 @@
             try {
                 const { data, error } = await supabaseClient.rpc('get_distinct_screener_filters');
                 if (error) throw error;
-
                 const dates = data.distinct_dates.map(i => i.scan_date).sort((a, b) => new Date(b) - new Date(a));
-                
                 if (dates.length > 0) {
                     if (!state.filters.date) {
                         state.filters.date = dates[0];
@@ -208,10 +200,8 @@
                     }
                     renderDateCapsules(dates);
                 }
-
                 const screeners = data.distinct_screeners.map(i => i.screener_name).sort();
                 renderScreenerFilters(screeners);
-
             } catch (e) {
                 console.error("Filter init failed:", e);
             }
@@ -224,7 +214,6 @@
                 const activeClass = isActive 
                     ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 border-emerald-400' 
                     : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-white';
-                
                 return `<button onclick="handleDateClick('${date}')" class="shrink-0 px-4 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${activeClass}">${formatDateShort(date)}</button>`;
             }).join('');
         }
@@ -279,12 +268,14 @@
                 state.totalDisplayed += data.length;
                 state.page++;
 
-                // Eksekusi Grouping Data
                 const groupedData = getGroupedData(state.data);
 
+                // 1. Render kerangka tabel dulu (dengan Skeleton loading untuk harga & chart)
                 renderRows(groupedData);
-                renderSparklines(groupedData);
                 updateSummary(groupedData);
+                
+                // 2. Tarik Harga Live & Data Sparkline dari Edge Function
+                await fetchPricesFromEdge(groupedData);
 
             } catch (e) {
                 console.error(e);
@@ -295,42 +286,101 @@
             }
         }
 
-        // ================= RENDERING =================
+        // ================= FETCH LIVE FROM EDGE FUNCTION =================
+        async function fetchPricesFromEdge(groupedItems) {
+            if (groupedItems.length === 0) return;
+
+            // Batching: Yahoo API bisa error jika URL terlalu panjang. Tarik per 20 saham.
+            const BATCH_SIZE = 20;
+            for (let i = 0; i < groupedItems.length; i += BATCH_SIZE) {
+                const batch = groupedItems.slice(i, i + BATCH_SIZE);
+                const tickers = batch.map(item => item.stock_code).join(',');
+
+                try {
+                    // Panggil nama Edge Function kamu sesuai yang dideploy (get-price)
+                    const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/get-price?tickers=${tickers}`);
+                    if (!res.ok) throw new Error('Gagal fetch edge function');
+                    
+                    const liveData = await res.json();
+
+                    liveData.forEach(data => {
+                        if (data.error) return;
+
+                        // --- 1. Update Harga & PnL Sementara ---
+                        const priceCell = document.querySelector(`#price-cell-${data.ticker}`);
+                        const originalItem = batch.find(b => b.stock_code === data.ticker);
+                        
+                        if (priceCell && data.price) {
+                            let pnlHtml = '';
+                            if (originalItem && originalItem.entry_price) {
+                                const pnl = ((data.price - originalItem.entry_price) / originalItem.entry_price) * 100;
+                                const color = pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400');
+                                const sign = pnl > 0 ? '+' : '';
+                                pnlHtml = `<div class="text-[10px] ${color} mt-0.5">${sign}${pnl.toFixed(2)}% vs Scan</div>`;
+                            }
+                            priceCell.innerHTML = `
+                                <div class="font-mono text-white font-medium">${formatIDR(data.price)}</div>
+                                ${pnlHtml}
+                            `;
+                        } else if (priceCell) {
+                             priceCell.innerHTML = `<span class="text-slate-500">-</span>`;
+                        }
+
+                        // --- 2. Update Sparkline 5D Chart ---
+                        const chartEl = document.querySelector(`#chart-${data.ticker}`);
+                        if (chartEl && data.history5D && data.history5D.length > 1) {
+                            chartEl.innerHTML = ''; // Hapus kotak skeleton
+                            
+                            const history = data.history5D;
+                            const isUp = history[history.length - 1] >= history[0];
+                            const chartColor = isUp ? '#10b981' : '#ef4444';
+
+                            new ApexCharts(chartEl, {
+                                chart: { type: 'area', height: 40, width: 90, sparkline: { enabled: true }, animations: { enabled: false } },
+                                stroke: { curve: 'smooth', width: 2 },
+                                fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.0, stops: [0, 100] } },
+                                series: [{ data: history }],
+                                colors: [chartColor],
+                                tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
+                            }).render();
+                        } else if (chartEl) {
+                             chartEl.innerHTML = '<span class="text-[10px] text-slate-600 flex items-center justify-center h-full">-</span>';
+                        }
+                    });
+                } catch (error) {
+                    console.error("Error fetching batch:", error);
+                    batch.forEach(item => {
+                        const cell = document.querySelector(`#price-cell-${item.stock_code}`);
+                        if (cell) cell.innerHTML = `<span class="text-xs text-rose-500">API Timeout</span>`;
+                    });
+                }
+            }
+        }
+
+        // ================= RENDERING TABLE =================
         function renderRows(groupedItems) {
             const html = groupedItems.map(item => {
-                const priceFmt = formatIDR(item.entry_price);
                 const statusBadge = getStatusBadge(item.sector);
                 
-                // Looping Multiple Strategy Badges
                 const strategyLabels = item.screener_names.map(name => {
-                    if (name === 'RADScreener') {
-                        return `<span class="text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap shadow-sm">RAD + V11</span>`;
-                    }
+                    if (name === 'RADScreener') return `<span class="text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap shadow-sm">RAD + V11</span>`;
                     return `<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap shadow-sm">${name}</span>`;
                 }).join('<span class="w-1.5 inline-block"></span>');
 
-                // Logika Volume & Volume Spike
+                // Volume Indicator
                 let volHtml = `<span class="text-xs font-mono text-slate-500">-</span>`;
                 if (item.volume_now) {
                     const volLot = (item.volume_now / 10000).toFixed(0) + 'K Lot';
                     let spikeHtml = '';
-                    
-                    // Jika Volume hari ini > 200% Rata-rata 10 hari
                     if (item.volume_10d_avg && item.volume_now > (item.volume_10d_avg * 2)) {
                         const spikePct = Math.round((item.volume_now / item.volume_10d_avg) * 100);
                         spikeHtml = `<span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded mt-1 border border-amber-400/20">🔥 VOL +${spikePct}%</span>`;
                     }
-                    
-                    volHtml = `
-                        <div class="flex flex-col items-end">
-                            <span class="font-mono text-slate-300">${volLot}</span>
-                            ${spikeHtml}
-                        </div>
-                    `;
+                    volHtml = `<div class="flex flex-col items-end"><span class="font-mono text-slate-300">${volLot}</span>${spikeHtml}</div>`;
                 }
 
                 return `
-                <tr id="row-${item.id}" class="group hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
+                <tr id="row-${item.stock_code}" class="group hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
                     <td class="px-6 py-4">
                         <div class="flex items-center gap-2 flex-wrap">
                             <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="font-bold text-white text-base hover:text-emerald-400 transition-colors">
@@ -343,15 +393,18 @@
                     </td>
                     <td class="px-6 py-4 hidden sm:table-cell">${statusBadge}</td>
                     <td class="px-6 py-4 text-right hidden md:table-cell text-slate-400 text-sm">${getDaysHeld(item.scan_date)} Hari</td>
-                    <td class="px-6 py-4 text-right font-mono text-white font-medium">${priceFmt}</td>
+                    
+                    <td class="px-6 py-4 text-right" id="price-cell-${item.stock_code}">
+                        <div class="skeleton h-5 w-20 ml-auto rounded"></div>
+                    </td>
                     
                     <td class="px-6 py-4 hidden sm:table-cell p-0 text-center">
-                        <div id="chart-${item.id}" class="h-10 w-24 mx-auto opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                        <div id="chart-${item.stock_code}" class="h-10 w-24 mx-auto opacity-80 group-hover:opacity-100 transition-opacity">
+                            <div class="skeleton h-full w-full rounded"></div>
+                        </div>
                     </td>
                     
-                    <td class="px-6 py-4 text-right hidden sm:table-cell">
-                        ${volHtml}
-                    </td>
+                    <td class="px-6 py-4 text-right hidden sm:table-cell">${volHtml}</td>
                 </tr>
                 `;
             }).join('');
@@ -359,46 +412,16 @@
             el.tableBody.innerHTML = html;
         }
 
-        // --- Render Mini Chart (Sparklines) ---
-        function renderSparklines(items) {
-            items.forEach(item => {
-                const chartEl = document.querySelector(`#chart-${item.id}`);
-                // Pastikan element ada dan data recent_prices tersedia dari Python
-                if (!chartEl || !item.recent_prices) {
-                    if (chartEl) chartEl.innerHTML = '<span class="text-[10px] text-slate-600 flex items-center justify-center h-full">-</span>';
-                    return;
-                }
-
-                const priceData = item.recent_prices.split(',').map(Number);
-                if (priceData.length < 2) return;
-
-                // Tentukan warna: Hijau jika harga terakhir >= harga awal
-                const isUp = priceData[priceData.length - 1] >= priceData[0];
-                const chartColor = isUp ? '#10b981' : '#ef4444'; 
-
-                new ApexCharts(chartEl, {
-                    chart: { type: 'area', height: 40, width: 90, sparkline: { enabled: true }, animations: { enabled: false } },
-                    stroke: { curve: 'smooth', width: 2 },
-                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.0, stops: [0, 100] } },
-                    series: [{ data: priceData }],
-                    colors: [chartColor],
-                    tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
-                }).render();
-            });
-        }
-
+        // ================= SUMMARY =================
         function updateSummary(groupedItems) {
             const totalItems = groupedItems.length;
-            
-            let strongBuyCount = 0;
-            let wonderfulCount = 0;
-            let avoidCount = 0;
+            let strongBuyCount = 0, wonderfulCount = 0, avoidCount = 0;
 
             groupedItems.forEach(item => {
                 const status = item.sector || "";
                 if (status.includes('🔥') || status.includes('Strong Buy') || status.includes('🟢')) strongBuyCount++;
                 if (status.includes('💎') || status.includes('WONDERFUL')) wonderfulCount++;
-                if (status.includes('⛔') || status.includes('🚨') || status.includes('Hindari') || status.includes('Laba Minus') || status.includes('🔴')) avoidCount++;
+                if (status.includes('⛔') || status.includes('🚨') || status.includes('Hindari') || status.includes('Minus') || status.includes('🔴')) avoidCount++;
             });
             
             const createCard = (title, value, sub, color) => `
