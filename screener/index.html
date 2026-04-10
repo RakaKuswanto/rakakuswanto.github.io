@@ -7,6 +7,7 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
 
@@ -54,12 +55,12 @@
                     </div>
                     Belajar Saham Dari Nol
                 </h1>
-                <p class="text-slate-400 text-sm mt-1 ml-14">Monitoring performa sinyal saham secara real-time</p>
+                <p class="text-slate-400 text-sm mt-1 ml-14">Sistem Algoritma & Fundamental Trading Real-time</p>
             </div>
             
             <div class="flex items-center gap-3">
                 <span id="last-updated" class="text-xs font-mono text-slate-500 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-800">Updating...</span>
-                <button id="refresh-btn" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-700 transition-all active:scale-95">
+                <button id="refresh-btn" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-700 transition-all active:scale-95" title="Refresh Data">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                 </button>
             </div>
@@ -99,10 +100,11 @@
                 <table class="w-full text-left border-collapse">
                     <thead>
                         <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-800 bg-slate-900/95">
-                            <th class="px-6 py-4 font-semibold">Emiten</th>
+                            <th class="px-6 py-4 font-semibold">Emiten & Strategi</th>
                             <th class="px-6 py-4 font-semibold hidden sm:table-cell">Fundamental</th>
                             <th class="px-6 py-4 font-semibold text-right hidden md:table-cell">Hold</th>
                             <th class="px-6 py-4 font-semibold text-right">Harga</th>
+                            <th class="px-6 py-4 font-semibold text-center hidden sm:table-cell w-32">Tren 5D</th>
                             <th class="px-6 py-4 font-semibold text-right hidden sm:table-cell w-32">Volume</th>
                         </tr>
                     </thead>
@@ -155,24 +157,43 @@
         const getStatusBadge = (status) => {
             if (!status || status === 'N/A' || status === 'null') return `<span class="text-slate-500">-</span>`;
             
-            if (status.includes('🔥') || status.includes('🟢')) {
+            if (status.includes('🔥') || status.includes('Strong Buy') || status.includes('🟢')) {
                 return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
             }
-            if (status.includes('💎')) {
+            if (status.includes('💎') || status.includes('WONDERFUL')) {
                 return `<span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
             }
             if (status.includes('💡') || status.includes('🟡')) {
                 return `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
             }
-            if (status.includes('⛔') || status.includes('🚨') || status.includes('🔴') || status.includes('Minus')) {
+            if (status.includes('⛔') || status.includes('🚨') || status.includes('Hindari') || status.includes('Minus') || status.includes('🔴')) {
                 return `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
             }
             return `<span class="bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
         };
 
-        // ================= LOGIC START =================
+        // Mengelompokkan sinyal ganda menjadi 1 baris
+        function getGroupedData(items) {
+            const map = new Map();
+            const result = [];
 
-        // 1. FILTER LOGIC
+            items.forEach(item => {
+                const key = `${item.scan_date}_${item.stock_code}`;
+                if (!map.has(key)) {
+                    const newItem = { ...item, screener_names: [item.screener_name] };
+                    map.set(key, newItem);
+                    result.push(newItem);
+                } else {
+                    const existingItem = map.get(key);
+                    if (!existingItem.screener_names.includes(item.screener_name)) {
+                        existingItem.screener_names.push(item.screener_name);
+                    }
+                }
+            });
+            return result;
+        }
+
+        // ================= FILTER LOGIC =================
         async function initFilters() {
             try {
                 const { data, error } = await supabaseClient.rpc('get_distinct_screener_filters');
@@ -230,7 +251,7 @@
             await fetchData();
         }
 
-        // 2. DATA FETCHING
+        // ================= DATA FETCHING =================
         async function fetchData() {
             if (state.loading || !state.hasMore) return;
             state.loading = true;
@@ -258,8 +279,12 @@
                 state.totalDisplayed += data.length;
                 state.page++;
 
-                renderRows(data);
-                updateSummary();
+                // Eksekusi Grouping Data
+                const groupedData = getGroupedData(state.data);
+
+                renderRows(groupedData);
+                renderSparklines(groupedData);
+                updateSummary(groupedData);
 
             } catch (e) {
                 console.error(e);
@@ -270,50 +295,106 @@
             }
         }
 
-        // 3. RENDERING
-        function renderRows(items) {
-            const html = items.map(item => {
+        // ================= RENDERING =================
+        function renderRows(groupedItems) {
+            const html = groupedItems.map(item => {
                 const priceFmt = formatIDR(item.entry_price);
-                const statusBadge = getStatusBadge(item.sector); // Status Fundamental ditarik dari kolom 'sector'
+                const statusBadge = getStatusBadge(item.sector);
                 
-                const strategyLabel = item.screener_name === 'RADScreener' 
-                    ? `<span class="text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">RAD + V11</span>`
-                    : `<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold">${item.screener_name}</span>`;
+                // Looping Multiple Strategy Badges
+                const strategyLabels = item.screener_names.map(name => {
+                    if (name === 'RADScreener') {
+                        return `<span class="text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap shadow-sm">RAD + V11</span>`;
+                    }
+                    return `<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap shadow-sm">${name}</span>`;
+                }).join('<span class="w-1.5 inline-block"></span>');
+
+                // Logika Volume & Volume Spike
+                let volHtml = `<span class="text-xs font-mono text-slate-500">-</span>`;
+                if (item.volume_now) {
+                    const volLot = (item.volume_now / 10000).toFixed(0) + 'K Lot';
+                    let spikeHtml = '';
+                    
+                    // Jika Volume hari ini > 200% Rata-rata 10 hari
+                    if (item.volume_10d_avg && item.volume_now > (item.volume_10d_avg * 2)) {
+                        const spikePct = Math.round((item.volume_now / item.volume_10d_avg) * 100);
+                        spikeHtml = `<span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded mt-1 border border-amber-400/20">🔥 VOL +${spikePct}%</span>`;
+                    }
+                    
+                    volHtml = `
+                        <div class="flex flex-col items-end">
+                            <span class="font-mono text-slate-300">${volLot}</span>
+                            ${spikeHtml}
+                        </div>
+                    `;
+                }
 
                 return `
                 <tr id="row-${item.id}" class="group hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
                     <td class="px-6 py-4">
-                        <div class="flex items-center gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
                             <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="font-bold text-white text-base hover:text-emerald-400 transition-colors">
                                 ${item.stock_code}
                             </a>
-                            ${strategyLabel}
+                            <div class="flex items-center flex-wrap gap-y-1 mt-0.5">
+                                ${strategyLabels}
+                            </div>
                         </div>
                     </td>
                     <td class="px-6 py-4 hidden sm:table-cell">${statusBadge}</td>
                     <td class="px-6 py-4 text-right hidden md:table-cell text-slate-400 text-sm">${getDaysHeld(item.scan_date)} Hari</td>
                     <td class="px-6 py-4 text-right font-mono text-white font-medium">${priceFmt}</td>
+                    
+                    <td class="px-6 py-4 hidden sm:table-cell p-0 text-center">
+                        <div id="chart-${item.id}" class="h-10 w-24 mx-auto opacity-80 group-hover:opacity-100 transition-opacity"></div>
+                    </td>
+                    
                     <td class="px-6 py-4 text-right hidden sm:table-cell">
-                        <span class="text-xs font-mono text-slate-400">
-                            ${item.volume_now ? (item.volume_now / 10000).toFixed(0) + 'K Lot' : '-'}
-                        </span>
+                        ${volHtml}
                     </td>
                 </tr>
                 `;
             }).join('');
-            el.tableBody.insertAdjacentHTML('beforeend', html);
+            
+            el.tableBody.innerHTML = html;
         }
 
-        // --- FUNGSI BARU UNTUK SUMMARY KARTU FUNDAMENTAL ---
-        function updateSummary() {
-            const totalItems = state.totalDisplayed;
+        // --- Render Mini Chart (Sparklines) ---
+        function renderSparklines(items) {
+            items.forEach(item => {
+                const chartEl = document.querySelector(`#chart-${item.id}`);
+                // Pastikan element ada dan data recent_prices tersedia dari Python
+                if (!chartEl || !item.recent_prices) {
+                    if (chartEl) chartEl.innerHTML = '<span class="text-[10px] text-slate-600 flex items-center justify-center h-full">-</span>';
+                    return;
+                }
+
+                const priceData = item.recent_prices.split(',').map(Number);
+                if (priceData.length < 2) return;
+
+                // Tentukan warna: Hijau jika harga terakhir >= harga awal
+                const isUp = priceData[priceData.length - 1] >= priceData[0];
+                const chartColor = isUp ? '#10b981' : '#ef4444'; 
+
+                new ApexCharts(chartEl, {
+                    chart: { type: 'area', height: 40, width: 90, sparkline: { enabled: true }, animations: { enabled: false } },
+                    stroke: { curve: 'smooth', width: 2 },
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.4, opacityTo: 0.0, stops: [0, 100] } },
+                    series: [{ data: priceData }],
+                    colors: [chartColor],
+                    tooltip: { fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
+                }).render();
+            });
+        }
+
+        function updateSummary(groupedItems) {
+            const totalItems = groupedItems.length;
             
-            // Hitung statistik fundamental
             let strongBuyCount = 0;
             let wonderfulCount = 0;
             let avoidCount = 0;
 
-            state.data.forEach(item => {
+            groupedItems.forEach(item => {
                 const status = item.sector || "";
                 if (status.includes('🔥') || status.includes('Strong Buy') || status.includes('🟢')) strongBuyCount++;
                 if (status.includes('💎') || status.includes('WONDERFUL')) wonderfulCount++;
@@ -330,9 +411,8 @@
                 </div>
             `;
 
-            // Tampilkan statistik fundamental sebagai pengganti win rate
             el.summary.innerHTML = `
-                ${createCard('Total Sinyal', totalItems, 'Emiten Terdeteksi', 'text-slate-500')}
+                ${createCard('Total Unik', totalItems, 'Emiten Terdeteksi', 'text-slate-500')}
                 ${createCard('Strong Buy 🔥', strongBuyCount, 'Valuasi Diskon', 'text-emerald-400')}
                 ${createCard('Wonderful 💎', wonderfulCount, 'Pertumbuhan Kuat', 'text-blue-400')}
                 ${createCard('Hindari ⛔', avoidCount, 'Red Flag / Rugi', 'text-rose-400')}
