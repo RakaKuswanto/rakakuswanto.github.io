@@ -9,103 +9,552 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
     
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
     <style>
-        :root {
-            --bg-dark: #0b1120;
-            --card-dark: #1e293b;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: var(--bg-dark);
-            color: #e2e8f0;
-            -webkit-font-smoothing: antialiased;
-        }
-        .font-mono { font-family: 'JetBrains Mono', monospace; }
-        
-        ::-webkit-scrollbar { height: 4px; width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-        
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
 
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        :root {
+            --primary: #06b6d4;
+            --primary-dark: #0891b2;
+            --accent: #10b981;
+            --accent-dark: #059669;
+            --bg-dark: #0f172a;
+            --bg-card: #1e293b;
+            --bg-hover: #334155;
+            --border-color: #475569;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+        }
+
+        html {
+            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a2942 100%);
+            min-height: 100vh;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: transparent;
+            color: var(--text-primary);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            font-feature-settings: "rlig" 1, "calt" 1;
+        }
+
+        .font-mono {
+            font-family: 'JetBrains Mono', monospace;
+            letter-spacing: -0.3px;
+        }
+
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 3px;
+            transition: background 0.2s;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+
+        .hide-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .hide-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        /* Smooth Animations */
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+
         .skeleton {
-            background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+            background: linear-gradient(90deg, var(--bg-card) 0%, #334155 50%, var(--bg-card) 100%);
             background-size: 200% 100%;
             animation: shimmer 2s infinite;
         }
-        
-        input[type="date"] { color-scheme: dark; }
+
+        .animate-fade-in {
+            animation: fade-in 0.6s ease-out;
+        }
+
+        .animate-pulse-glow {
+            animation: pulse-glow 2s ease-in-out infinite;
+        }
+
+        input[type="date"] {
+            color-scheme: dark;
+        }
+
+        /* Smooth Transitions */
+        * {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+
+        /* Professional Card Styles */
+        .card-base {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(71, 85, 105, 0.5);
+            border-radius: 12px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .card-base:hover {
+            background: rgba(30, 41, 59, 0.65);
+            border-color: rgba(6, 182, 212, 0.3);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            border-color: rgba(6, 182, 212, 0.5);
+            box-shadow: 0 10px 30px rgba(6, 182, 212, 0.1);
+        }
+
+        /* Metric Cards */
+        .metric-card {
+            padding: 1.25rem;
+            border-radius: 14px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-label {
+            font-size: 12px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-primary);
+            letter-spacing: -1px;
+        }
+
+        .metric-sub {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 0.75rem;
+        }
+
+        /* Badge Styles */
+        .badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+
+        .badge-success {
+            background: rgba(16, 185, 129, 0.15);
+            color: #6ee7b7;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .badge-success:hover {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: rgba(16, 185, 129, 0.5);
+        }
+
+        .badge-info {
+            background: rgba(6, 182, 212, 0.15);
+            color: #67e8f9;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+        }
+
+        .badge-warning {
+            background: rgba(251, 146, 60, 0.15);
+            color: #fdba74;
+            border: 1px solid rgba(251, 146, 60, 0.3);
+        }
+
+        .badge-danger {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-ghost {
+            background: rgba(71, 85, 105, 0.3);
+            color: var(--text-secondary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(71, 85, 105, 0.5);
+            border-color: var(--primary);
+            color: var(--text-primary);
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead tr {
+            border-bottom: 2px solid var(--border-color);
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+            text-transform: uppercase;
+            font-size: 11px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        tbody tr {
+            transition: all 0.2s;
+        }
+
+        tbody tr:hover {
+            background: rgba(6, 182, 212, 0.05);
+            border-bottom-color: rgba(6, 182, 212, 0.3);
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Stock Code Link */
+        .stock-link {
+            font-weight: 600;
+            color: var(--primary);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-bottom: 2px solid transparent;
+        }
+
+        .stock-link:hover {
+            color: var(--primary-dark);
+            border-bottom-color: var(--primary);
+        }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: rgba(30, 41, 59, 0.4);
+            border: 1px solid rgba(71, 85, 105, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .filter-chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .filter-chip.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
+        }
+
+        .filter-chip:hover:not(.active) {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+
+        /* Loading State */
+        .loader {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(6, 182, 212, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Indicators */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .status-indicator.success {
+            background: #10b981;
+        }
+
+        .status-indicator.warning {
+            background: #f59e0b;
+        }
+
+        .status-indicator.danger {
+            background: #ef4444;
+        }
+
+        /* Price Display */
+        .price-display {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .price-change {
+            font-size: 11px;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .price-change.positive {
+            color: #6ee7b7;
+        }
+
+        .price-change.negative {
+            color: #fca5a5;
+        }
+
+        .price-change.neutral {
+            color: var(--text-muted);
+        }
+
+        /* Header Styling */
+        .page-header {
+            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(16, 185, 129, 0.05));
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 0 0 16px 16px;
+        }
+
+        .header-title {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-icon {
+            width: 44px;
+            height: 44px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .header-subtitle {
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 2rem;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        .empty-state-text {
+            color: var(--text-muted);
+            font-size: 14px;
+        }
     </style>
 </head>
-<body class="min-h-screen pb-12">
+<body class="min-h-screen">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
-        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-            <div>
-                <h1 class="text-2xl md:text-3xl font-bold text-white tracking-tight flex items-center gap-3">
-                    <div class="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center border border-emerald-500/20">
-                        <svg class="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
-                    </div>
-                    Belajar Saham Dari Nol
-                </h1>
-                <p class="text-slate-400 text-sm mt-1 ml-14">Sistem Algoritma & Fundamental Trading Real-time</p>
-            </div>
-            
-            <div class="flex items-center gap-3">
-                <span id="last-updated" class="text-xs font-mono text-slate-500 bg-slate-800/50 px-3 py-1.5 rounded-lg border border-slate-800">Updating...</span>
-                <button id="refresh-btn" class="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl border border-slate-700 transition-all active:scale-95" title="Refresh Data">
-                    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                </button>
-            </div>
-        </header>
-
-        <div id="summary-container" class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="skeleton h-28 rounded-2xl border border-slate-800/50"></div>
-            <div class="skeleton h-28 rounded-2xl border border-slate-800/50"></div>
-            <div class="skeleton h-28 rounded-2xl border border-slate-800/50"></div>
-            <div class="skeleton h-28 rounded-2xl border border-slate-800/50"></div>
-        </div>
-
-        <div class="bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-2xl p-1 mb-6 sticky top-2 z-30 shadow-2xl shadow-black/50">
-            <div class="flex flex-col sm:flex-row items-center gap-1">
-                <div class="flex items-center gap-2 p-2 w-full sm:w-auto border-b sm:border-b-0 sm:border-r border-slate-800/50 pr-4">
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-4 w-4 text-slate-400 group-hover:text-emerald-500 transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+    <div class="page-header">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-start justify-between mb-4">
+                <div class="flex-1">
+                    <div class="header-title">
+                        <div class="header-icon">
+                            <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                            </svg>
                         </div>
-                        <input type="date" id="manual-date-picker" class="pl-10 pr-3 py-2 bg-slate-950/50 border border-slate-800 rounded-lg text-sm text-white focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 block w-full outline-none transition-all cursor-pointer hover:bg-slate-900">
+                        <span>Belajar Saham Dari Nol</span>
                     </div>
+                    <p class="header-subtitle">Sistem Algoritma & Fundamental Trading Real-time</p>
                 </div>
-                <div class="flex-1 w-full overflow-hidden px-2 py-2 sm:py-0">
-                    <div id="date-list-container" class="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth"></div>
+                <div class="flex items-center gap-3">
+                    <div class="text-right">
+                        <div id="last-updated" class="text-xs font-mono text-right bg-slate-800/30 px-3 py-1.5 rounded-lg border border-slate-700/50">Updating...</div>
+                    </div>
+                    <button id="refresh-btn" class="btn btn-ghost" title="Refresh Data">
+                        <svg class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </button>
                 </div>
-                <div class="hidden md:flex border-l border-slate-800/50 pl-2" id="screener-filter-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        
+        <!-- Summary Cards -->
+        <div id="summary-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8 animate-fade-in">
+            <div class="card-base metric-card skeleton h-28"></div>
+            <div class="card-base metric-card skeleton h-28"></div>
+            <div class="card-base metric-card skeleton h-28"></div>
+            <div class="card-base metric-card skeleton h-28"></div>
+        </div>
+
+        <!-- Filter Bar -->
+        <div class="filter-bar p-3 mb-6 sticky top-4 z-30 rounded-2xl">
+            <div class="flex flex-col sm:flex-row items-center gap-3">
+                <div class="relative flex-1 sm:flex-none w-full sm:w-auto">
+                    <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                    </div>
+                    <input type="date" id="manual-date-picker" class="pl-10 pr-3 py-2 bg-slate-950/30 border border-slate-700/50 rounded-lg text-sm text-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 block w-full outline-none transition-all cursor-pointer hover:bg-slate-900/50" />
+                </div>
+                <div class="flex-1 w-full overflow-hidden">
+                    <div id="date-list-container" class="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth px-2"></div>
+                </div>
+                <div class="hidden md:flex border-l border-slate-700/50 pl-3" id="screener-filter-container"></div>
             </div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-lg">
+        <!-- Data Table -->
+        <div class="card-base rounded-2xl overflow-hidden shadow-xl">
             <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
+                <table>
                     <thead>
-                        <tr class="text-xs text-slate-400 uppercase tracking-wider border-b border-slate-800 bg-slate-900/95">
-                            <th class="px-6 py-4 font-semibold">Emiten & Strategi</th>
-                            <th class="px-6 py-4 font-semibold hidden sm:table-cell">Fundamental</th>
-                            <th class="px-6 py-4 font-semibold text-right hidden md:table-cell">Hold</th>
-                            <th class="px-6 py-4 font-semibold text-right">Harga Live</th>
-                            <th class="px-6 py-4 font-semibold text-center hidden sm:table-cell w-36">Candle 5D</th>
-                            <th class="px-6 py-4 font-semibold text-right hidden sm:table-cell w-32">Volume Scan</th>
+                        <tr>
+                            <th>Emiten & Strategi</th>
+                            <th class="hidden sm:table-cell">Fundamental</th>
+                            <th class="hidden md:table-cell text-right">Hold</th>
+                            <th class="text-right">Harga Live</th>
+                            <th class="hidden sm:table-cell text-center w-36">Candle 5D</th>
+                            <th class="hidden sm:table-cell text-right w-32">Volume Scan</th>
                         </tr>
                     </thead>
-                    <tbody id="stock-table-body" class="divide-y divide-slate-800 text-sm">
-                        </tbody>
+                    <tbody id="stock-table-body">
+                        <tr>
+                            <td colspan="6" class="empty-state">
+                                <div class="loader" style="margin: 0 auto;"></div>
+                                <p style="margin-top: 1rem; color: var(--text-muted);">Loading stocks...</p>
+                            </td>
+                        </tr>
+                    </tbody>
                 </table>
             </div>
-            <div id="load-more-container" class="p-6 text-center border-t border-slate-800"></div>
+            <div id="load-more-container" class="p-6 text-center border-t border-slate-700/50"></div>
         </div>
 
     </div>
@@ -140,25 +589,25 @@
         };
 
         // ================= HELPERS =================
-        const formatIDR = (n) => n ? new Intl.NumberFormat('id-ID').format(n) : '-';
+        const formatIDR = (n) => n ? new Intl.NumberFormat('id-ID').format(Math.round(n)) : '-';
         const formatDateShort = (d) => new Date(d).toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
         const getDaysHeld = (d) => Math.max(0, Math.floor((new Date() - new Date(d)) / (86400000)));
 
         const getStatusBadge = (status) => {
             if (!status || status === 'N/A' || status === 'null') return `<span class="text-slate-500">-</span>`;
             if (status.includes('🔥') || status.includes('Strong Buy') || status.includes('🟢')) {
-                return `<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+                return `<span class="badge badge-success">🔥 Strong Buy</span>`;
             }
             if (status.includes('💎') || status.includes('WONDERFUL')) {
-                return `<span class="bg-blue-500/20 text-blue-400 border border-blue-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+                return `<span class="badge badge-info">💎 Wonderful</span>`;
             }
             if (status.includes('💡') || status.includes('🟡')) {
-                return `<span class="bg-amber-500/20 text-amber-400 border border-amber-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+                return `<span class="badge badge-warning">💡 Hold</span>`;
             }
             if (status.includes('⛔') || status.includes('🚨') || status.includes('Hindari') || status.includes('Minus') || status.includes('🔴')) {
-                return `<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+                return `<span class="badge badge-danger">⛔ Hindari</span>`;
             }
-            return `<span class="bg-slate-700 text-slate-300 border border-slate-600 px-2.5 py-1 rounded-md text-[11px] font-bold uppercase tracking-wider">${status}</span>`;
+            return `<span class="badge" style="background: rgba(71, 85, 105, 0.2); border: 1px solid rgba(71, 85, 105, 0.4); color: var(--text-muted);">${status}</span>`;
         };
 
         function getGroupedData(items) {
@@ -201,21 +650,18 @@
         }
 
         function renderDateCapsules(allDates) {
-            const recentDates = allDates.slice(0, 10); 
+            const recentDates = allDates.slice(0, 10);
             el.dateContainer.innerHTML = recentDates.map(date => {
                 const isActive = state.filters.date === date;
-                const activeClass = isActive 
-                    ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 border-emerald-400' 
-                    : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-700 hover:text-white';
-                return `<button onclick="handleDateClick('${date}')" class="shrink-0 px-4 py-1.5 rounded-lg text-xs font-medium border transition-all duration-200 ${activeClass}">${formatDateShort(date)}</button>`;
+                return `<button onclick="handleDateClick('${date}')" class="filter-chip ${isActive ? 'active' : ''}">${formatDateShort(date)}</button>`;
             }).join('');
         }
 
         function renderScreenerFilters(screeners) {
             const html = `
-                <select onchange="handleScreenerChange(this.value)" class="bg-slate-950 border border-slate-800 text-xs text-slate-300 rounded-lg px-3 py-2 outline-none focus:border-emerald-500">
-                    <option value="">Semua Strategi</option>
-                    ${screeners.map(s => `<option value="${s}" ${state.filters.screener === s ? 'selected' : ''}>${s}</option>`).join('')}
+                <select onchange="handleScreenerChange(this.value)" style="background: rgba(71, 85, 105, 0.2); border: 1px solid rgba(71, 85, 105, 0.4); color: var(--text-secondary); border-radius: 8px; padding: 6px 12px; outline: none; font-size: 12px; font-weight: 500; cursor: pointer;">
+                    <option value="" style="background: var(--bg-card); color: var(--text-primary);">Semua Strategi</option>
+                    ${screeners.map(s => `<option value="${s}" style="background: var(--bg-card); color: var(--text-primary);" ${state.filters.screener === s ? 'selected' : ''}>${s}</option>`).join('')}
                 </select>
             `;
             el.screenerContainer.innerHTML = html;
@@ -228,7 +674,7 @@
         async function applyFilter(type, value) {
             if (state.filters[type] === value) return;
             state.filters[type] = value;
-            if(type === 'date') initFilters(); 
+            if(type === 'date') initFilters();
             resetData();
             await fetchData();
         }
@@ -265,12 +711,12 @@
 
                 renderRows(groupedData);
                 updateSummary(groupedData);
-                
+
                 await fetchPricesFromEdge(groupedData);
 
             } catch (e) {
                 console.error(e);
-                el.loadMore.innerHTML = `<span class="text-red-500 text-sm">Gagal memuat data</span>`;
+                el.loadMore.innerHTML = `<span style="color: #fca5a5; font-size: 13px;">Gagal memuat data</span>`;
             } finally {
                 state.loading = false;
                 renderLoadMore();
@@ -289,72 +735,70 @@
                 try {
                     const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/get-price?tickers=${tickers}`);
                     if (!res.ok) throw new Error('Gagal fetch edge function');
-                    
+
                     const liveData = await res.json();
 
                     liveData.forEach(data => {
                         if (data.error) return;
 
-                        // 1. Update Harga
                         const priceCell = document.querySelector(`#price-cell-${data.ticker}`);
                         const originalItem = batch.find(b => b.stock_code === data.ticker);
-                        
+
                         if (priceCell && data.price) {
                             let pnlHtml = '';
                             if (originalItem && originalItem.entry_price) {
                                 const pnl = ((data.price - originalItem.entry_price) / originalItem.entry_price) * 100;
-                                const color = pnl > 0 ? 'text-emerald-400' : (pnl < 0 ? 'text-rose-400' : 'text-slate-400');
+                                const color = pnl > 0 ? 'positive' : (pnl < 0 ? 'negative' : 'neutral');
                                 const sign = pnl > 0 ? '+' : '';
-                                pnlHtml = `<div class="text-[10px] ${color} mt-0.5">${sign}${pnl.toFixed(2)}% vs Scan</div>`;
+                                pnlHtml = `<div class="price-change ${color}">${sign}${pnl.toFixed(2)}% vs Scan</div>`;
                             }
                             priceCell.innerHTML = `
-                                <div class="font-mono text-white font-medium">${formatIDR(data.price)}</div>
+                                <div class="price-display">${formatIDR(data.price)}</div>
                                 ${pnlHtml}
                             `;
                         } else if (priceCell) {
-                             priceCell.innerHTML = `<span class="text-slate-500">-</span>`;
+                            priceCell.innerHTML = `<span style="color: var(--text-muted);">-</span>`;
                         }
 
-                        // 2. Update Candlestick Chart 5D
                         const chartEl = document.querySelector(`#chart-${data.ticker}`);
                         if (chartEl && data.historyOHLC && data.historyOHLC.length > 0) {
-                            chartEl.innerHTML = ''; 
+                            chartEl.innerHTML = '';
 
                             new ApexCharts(chartEl, {
-                                chart: { 
-                                    type: 'candlestick', 
-                                    height: 45, 
-                                    width: 100, 
-                                    sparkline: { enabled: true }, 
-                                    animations: { enabled: false } 
+                                chart: {
+                                    type: 'candlestick',
+                                    height: 45,
+                                    width: 100,
+                                    sparkline: { enabled: true },
+                                    animations: { enabled: false }
                                 },
                                 series: [{ data: data.historyOHLC }],
                                 plotOptions: {
                                     candlestick: {
                                         colors: {
-                                            upward: '#10b981',   // Hijau untuk Bullish
-                                            downward: '#ef4444'  // Merah untuk Bearish
+                                            upward: '#10b981',
+                                            downward: '#ef4444'
                                         },
                                         wick: { useFillColor: true }
                                     }
                                 },
-                                tooltip: { 
+                                tooltip: {
                                     theme: 'dark',
-                                    fixed: { enabled: false }, 
+                                    fixed: { enabled: false },
                                     x: { show: false },
                                     y: { title: { formatter: () => '' } },
                                     marker: { show: false }
                                 }
                             }).render();
                         } else if (chartEl) {
-                             chartEl.innerHTML = '<span class="text-[10px] text-slate-600 flex items-center justify-center h-full">-</span>';
+                            chartEl.innerHTML = '<span style="font-size: 10px; color: var(--text-muted); display: flex; align-items: center; justify-content: center; height: 100%;">-</span>';
                         }
                     });
                 } catch (error) {
                     console.error("Error fetching batch:", error);
                     batch.forEach(item => {
                         const cell = document.querySelector(`#price-cell-${item.stock_code}`);
-                        if (cell) cell.innerHTML = `<span class="text-xs text-rose-500">API Error</span>`;
+                        if (cell) cell.innerHTML = `<span style="font-size: 11px; color: #fca5a5;">API Error</span>`;
                     });
                 }
             }
@@ -364,53 +808,50 @@
         function renderRows(groupedItems) {
             const html = groupedItems.map(item => {
                 const statusBadge = getStatusBadge(item.sector);
-                
-                const strategyLabels = item.screener_names.map(name => {
-                    if (name === 'RADScreener') return `<span class="text-purple-400 bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap shadow-sm">RAD + V11</span>`;
-                    return `<span class="text-blue-400 bg-blue-500/10 border border-blue-500/20 px-2 py-0.5 rounded text-[10px] uppercase font-bold whitespace-nowrap shadow-sm">${name}</span>`;
-                }).join('<span class="w-1.5 inline-block"></span>');
 
-                let volHtml = `<span class="text-xs font-mono text-slate-500">-</span>`;
+                const strategyLabels = item.screener_names.map(name => {
+                    if (name === 'RADScreener') return `<span class="badge badge-info">RAD + V11</span>`;
+                    return `<span class="badge badge-info">${name}</span>`;
+                }).join('');
+
+                let volHtml = `<span style="font-size: 12px; color: var(--text-muted);">-</span>`;
                 if (item.volume_now) {
-                    const volLot = (item.volume_now / 10000).toFixed(0) + 'K Lot';
+                    const volLot = (item.volume_now / 10000).toFixed(0) + 'K';
                     let spikeHtml = '';
                     if (item.volume_10d_avg && item.volume_now > (item.volume_10d_avg * 2)) {
                         const spikePct = Math.round((item.volume_now / item.volume_10d_avg) * 100);
-                        spikeHtml = `<span class="text-[10px] font-bold text-amber-400 bg-amber-400/10 px-1.5 py-0.5 rounded mt-1 border border-amber-400/20">🔥 VOL +${spikePct}%</span>`;
+                        spikeHtml = `<div class="badge badge-warning" style="margin-top: 4px; font-size: 10px;">Vol +${spikePct}%</div>`;
                     }
-                    volHtml = `<div class="flex flex-col items-end"><span class="font-mono text-slate-300">${volLot}</span>${spikeHtml}</div>`;
+                    volHtml = `<div style="text-align: right;"><div style="font-weight: 600; color: var(--text-primary);">${volLot}</div>${spikeHtml}</div>`;
                 }
 
                 return `
-                <tr id="row-${item.stock_code}" class="group hover:bg-slate-800/40 transition-colors border-b border-slate-800/50 last:border-0">
-                    <td class="px-6 py-4">
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="font-bold text-white text-base hover:text-emerald-400 transition-colors">
+                <tr id="row-${item.stock_code}" style="animation: fade-in 0.4s ease-out;">
+                    <td>
+                        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                            <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="stock-link" style="font-size: 13px;">
                                 ${item.stock_code}
                             </a>
-                            <div class="flex items-center flex-wrap gap-y-1 mt-0.5">
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px;">
                                 ${strategyLabels}
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 hidden sm:table-cell">${statusBadge}</td>
-                    <td class="px-6 py-4 text-right hidden md:table-cell text-slate-400 text-sm">${getDaysHeld(item.scan_date)} Hari</td>
-                    
-                    <td class="px-6 py-4 text-right" id="price-cell-${item.stock_code}">
-                        <div class="skeleton h-5 w-20 ml-auto rounded"></div>
+                    <td class="hidden sm:table-cell">${statusBadge}</td>
+                    <td class="hidden md:table-cell text-right" style="color: var(--text-muted);">${getDaysHeld(item.scan_date)} Hari</td>
+                    <td class="text-right" id="price-cell-${item.stock_code}">
+                        <div class="skeleton" style="width: 80px; height: 20px; margin-left: auto; border-radius: 6px;"></div>
                     </td>
-                    
-                    <td class="px-6 py-4 hidden sm:table-cell p-0 text-center">
-                        <div id="chart-${item.stock_code}" class="h-12 w-28 mx-auto opacity-90 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <div class="skeleton h-8 w-20 rounded"></div>
+                    <td class="hidden sm:table-cell text-center p-0">
+                        <div id="chart-${item.stock_code}" style="height: 48px; width: 112px; margin: 0 auto; opacity: 0.9;">
+                            <div class="skeleton" style="width: 100%; height: 100%; border-radius: 6px;"></div>
                         </div>
                     </td>
-                    
-                    <td class="px-6 py-4 text-right hidden sm:table-cell">${volHtml}</td>
+                    <td class="hidden sm:table-cell text-right">${volHtml}</td>
                 </tr>
                 `;
             }).join('');
-            
+
             el.tableBody.innerHTML = html;
         }
 
@@ -425,32 +866,30 @@
                 if (status.includes('💎') || status.includes('WONDERFUL')) wonderfulCount++;
                 if (status.includes('⛔') || status.includes('🚨') || status.includes('Hindari') || status.includes('Minus') || status.includes('🔴')) avoidCount++;
             });
-            
+
             const createCard = (title, value, sub, color) => `
-                <div class="bg-slate-900/50 backdrop-blur border border-slate-800 p-5 rounded-2xl flex flex-col justify-between h-full">
-                    <div class="text-slate-400 text-xs font-semibold uppercase tracking-wider mb-2">${title}</div>
-                    <div class="flex items-end gap-2">
-                        <div class="text-2xl lg:text-3xl font-bold text-white">${value}</div>
-                        <div class="text-xs font-medium mb-1.5 ${color}">${sub}</div>
-                    </div>
+                <div class="card-base metric-card animate-fade-in">
+                    <div class="metric-label">${title}</div>
+                    <div class="metric-value" style="color: ${color};">${value}</div>
+                    <div class="metric-sub" style="color: var(--text-muted);">${sub}</div>
                 </div>
             `;
 
             el.summary.innerHTML = `
-                ${createCard('Total Unik', totalItems, 'Emiten Terdeteksi', 'text-slate-500')}
-                ${createCard('Strong Buy 🔥', strongBuyCount, 'Valuasi Diskon', 'text-emerald-400')}
-                ${createCard('Wonderful 💎', wonderfulCount, 'Pertumbuhan Kuat', 'text-blue-400')}
-                ${createCard('Hindari ⛔', avoidCount, 'Red Flag / Rugi', 'text-rose-400')}
+                ${createCard('Total Unik', totalItems, 'Emiten Terdeteksi', 'var(--primary)')}
+                ${createCard('Strong Buy', strongBuyCount, 'Valuasi Diskon', '#10b981')}
+                ${createCard('Wonderful', wonderfulCount, 'Pertumbuhan Kuat', '#06b6d4')}
+                ${createCard('Hindari', avoidCount, 'Red Flag / Rugi', '#ef4444')}
             `;
         }
 
         function renderLoadMore() {
             if (state.loading) {
-                el.loadMore.innerHTML = `<div class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-slate-600 border-r-emerald-500"></div>`;
+                el.loadMore.innerHTML = `<div class="loader"></div>`;
             } else if (state.hasMore) {
-                el.loadMore.innerHTML = `<button onclick="fetchData()" class="text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 px-6 py-2.5 rounded-full transition-all shadow-lg shadow-emerald-900/20">Muat Lebih Banyak</button>`;
+                el.loadMore.innerHTML = `<button onclick="fetchData()" class="btn btn-primary">Muat Lebih Banyak</button>`;
             } else {
-                el.loadMore.innerHTML = `<span class="text-xs text-slate-600 font-medium uppercase tracking-widest">Semua Data Ditampilkan</span>`;
+                el.loadMore.innerHTML = `<span style="font-size: 11px; color: var(--text-muted); letter-spacing: 0.3px; text-transform: uppercase; font-weight: 600;">Semua Data Ditampilkan</span>`;
             }
         }
 
@@ -459,9 +898,16 @@
             state.page = 1;
             state.hasMore = true;
             state.totalDisplayed = 0;
-            el.tableBody.innerHTML = '';
+            el.tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="empty-state">
+                        <div class="loader" style="margin: 0 auto;"></div>
+                        <p style="margin-top: 1rem; color: var(--text-muted);">Loading stocks...</p>
+                    </td>
+                </tr>
+            `;
             el.loadMore.innerHTML = '';
-            el.summary.innerHTML = `<div class="col-span-4 text-center py-4 text-slate-500">Memuat statistik...</div>`;
+            el.summary.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">Memuat statistik...</div>`;
         }
 
         // INIT
@@ -469,7 +915,7 @@
             el.lastUpdated.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
             await initFilters();
             await fetchData();
-            
+
             document.getElementById('refresh-btn').addEventListener('click', () => {
                 resetData();
                 fetchData();
