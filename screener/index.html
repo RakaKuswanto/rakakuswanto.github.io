@@ -12,190 +12,73 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
 
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
-            --primary: #06b6d4;
-            --primary-dark: #0891b2;
-            --accent: #10b981;
-            --accent-dark: #059669;
-            --bg-dark: #0f172a;
-            --bg-card: #1e293b;
-            --bg-hover: #334155;
-            --border-color: #475569;
-            --text-primary: #f1f5f9;
-            --text-secondary: #cbd5e1;
-            --text-muted: #94a3b8;
+            --primary: #06b6d4; --primary-dark: #0891b2;
+            --accent: #10b981; --accent-dark: #059669;
+            --bg-dark: #0f172a; --bg-card: #1e293b;
+            --bg-hover: #334155; --border-color: #475569;
+            --text-primary: #f1f5f9; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
         }
 
-        html {
-            background: linear-gradient(135deg, var(--bg-dark) 0%, #1a2942 100%);
-            min-height: 100vh;
-        }
+        html { background: linear-gradient(135deg, var(--bg-dark) 0%, #1a2942 100%); min-height: 100vh; }
+        body { font-family: 'Inter', sans-serif; background: transparent; color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: transparent;
-            color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
-            font-feature-settings: "rlig" 1, "calt" 1;
-        }
-
-        .font-mono {
-            font-family: 'JetBrains Mono', monospace;
-            letter-spacing: -0.3px;
-        }
-
-        /* Scrollbar Styling */
+        /* Scrollbar & Animations */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb {
-            background: var(--border-color);
-            border-radius: 3px;
-            transition: background 0.2s;
-        }
+        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
 
-        /* Smooth Animations */
-        @keyframes shimmer {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-        @keyframes fade-in {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        .skeleton {
-            background: linear-gradient(90deg, var(--bg-card) 0%, #334155 50%, var(--bg-card) 100%);
-            background-size: 200% 100%;
-            animation: shimmer 2s infinite;
-        }
-
+        .skeleton { background: linear-gradient(90deg, var(--bg-card) 0%, #334155 50%, var(--bg-card) 100%); background-size: 200% 100%; animation: shimmer 2s infinite; }
         .animate-fade-in { animation: fade-in 0.6s ease-out; }
         input[type="date"] { color-scheme: dark; }
-        * { transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease; }
 
-        /* Professional Card Styles */
-        .card-base {
-            background: rgba(30, 41, 59, 0.5);
-            border: 1px solid rgba(71, 85, 105, 0.5);
-            border-radius: 12px;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-        }
-        .card-base:hover {
-            background: rgba(30, 41, 59, 0.65);
-            border-color: rgba(6, 182, 212, 0.3);
-        }
-
-        /* Metric Cards */
-        .metric-card {
-            padding: 1.25rem;
-            border-radius: 14px;
-            position: relative;
-            overflow: hidden;
-        }
-        .metric-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--primary), var(--accent), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
+        /* Cards & Metrics */
+        .card-base { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(71, 85, 105, 0.5); border-radius: 12px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+        .card-base:hover { background: rgba(30, 41, 59, 0.65); border-color: rgba(6, 182, 212, 0.3); }
+        .metric-card { padding: 1.25rem; border-radius: 14px; position: relative; overflow: hidden; }
+        .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--primary), var(--accent), transparent); opacity: 0; transition: opacity 0.3s; }
         .metric-card:hover::before { opacity: 1; }
-        .metric-label {
-            font-size: 12px; font-weight: 500; letter-spacing: 0.5px;
-            text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem;
-        }
-        .metric-value {
-            font-size: 24px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px;
-        }
+        .metric-label { font-size: 12px; font-weight: 500; letter-spacing: 0.5px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .metric-value { font-size: 24px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; }
         @media (min-width: 640px) { .metric-value { font-size: 28px; } }
         .metric-sub { font-size: 11px; font-weight: 600; margin-top: 0.75rem; }
 
-        /* Badge Styles */
-        .badge {
-            display: inline-block;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 10px;
-            border-radius: 20px;
-            letter-spacing: 0.3px;
-            text-transform: uppercase;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
+        /* Badges & Buttons */
+        .badge { display: inline-block; font-size: 11px; font-weight: 600; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.3px; text-transform: uppercase; white-space: nowrap; }
         .badge-success { background: rgba(16, 185, 129, 0.15); color: #6ee7b7; border: 1px solid rgba(16, 185, 129, 0.3); }
         .badge-info { background: rgba(6, 182, 212, 0.15); color: #67e8f9; border: 1px solid rgba(6, 182, 212, 0.3); }
         .badge-warning { background: rgba(251, 146, 60, 0.15); color: #fdba74; border: 1px solid rgba(251, 146, 60, 0.3); }
         .badge-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
-
-        /* Button Styles */
-        .btn {
-            padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
-            border: none; cursor: pointer; transition: all 0.2s ease; letter-spacing: 0.3px;
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2);
-        }
+        
+        .btn { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; }
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2); }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3); }
         .btn-ghost { background: rgba(71, 85, 105, 0.3); color: var(--text-secondary); border: 1px solid var(--border-color); }
         .btn-ghost:hover { background: rgba(71, 85, 105, 0.5); border-color: var(--primary); color: var(--text-primary); }
 
-        /* Table Styling */
+        /* Tables & Layouts */
         table { width: 100%; border-collapse: collapse; font-size: 13px; }
         thead tr { border-bottom: 2px solid var(--border-color); background: rgba(15, 23, 42, 0.5); }
-        th {
-            padding: 12px 16px; text-align: left; font-weight: 600;
-            color: var(--text-muted); letter-spacing: 0.3px; text-transform: uppercase; font-size: 11px;
-        }
+        th { padding: 12px 16px; text-align: left; font-weight: 600; color: var(--text-muted); text-transform: uppercase; font-size: 11px; }
         td { padding: 14px 16px; border-bottom: 1px solid rgba(71, 85, 105, 0.3); }
         tbody tr:hover { background: rgba(6, 182, 212, 0.05); border-bottom-color: rgba(6, 182, 212, 0.3); }
-        tbody tr:last-child td { border-bottom: none; }
-
-        /* Mobile specific table adjustments */
-        @media (max-width: 639px) {
-            th, td { padding: 12px 12px; }
-        }
-
-        .stock-link {
-            font-weight: 600; color: var(--primary); text-decoration: none;
-            border-bottom: 2px solid transparent;
-        }
+        @media (max-width: 639px) { th, td { padding: 12px 12px; } }
+        .stock-link { font-weight: 600; color: var(--primary); text-decoration: none; border-bottom: 2px solid transparent; }
         .stock-link:hover { color: var(--primary-dark); border-bottom-color: var(--primary); }
 
-        /* Filter Bar */
-        .filter-bar {
-            background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(71, 85, 105, 0.4);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        }
-        .filter-chip {
-            padding: 6px 14px; border-radius: 20px; background: rgba(6, 182, 212, 0.1);
-            border: 1px solid rgba(6, 182, 212, 0.3); color: var(--text-secondary);
-            font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap;
-        }
-        .filter-chip.active {
-            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
-            color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);
-        }
+        .filter-bar { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(71, 85, 105, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+        .filter-chip { padding: 6px 14px; border-radius: 20px; background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+        .filter-chip.active { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25); }
 
-        /* Loading & Header */
-        .loader {
-            display: inline-block; width: 20px; height: 20px;
-            border: 2px solid rgba(6, 182, 212, 0.3); border-radius: 50%;
-            border-top-color: var(--primary); animation: spin 0.8s linear infinite;
-        }
+        .loader { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(6, 182, 212, 0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .price-display { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text-primary); }
@@ -204,20 +87,10 @@
         .price-change.negative { color: #fca5a5; }
         .price-change.neutral { color: var(--text-muted); }
 
-        .page-header {
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(16, 185, 129, 0.05));
-            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
-            padding: 2rem 0; margin-bottom: 2rem; border-radius: 0 0 16px 16px;
-        }
-        .header-title { font-size: 24px; font-weight: 700; letter-spacing: -1px; display: flex; align-items: center; gap: 12px; margin-bottom: 0.5rem; }
+        .page-header { background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(16, 185, 129, 0.05)); border-bottom: 1px solid rgba(71, 85, 105, 0.3); padding: 2rem 0; margin-bottom: 2rem; border-radius: 0 0 16px 16px; }
+        .header-title { font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px; margin-bottom: 0.5rem; }
         @media (min-width: 640px) { .header-title { font-size: 28px; } }
-        .header-icon {
-            width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent));
-            border-radius: 12px; display: flex; align-items: center; justify-content: center;
-        }
-        .header-subtitle { color: var(--text-muted); font-size: 12px; font-weight: 500; letter-spacing: 0.3px; }
-        @media (min-width: 640px) { .header-subtitle { font-size: 13px; } }
-
+        .header-icon { width: 40px; height: 40px; background: linear-gradient(135deg, var(--primary), var(--accent)); border-radius: 12px; display: flex; align-items: center; justify-content: center; }
         .empty-state { text-align: center; padding: 3rem 2rem; }
     </style>
 </head>
@@ -233,9 +106,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                             </svg>
                         </div>
-                        <span>Screener Dashboard</span>
+                        <span>Pro Screener</span>
                     </div>
-                    <p class="header-subtitle mt-2 sm:mt-0">The simpler your system, the better your results.</p>
+                    <p class="text-slate-400 text-xs sm:text-sm mt-2 sm:mt-0 font-medium">Sistem Analisis Berbasis Volume & Momentum</p>
                 </div>
                 <div class="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
                     <div id="last-updated" class="text-[10px] sm:text-xs font-mono text-right bg-slate-800/30 px-2 sm:px-3 py-1.5 rounded-lg border border-slate-700/50">Updating...</div>
@@ -251,14 +124,15 @@
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
         
-        <div id="summary-container" class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8 animate-fade-in">
+        <div id="summary-container" class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8 animate-fade-in">
+            <div class="card-base metric-card skeleton h-24 sm:h-28"></div>
             <div class="card-base metric-card skeleton h-24 sm:h-28"></div>
             <div class="card-base metric-card skeleton h-24 sm:h-28"></div>
             <div class="card-base metric-card skeleton h-24 sm:h-28"></div>
             <div class="card-base metric-card skeleton h-24 sm:h-28"></div>
         </div>
 
-        <div class="filter-bar p-2.5 sm:p-3 mb-6 sticky top-2 z-30 rounded-xl sm:rounded-2xl">
+        <div class="filter-bar p-2.5 sm:p-3 mb-6 sticky top-2 z-30 rounded-xl sm:rounded-2xl shadow-lg">
             <div class="flex flex-col sm:flex-row items-center gap-3">
                 <div class="relative w-full sm:w-auto">
                     <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -283,7 +157,7 @@
                             <th class="w-1/2 sm:w-auto">Emiten & Info</th>
                             <th class="hidden md:table-cell">Fundamental</th>
                             <th class="hidden lg:table-cell text-right">Hold</th>
-                            <th class="text-right w-1/2 sm:w-auto">Harga & Analisis</th>
+                            <th class="text-right w-1/2 sm:w-auto">Harga & PnL</th>
                             <th class="hidden sm:table-cell text-center w-36">Candle 5D</th>
                             <th class="hidden md:table-cell text-right w-28">Vol Scan</th>
                         </tr>
@@ -292,7 +166,7 @@
                         <tr>
                             <td colspan="6" class="empty-state">
                                 <div class="loader" style="margin: 0 auto;"></div>
-                                <p style="margin-top: 1rem; color: var(--text-muted);">Loading stocks...</p>
+                                <p style="margin-top: 1rem; color: var(--text-muted);">Memuat algoritma...</p>
                             </td>
                         </tr>
                     </tbody>
@@ -312,7 +186,10 @@
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
         
+        // Menambahkan state Win Rate
         const state = { data: [], filters: { date: null, screener: null }, page: 1, loading: false, hasMore: true, totalDisplayed: 0 };
+        const performanceState = { win: 0, loss: 0, totalProcessed: 0 }; // Lacak performa batch saat ini
+
         const el = {
             tableBody: document.getElementById('stock-table-body'),
             dateContainer: document.getElementById('date-list-container'),
@@ -354,15 +231,28 @@
 
         async function initFilters() {
             try {
+                // 1. Ambil list filter dasar (tanggal & nama screener)
                 const { data, error } = await supabaseClient.rpc('get_distinct_screener_filters');
                 if (error) throw error;
+                
+                // 2. Ambil data Historical Win Rate dari tabel baru yang kita buat
+                const { data: perfData, error: perfError } = await supabaseClient.from('screener_performance').select('*');
+                let perfMap = new Map();
+                if (!perfError && perfData) {
+                    perfData.forEach(p => perfMap.set(p.screener_name, p.win_rate_pct));
+                }
+
+                // Render Tanggal
                 const dates = data.distinct_dates.map(i => i.scan_date).sort((a, b) => new Date(b) - new Date(a));
                 if (dates.length > 0) {
                     if (!state.filters.date) { state.filters.date = dates[0]; el.datePicker.value = dates[0]; }
                     renderDateCapsules(dates);
                 }
+
+                // Render Dropdown Screener (Dengan Historical Win Rate)
                 const screeners = data.distinct_screeners.map(i => i.screener_name).sort();
-                renderScreenerFilters(screeners);
+                renderScreenerFilters(screeners, perfMap);
+
             } catch (e) { console.error("Filter init failed:", e); }
         }
 
@@ -374,11 +264,19 @@
             }).join('');
         }
 
-        function renderScreenerFilters(screeners) {
+        function renderScreenerFilters(screeners, perfMap) {
             const html = `
                 <select onchange="handleScreenerChange(this.value)" class="w-full sm:w-auto" style="background: rgba(71, 85, 105, 0.2); border: 1px solid rgba(71, 85, 105, 0.4); color: var(--text-secondary); border-radius: 8px; padding: 8px 12px; outline: none; font-size: 13px; font-weight: 500; cursor: pointer;">
                     <option value="" style="background: var(--bg-card); color: var(--text-primary);">Semua Strategi</option>
-                    ${screeners.map(s => `<option value="${s}" style="background: var(--bg-card); color: var(--text-primary);" ${state.filters.screener === s ? 'selected' : ''}>${s}</option>`).join('')}
+                    ${screeners.map(s => {
+                        // Cek apakah ada data history win rate
+                        const wr = perfMap.has(s) ? parseFloat(perfMap.get(s)) : null;
+                        let textWr = '';
+                        if (wr !== null) {
+                            textWr = ` (WR: ${wr}%) ${wr >= 60 ? '🔥' : ''}`;
+                        }
+                        return `<option value="${s}" style="background: var(--bg-card); color: var(--text-primary);" ${state.filters.screener === s ? 'selected' : ''}>${s}${textWr}</option>`;
+                    }).join('')}
                 </select>
             `;
             el.screenerContainer.innerHTML = html;
@@ -425,7 +323,7 @@
                 await fetchPricesFromEdge(groupedData);
 
             } catch (e) {
-                console.error(e); el.loadMore.innerHTML = `<span style="color: #fca5a5; font-size: 13px;">Gagal memuat data</span>`;
+                console.error(e); el.loadMore.innerHTML = `<span style="color: #fca5a5; font-size: 13px;">Gagal memuat data database</span>`;
             } finally {
                 state.loading = false; renderLoadMore();
             }
@@ -447,7 +345,6 @@
                     liveData.forEach(data => {
                         if (data.error) return;
 
-                        // 1. Update Harga, PnL, & Bollinger Bands
                         const priceCell = document.querySelector(`#price-cell-${data.ticker}`);
                         const originalItem = batch.find(b => b.stock_code === data.ticker);
 
@@ -455,6 +352,13 @@
                             let pnlHtml = '';
                             if (originalItem && originalItem.entry_price) {
                                 const pnl = ((data.price - originalItem.entry_price) / originalItem.entry_price) * 100;
+                                
+                                // --- KALKULASI FLOATING WIN RATE ---
+                                if (pnl > 0) performanceState.win++;
+                                else if (pnl <= 0) performanceState.loss++;
+                                performanceState.totalProcessed++;
+                                // -----------------------------------
+
                                 const color = pnl > 0 ? 'positive' : (pnl < 0 ? 'negative' : 'neutral');
                                 const sign = pnl > 0 ? '+' : '';
                                 pnlHtml = `<div class="price-change ${color}">${sign}${pnl.toFixed(2)}% vs Scan</div>`;
@@ -481,23 +385,29 @@
                             `;
                         }
 
-                        // 2. Update Candlestick Chart 5D
+                        // Update Candlestick Chart 5D
                         const chartEl = document.querySelector(`#chart-${data.ticker}`);
                         if (chartEl && data.historyOHLC && data.historyOHLC.length > 0) {
                             chartEl.innerHTML = '';
                             new ApexCharts(chartEl, {
                                 chart: { type: 'candlestick', height: 48, width: 110, sparkline: { enabled: true }, animations: { enabled: false } },
                                 series: [{ data: data.historyOHLC }],
-                                plotOptions: {
-                                    candlestick: {
-                                        colors: { upward: '#10b981', downward: '#ef4444' },
-                                        wick: { useFillColor: true }
-                                    }
-                                },
+                                plotOptions: { candlestick: { colors: { upward: '#10b981', downward: '#ef4444' }, wick: { useFillColor: true } } },
                                 tooltip: { theme: 'dark', fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
                             }).render();
                         }
                     });
+
+                    // --- UPDATE UI WIN RATE SETELAH BATCH SELESAI ---
+                    const winRateEl = document.getElementById('win-rate-value');
+                    if (winRateEl && performanceState.totalProcessed > 0) {
+                        const winRatePct = (performanceState.win / performanceState.totalProcessed) * 100;
+                        winRateEl.innerHTML = `${winRatePct.toFixed(1)}%`;
+                        // Ganti warna teks berdasarkan ambang batas performa
+                        winRateEl.style.color = winRatePct >= 55 ? '#10b981' : (winRatePct >= 40 ? '#f59e0b' : '#ef4444');
+                    }
+                    // --------------------------------------------------
+
                 } catch (error) {
                     console.error("Error fetching batch:", error);
                     batch.forEach(item => {
@@ -535,13 +445,9 @@
                                 <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="stock-link" style="font-size: 14px;">
                                     ${item.stock_code}
                                 </a>
-                                <div class="md:hidden">
-                                    ${statusBadge}
-                                </div>
+                                <div class="md:hidden">${statusBadge}</div>
                             </div>
-                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                ${strategyLabels}
-                            </div>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">${strategyLabels}</div>
                         </div>
                     </td>
                     <td class="hidden md:table-cell">${statusBadge}</td>
@@ -560,6 +466,7 @@
             el.tableBody.innerHTML = html;
         }
 
+        // Diperbarui dengan 5 Card (Termasuk Win Rate)
         function updateSummary(groupedItems) {
             const totalItems = groupedItems.length;
             let strongBuyCount = 0, wonderfulCount = 0, avoidCount = 0;
@@ -571,10 +478,10 @@
                 if (status.includes('⛔') || status.includes('🚨') || status.includes('Hindari') || status.includes('Minus') || status.includes('🔴')) avoidCount++;
             });
 
-            const createCard = (title, value, sub, color) => `
+            const createCard = (title, value, sub, color, id = "") => `
                 <div class="card-base metric-card animate-fade-in">
                     <div class="metric-label">${title}</div>
-                    <div class="metric-value" style="color: ${color};">${value}</div>
+                    <div class="metric-value" id="${id}" style="color: ${color};">${value}</div>
                     <div class="metric-sub" style="color: var(--text-muted);">${sub}</div>
                 </div>
             `;
@@ -584,6 +491,7 @@
                 ${createCard('Strong Buy', strongBuyCount, 'Valuasi Diskon', '#10b981')}
                 ${createCard('Wonderful', wonderfulCount, 'Pertumbuhan Kuat', '#06b6d4')}
                 ${createCard('Hindari', avoidCount, 'Red Flag / Rugi', '#ef4444')}
+                ${createCard('Float Win Rate', '<div class="loader" style="width:16px;height:16px;border-width:2px;margin-top:6px;"></div>', 'Profit > 0% Saat Ini', '#f59e0b', 'win-rate-value')}
             `;
         }
 
@@ -599,9 +507,15 @@
 
         function resetData() {
             state.data = []; state.page = 1; state.hasMore = true; state.totalDisplayed = 0;
-            el.tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="loader" style="margin: 0 auto;"></div><p style="margin-top: 1rem; color: var(--text-muted);">Loading stocks...</p></td></tr>`;
+            
+            // Reset perhitungan performa
+            performanceState.win = 0; performanceState.loss = 0; performanceState.totalProcessed = 0;
+
+            el.tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="loader" style="margin: 0 auto;"></div><p style="margin-top: 1rem; color: var(--text-muted);">Memuat algoritma...</p></td></tr>`;
             el.loadMore.innerHTML = '';
-            el.summary.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;">Memuat statistik...</div>`;
+            
+            // Re-render card kosong
+            el.summary.innerHTML = Array(5).fill('<div class="card-base metric-card skeleton h-24 sm:h-28"></div>').join('');
         }
 
         (async function init() {
