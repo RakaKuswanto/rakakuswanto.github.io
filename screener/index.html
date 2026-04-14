@@ -13,34 +13,19 @@
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        :root {
-            --primary: #06b6d4; --primary-dark: #0891b2;
-            --accent: #10b981; --accent-dark: #059669;
-            --bg-dark: #0f172a; --bg-card: #1e293b;
-            --bg-hover: #334155; --border-color: #475569;
-            --text-primary: #f1f5f9; --text-secondary: #cbd5e1; --text-muted: #94a3b8;
-        }
-
+        :root { --primary: #06b6d4; --primary-dark: #0891b2; --accent: #10b981; --bg-dark: #0f172a; --bg-card: #1e293b; --border-color: #475569; --text-primary: #f1f5f9; --text-secondary: #cbd5e1; --text-muted: #94a3b8; }
         html { background: linear-gradient(135deg, var(--bg-dark) 0%, #1a2942 100%); min-height: 100vh; }
         body { font-family: 'Inter', sans-serif; background: transparent; color: var(--text-primary); -webkit-font-smoothing: antialiased; }
         .font-mono { font-family: 'JetBrains Mono', monospace; }
 
-        /* Scrollbar & Animations */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-        @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
+        /* Scrollbar & Animation */
+        ::-webkit-scrollbar { width: 6px; height: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; } ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; } .hide-scrollbar::-webkit-scrollbar { display: none; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } } @keyframes fade-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .skeleton { background: linear-gradient(90deg, var(--bg-card) 0%, #334155 50%, var(--bg-card) 100%); background-size: 200% 100%; animation: shimmer 2s infinite; }
-        .animate-fade-in { animation: fade-in 0.6s ease-out; }
-        input[type="date"] { color-scheme: dark; }
+        .animate-fade-in { animation: fade-in 0.6s ease-out; } input[type="date"] { color-scheme: dark; }
 
-        /* Cards & Metrics */
+        /* Cards & Metric */
         .card-base { background: rgba(30, 41, 59, 0.5); border: 1px solid rgba(71, 85, 105, 0.5); border-radius: 12px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
         .card-base:hover { background: rgba(30, 41, 59, 0.65); border-color: rgba(6, 182, 212, 0.3); }
         .metric-card { padding: 1.25rem; border-radius: 14px; position: relative; overflow: hidden; }
@@ -57,7 +42,6 @@
         .badge-info { background: rgba(6, 182, 212, 0.15); color: #67e8f9; border: 1px solid rgba(6, 182, 212, 0.3); }
         .badge-warning { background: rgba(251, 146, 60, 0.15); color: #fdba74; border: 1px solid rgba(251, 146, 60, 0.3); }
         .badge-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.3); }
-        
         .btn { padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; border: none; cursor: pointer; transition: all 0.2s ease; }
         .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; box-shadow: 0 4px 15px rgba(6, 182, 212, 0.2); }
         .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3); }
@@ -77,15 +61,12 @@
         .filter-bar { background: rgba(30, 41, 59, 0.4); border: 1px solid rgba(71, 85, 105, 0.4); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
         .filter-chip { padding: 6px 14px; border-radius: 20px; background: rgba(6, 182, 212, 0.1); border: 1px solid rgba(6, 182, 212, 0.3); color: var(--text-secondary); font-size: 12px; font-weight: 500; cursor: pointer; white-space: nowrap; }
         .filter-chip.active { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; border-color: var(--primary); box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25); }
-
         .loader { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(6, 182, 212, 0.3); border-radius: 50%; border-top-color: var(--primary); animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         .price-display { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 600; color: var(--text-primary); }
         .price-change { font-size: 11px; font-weight: 600; margin-top: 4px; }
-        .price-change.positive { color: #6ee7b7; }
-        .price-change.negative { color: #fca5a5; }
-        .price-change.neutral { color: var(--text-muted); }
+        .price-change.positive { color: #6ee7b7; } .price-change.negative { color: #fca5a5; } .price-change.neutral { color: var(--text-muted); }
 
         .page-header { background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(16, 185, 129, 0.05)); border-bottom: 1px solid rgba(71, 85, 105, 0.3); padding: 2rem 0; margin-bottom: 2rem; border-radius: 0 0 16px 16px; }
         .header-title { font-size: 24px; font-weight: 700; display: flex; align-items: center; gap: 12px; margin-bottom: 0.5rem; }
@@ -102,9 +83,7 @@
                 <div class="flex-1">
                     <div class="header-title">
                         <div class="header-icon">
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-                            </svg>
+                            <svg class="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>
                         </div>
                         <span>Pro Screener</span>
                     </div>
@@ -113,9 +92,7 @@
                 <div class="flex flex-col items-end gap-2 sm:flex-row sm:items-center sm:gap-3">
                     <div id="last-updated" class="text-[10px] sm:text-xs font-mono text-right bg-slate-800/30 px-2 sm:px-3 py-1.5 rounded-lg border border-slate-700/50">Updating...</div>
                     <button id="refresh-btn" class="btn btn-ghost" title="Refresh Data">
-                        <svg class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                        </svg>
+                        <svg class="w-4 h-4 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
                     </button>
                 </div>
             </div>
@@ -123,7 +100,6 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
-        
         <div id="summary-container" class="grid grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4 mb-6 sm:mb-8 animate-fade-in">
             <div class="card-base metric-card skeleton h-24 sm:h-28"></div>
             <div class="card-base metric-card skeleton h-24 sm:h-28"></div>
@@ -136,9 +112,7 @@
             <div class="flex flex-col sm:flex-row items-center gap-3">
                 <div class="relative w-full sm:w-auto">
                     <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                        <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                     </div>
                     <input type="date" id="manual-date-picker" class="pl-10 pr-3 py-2 bg-slate-950/30 border border-slate-700/50 rounded-lg text-sm text-white focus:ring-1 focus:ring-cyan-500 focus:border-cyan-500 block w-full outline-none transition-all cursor-pointer hover:bg-slate-900/50" />
                 </div>
@@ -163,18 +137,12 @@
                         </tr>
                     </thead>
                     <tbody id="stock-table-body">
-                        <tr>
-                            <td colspan="6" class="empty-state">
-                                <div class="loader" style="margin: 0 auto;"></div>
-                                <p style="margin-top: 1rem; color: var(--text-muted);">Memuat algoritma...</p>
-                            </td>
-                        </tr>
+                        <tr><td colspan="6" class="empty-state"><div class="loader" style="margin: 0 auto;"></div><p style="margin-top: 1rem; color: var(--text-muted);">Memuat algoritma...</p></td></tr>
                     </tbody>
                 </table>
             </div>
             <div id="load-more-container" class="p-4 sm:p-6 text-center border-t border-slate-700/50"></div>
         </div>
-
     </div>
 
     <script>
@@ -186,9 +154,10 @@
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
         
-        // Menambahkan state Win Rate
+        // Global States
         const state = { data: [], filters: { date: null, screener: null }, page: 1, loading: false, hasMore: true, totalDisplayed: 0 };
-        const performanceState = { win: 0, loss: 0, totalProcessed: 0 }; // Lacak performa batch saat ini
+        const performanceState = { win: 0, loss: 0, totalProcessed: 0 }; 
+        const emitenPerfMap = new Map(); // Untuk menyimpan Win Rate Emiten
 
         const el = {
             tableBody: document.getElementById('stock-table-body'),
@@ -231,16 +200,18 @@
 
         async function initFilters() {
             try {
-                // 1. Ambil list filter dasar (tanggal & nama screener)
+                // 1. Tarik Data Dropdown Tanggal & Screener
                 const { data, error } = await supabaseClient.rpc('get_distinct_screener_filters');
                 if (error) throw error;
                 
-                // 2. Ambil data Historical Win Rate dari tabel baru yang kita buat
+                // 2. Tarik Data Win Rate Screener
                 const { data: perfData, error: perfError } = await supabaseClient.from('screener_performance').select('*');
                 let perfMap = new Map();
-                if (!perfError && perfData) {
-                    perfData.forEach(p => perfMap.set(p.screener_name, p.win_rate_pct));
-                }
+                if (!perfError && perfData) perfData.forEach(p => perfMap.set(p.screener_name, p.win_rate_pct));
+
+                // 3. Tarik Data Win Rate Emiten
+                const { data: emitenData, error: emitenError } = await supabaseClient.from('emiten_performance').select('stock_code, win_rate_pct');
+                if (!emitenError && emitenData) emitenData.forEach(e => emitenPerfMap.set(e.stock_code, parseFloat(e.win_rate_pct)));
 
                 // Render Tanggal
                 const dates = data.distinct_dates.map(i => i.scan_date).sort((a, b) => new Date(b) - new Date(a));
@@ -249,7 +220,7 @@
                     renderDateCapsules(dates);
                 }
 
-                // Render Dropdown Screener (Dengan Historical Win Rate)
+                // Render Dropdown Screener
                 const screeners = data.distinct_screeners.map(i => i.screener_name).sort();
                 renderScreenerFilters(screeners, perfMap);
 
@@ -269,12 +240,8 @@
                 <select onchange="handleScreenerChange(this.value)" class="w-full sm:w-auto" style="background: rgba(71, 85, 105, 0.2); border: 1px solid rgba(71, 85, 105, 0.4); color: var(--text-secondary); border-radius: 8px; padding: 8px 12px; outline: none; font-size: 13px; font-weight: 500; cursor: pointer;">
                     <option value="" style="background: var(--bg-card); color: var(--text-primary);">Semua Strategi</option>
                     ${screeners.map(s => {
-                        // Cek apakah ada data history win rate
                         const wr = perfMap.has(s) ? parseFloat(perfMap.get(s)) : null;
-                        let textWr = '';
-                        if (wr !== null) {
-                            textWr = ` (WR: ${wr}%) ${wr >= 60 ? '🔥' : ''}`;
-                        }
+                        const textWr = wr !== null ? ` (WR: ${wr}%) ${wr >= 60 ? '🔥' : ''}` : '';
                         return `<option value="${s}" style="background: var(--bg-card); color: var(--text-primary);" ${state.filters.screener === s ? 'selected' : ''}>${s}${textWr}</option>`;
                     }).join('')}
                 </select>
@@ -290,8 +257,7 @@
             if (state.filters[type] === value) return;
             state.filters[type] = value;
             if(type === 'date') initFilters();
-            resetData();
-            await fetchData();
+            resetData(); await fetchData();
         }
 
         async function fetchData() {
@@ -353,18 +319,16 @@
                             if (originalItem && originalItem.entry_price) {
                                 const pnl = ((data.price - originalItem.entry_price) / originalItem.entry_price) * 100;
                                 
-                                // --- KALKULASI FLOATING WIN RATE ---
+                                // Kalkulasi Floating Win Rate Live
                                 if (pnl > 0) performanceState.win++;
                                 else if (pnl <= 0) performanceState.loss++;
                                 performanceState.totalProcessed++;
-                                // -----------------------------------
 
                                 const color = pnl > 0 ? 'positive' : (pnl < 0 ? 'negative' : 'neutral');
                                 const sign = pnl > 0 ? '+' : '';
                                 pnlHtml = `<div class="price-change ${color}">${sign}${pnl.toFixed(2)}% vs Scan</div>`;
                             }
 
-                            // Render Bollinger Band Status
                             let bbBadgeHtml = '';
                             if (data.bbStatus) {
                                 let bbClass = 'badge';
@@ -372,7 +336,6 @@
                                 else if (data.bbStatus.includes('Upper Half')) bbClass = 'badge-info';
                                 else if (data.bbStatus.includes('Lower Half')) bbClass = 'badge-warning';
                                 else if (data.bbStatus.includes('Lower 🧊')) bbClass = 'badge-success';
-
                                 bbBadgeHtml = `<div class="mt-1.5"><span class="badge ${bbClass}" style="font-size: 9px; padding: 2px 6px;">BB: ${data.bbStatus}</span></div>`;
                             }
 
@@ -385,7 +348,6 @@
                             `;
                         }
 
-                        // Update Candlestick Chart 5D
                         const chartEl = document.querySelector(`#chart-${data.ticker}`);
                         if (chartEl && data.historyOHLC && data.historyOHLC.length > 0) {
                             chartEl.innerHTML = '';
@@ -398,18 +360,15 @@
                         }
                     });
 
-                    // --- UPDATE UI WIN RATE SETELAH BATCH SELESAI ---
+                    // Update UI Float Win Rate per Batch
                     const winRateEl = document.getElementById('win-rate-value');
                     if (winRateEl && performanceState.totalProcessed > 0) {
                         const winRatePct = (performanceState.win / performanceState.totalProcessed) * 100;
                         winRateEl.innerHTML = `${winRatePct.toFixed(1)}%`;
-                        // Ganti warna teks berdasarkan ambang batas performa
                         winRateEl.style.color = winRatePct >= 55 ? '#10b981' : (winRatePct >= 40 ? '#f59e0b' : '#ef4444');
                     }
-                    // --------------------------------------------------
 
                 } catch (error) {
-                    console.error("Error fetching batch:", error);
                     batch.forEach(item => {
                         const cell = document.querySelector(`#price-cell-${item.stock_code}`);
                         if (cell) cell.innerHTML = `<span style="font-size: 11px; color: #fca5a5;">API Error</span>`;
@@ -421,10 +380,15 @@
         function renderRows(groupedItems) {
             const html = groupedItems.map(item => {
                 const statusBadge = getStatusBadge(item.sector);
-                const strategyLabels = item.screener_names.map(name => {
-                    const txt = name === 'RADScreener' ? 'RAD + V11' : name;
-                    return `<span class="badge badge-info">${txt}</span>`;
-                }).join('');
+                const strategyLabels = item.screener_names.map(name => `<span class="badge badge-info">${name === 'RADScreener' ? 'RAD + V11' : name}</span>`).join('');
+
+                // Render Badge Win Rate Emiten
+                const emitenWR = emitenPerfMap.has(item.stock_code) ? emitenPerfMap.get(item.stock_code) : null;
+                let emitenWrHtml = '';
+                if (emitenWR !== null) {
+                    const wrColor = emitenWR >= 60 ? 'text-emerald-400' : (emitenWR >= 40 ? 'text-amber-400' : 'text-rose-400');
+                    emitenWrHtml = `<span class="${wrColor}" style="font-size: 10px; font-weight: 600; letter-spacing: 0.5px; margin-left: 6px; padding: 2px 6px; background: rgba(15, 23, 42, 0.4); border-radius: 4px; border: 1px solid rgba(71, 85, 105, 0.4);">🎯 WR: ${emitenWR}%</span>`;
+                }
 
                 let volHtml = `<span style="font-size: 12px; color: var(--text-muted);">-</span>`;
                 if (item.volume_now) {
@@ -441,12 +405,11 @@
                 <tr id="row-${item.stock_code}" style="animation: fade-in 0.4s ease-out;">
                     <td>
                         <div style="display: flex; flex-direction: column; gap: 6px;">
-                            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                                <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="stock-link" style="font-size: 14px;">
-                                    ${item.stock_code}
-                                </a>
-                                <div class="md:hidden">${statusBadge}</div>
+                            <div style="display: flex; align-items: center; flex-wrap: wrap;">
+                                <a href="https://stockbit.com/symbol/${item.stock_code}" target="_blank" class="stock-link" style="font-size: 14px;">${item.stock_code}</a>
+                                ${emitenWrHtml}
                             </div>
+                            <div class="md:hidden mt-1">${statusBadge}</div>
                             <div style="display: flex; gap: 6px; flex-wrap: wrap;">${strategyLabels}</div>
                         </div>
                     </td>
@@ -466,7 +429,6 @@
             el.tableBody.innerHTML = html;
         }
 
-        // Diperbarui dengan 5 Card (Termasuk Win Rate)
         function updateSummary(groupedItems) {
             const totalItems = groupedItems.length;
             let strongBuyCount = 0, wonderfulCount = 0, avoidCount = 0;
@@ -496,25 +458,16 @@
         }
 
         function renderLoadMore() {
-            if (state.loading) {
-                el.loadMore.innerHTML = `<div class="loader"></div>`;
-            } else if (state.hasMore) {
-                el.loadMore.innerHTML = `<button onclick="fetchData()" class="btn btn-primary w-full sm:w-auto">Muat Lebih Banyak</button>`;
-            } else {
-                el.loadMore.innerHTML = `<span style="font-size: 11px; color: var(--text-muted); letter-spacing: 0.3px; text-transform: uppercase; font-weight: 600;">Semua Data Ditampilkan</span>`;
-            }
+            if (state.loading) el.loadMore.innerHTML = `<div class="loader"></div>`;
+            else if (state.hasMore) el.loadMore.innerHTML = `<button onclick="fetchData()" class="btn btn-primary w-full sm:w-auto">Muat Lebih Banyak</button>`;
+            else el.loadMore.innerHTML = `<span style="font-size: 11px; color: var(--text-muted); letter-spacing: 0.3px; text-transform: uppercase; font-weight: 600;">Semua Data Ditampilkan</span>`;
         }
 
         function resetData() {
             state.data = []; state.page = 1; state.hasMore = true; state.totalDisplayed = 0;
-            
-            // Reset perhitungan performa
             performanceState.win = 0; performanceState.loss = 0; performanceState.totalProcessed = 0;
-
             el.tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="loader" style="margin: 0 auto;"></div><p style="margin-top: 1rem; color: var(--text-muted);">Memuat algoritma...</p></td></tr>`;
             el.loadMore.innerHTML = '';
-            
-            // Re-render card kosong
             el.summary.innerHTML = Array(5).fill('<div class="card-base metric-card skeleton h-24 sm:h-28"></div>').join('');
         }
 
