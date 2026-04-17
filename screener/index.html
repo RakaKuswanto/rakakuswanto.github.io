@@ -123,7 +123,7 @@
                 
                 <div class="flex flex-wrap items-center gap-3 mt-2 sm:mt-0 sm:ml-auto w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-700/50">
                     
-                    <select id="filter-fund" onchange="updateClientFilter('fundamental', this.value)" class="bg-slate-800/50 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-300 outline-none">
+                    <select id="filter-fund" onchange="updateClientFilter('fundamental', this.value)" class="bg-slate-800/50 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-300 outline-none cursor-pointer">
                         <option value="all">Status: Semua</option>
                         <option value="buy">🔥 Strong Buy</option>
                         <option value="wonderful">💎 Wonderful</option>
@@ -131,7 +131,7 @@
                         <option value="avoid">⛔ Hindari</option>
                     </select>
 
-                    <select id="filter-bb" onchange="updateClientFilter('bb', this.value)" class="bg-slate-800/50 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-300 outline-none">
+                    <select id="filter-bb" onchange="updateClientFilter('bb', this.value)" class="bg-slate-800/50 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-300 outline-none cursor-pointer">
                         <option value="all">BB: Semua</option>
                         <option value="lower">❄️ Lower 🧊</option>
                         <option value="lower half">🟡 Lower Half</option>
@@ -179,12 +179,11 @@
         const CONFIG = {
             SUPABASE_URL: 'https://yvmfenyirwzmgbzzrbfw.supabase.co',
             SUPABASE_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inl2bWZlbnlpcnd6bWdienpyYmZ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc1ODI0NDIsImV4cCI6MjA3MzE1ODQ0Mn0.i2Yjxa2LZbXEzi6amZpptPAnyLoeAirADdWsW47ZVcA',
-            ITEMS_PER_PAGE: 50
+            ITEMS_PER_PAGE: 500 // Dinaikkan menjadi 500 agar load semua data sekaligus (menghilangkan kebutuhan klik Load More)
         };
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
         
-        // --- STATE DIPERBARUI DENGAN FILTER CLIENT-SIDE ---
         const state = { 
             data: [], 
             filters: { 
@@ -202,6 +201,7 @@
         };
         const performanceState = { win: 0, loss: 0, totalProcessed: 0 }; 
         const emitenPerfMap = new Map(); 
+        const liveDataStore = {}; // MEMORI CACHE BARU: Mencegah hilangnya status saat render ulang
 
         const el = {
             tableBody: document.getElementById('stock-table-body'),
@@ -338,91 +338,107 @@
             }
         }
 
+        // Fungsi Helper untuk merender hasil API ke DOM
+        function renderLiveDataToDOM(originalItem, data) {
+            const priceCell = document.querySelector(`#price-cell-${data.ticker}`);
+            if (priceCell && data.price) {
+                let pnlHtml = '';
+                if (originalItem && originalItem.entry_price) {
+                    const pnl = ((data.price - originalItem.entry_price) / originalItem.entry_price) * 100;
+                    
+                    if (pnl > 0) performanceState.win++;
+                    else if (pnl <= 0) performanceState.loss++;
+                    performanceState.totalProcessed++;
+
+                    const color = pnl > 0 ? 'positive' : (pnl < 0 ? 'negative' : 'neutral');
+                    const sign = pnl > 0 ? '+' : '';
+                    pnlHtml = `<div class="price-change ${color}">${sign}${pnl.toFixed(2)}% vs Scan</div>`;
+                }
+
+                let bbBadgeHtml = '';
+                if (data.bbStatus) {
+                    let bbClass = 'badge';
+                    if (data.bbStatus.includes('Upper 🔥')) bbClass = 'badge-danger';
+                    else if (data.bbStatus.includes('Upper Half')) bbClass = 'badge-info';
+                    else if (data.bbStatus.includes('Lower Half')) bbClass = 'badge-warning';
+                    else if (data.bbStatus.includes('Lower 🧊')) bbClass = 'badge-success';
+                    bbBadgeHtml = `<div class="mt-1.5"><span class="badge ${bbClass}" style="font-size: 9px; padding: 2px 6px;">BB: ${data.bbStatus}</span></div>`;
+                }
+
+                priceCell.innerHTML = `
+                    <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                        <div class="price-display">${formatIDR(data.price)}</div>
+                        ${pnlHtml}
+                        ${bbBadgeHtml}
+                    </div>
+                `;
+            }
+
+            const chartEl = document.querySelector(`#chart-${data.ticker}`);
+            if (chartEl && data.historyOHLC && data.historyOHLC.length > 0) {
+                chartEl.innerHTML = '';
+                new ApexCharts(chartEl, {
+                    chart: { type: 'candlestick', height: 48, width: 110, sparkline: { enabled: true }, animations: { enabled: false } },
+                    series: [{ data: data.historyOHLC }],
+                    plotOptions: { candlestick: { colors: { upward: '#10b981', downward: '#ef4444' }, wick: { useFillColor: true } } },
+                    tooltip: { theme: 'dark', fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
+                }).render();
+            }
+        }
+
         async function fetchPricesFromEdge(groupedItems) {
             if (groupedItems.length === 0) return;
-            const BATCH_SIZE = 20;
+            
+            const itemsToFetch = [];
 
-            for (let i = 0; i < groupedItems.length; i += BATCH_SIZE) {
-                const batch = groupedItems.slice(i, i + BATCH_SIZE);
-                const tickers = batch.map(item => item.stock_code).join(',');
+            // 1. Eksekusi data yang sudah ada di Cache agar tampil instan
+            groupedItems.forEach(item => {
+                if (liveDataStore[item.stock_code]) {
+                    renderLiveDataToDOM(item, liveDataStore[item.stock_code]);
+                } else {
+                    itemsToFetch.push(item);
+                }
+            });
 
-                try {
-                    const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/get-price?tickers=${tickers}`);
-                    if (!res.ok) throw new Error('Gagal fetch edge function');
-                    const liveData = await res.json();
+            // 2. Fetch data yang belum ada di Cache
+            if (itemsToFetch.length > 0) {
+                const BATCH_SIZE = 20;
+                for (let i = 0; i < itemsToFetch.length; i += BATCH_SIZE) {
+                    const batch = itemsToFetch.slice(i, i + BATCH_SIZE);
+                    const tickers = batch.map(item => item.stock_code).join(',');
 
-                    liveData.forEach(data => {
-                        if (data.error) return;
+                    try {
+                        const res = await fetch(`${CONFIG.SUPABASE_URL}/functions/v1/get-price?tickers=${tickers}`);
+                        if (!res.ok) throw new Error('Gagal fetch edge function');
+                        const liveData = await res.json();
 
-                        const priceCell = document.querySelector(`#price-cell-${data.ticker}`);
-                        const originalItem = batch.find(b => b.stock_code === data.ticker);
-                        
-                        // --- SIMPAN BB STATUS KE MEMORI UNTUK FILTER ---
-                        if (originalItem && data.bbStatus) {
-                            originalItem.live_bb = data.bbStatus;
+                        liveData.forEach(data => {
+                            if (data.error) return;
+                            
+                            // Simpan ke Cache Memory Global
+                            liveDataStore[data.ticker] = data;
+
+                            const originalItem = batch.find(b => b.stock_code === data.ticker);
+                            if(originalItem) renderLiveDataToDOM(originalItem, data);
+                        });
+
+                        const winRateEl = document.getElementById('win-rate-value');
+                        if (winRateEl && performanceState.totalProcessed > 0) {
+                            const winRatePct = (performanceState.win / performanceState.totalProcessed) * 100;
+                            winRateEl.innerHTML = `${winRatePct.toFixed(1)}%`;
+                            winRateEl.style.color = winRatePct >= 55 ? '#10b981' : (winRatePct >= 40 ? '#f59e0b' : '#ef4444');
                         }
 
-                        if (priceCell && data.price) {
-                            let pnlHtml = '';
-                            if (originalItem && originalItem.entry_price) {
-                                const pnl = ((data.price - originalItem.entry_price) / originalItem.entry_price) * 100;
-                                
-                                if (pnl > 0) performanceState.win++;
-                                else if (pnl <= 0) performanceState.loss++;
-                                performanceState.totalProcessed++;
-
-                                const color = pnl > 0 ? 'positive' : (pnl < 0 ? 'negative' : 'neutral');
-                                const sign = pnl > 0 ? '+' : '';
-                                pnlHtml = `<div class="price-change ${color}">${sign}${pnl.toFixed(2)}% vs Scan</div>`;
-                            }
-
-                            let bbBadgeHtml = '';
-                            if (data.bbStatus) {
-                                let bbClass = 'badge';
-                                if (data.bbStatus.includes('Upper 🔥')) bbClass = 'badge-danger';
-                                else if (data.bbStatus.includes('Upper Half')) bbClass = 'badge-info';
-                                else if (data.bbStatus.includes('Lower Half')) bbClass = 'badge-warning';
-                                else if (data.bbStatus.includes('Lower 🧊')) bbClass = 'badge-success';
-                                bbBadgeHtml = `<div class="mt-1.5"><span class="badge ${bbClass}" style="font-size: 9px; padding: 2px 6px;">BB: ${data.bbStatus}</span></div>`;
-                            }
-
-                            priceCell.innerHTML = `
-                                <div style="display: flex; flex-direction: column; align-items: flex-end;">
-                                    <div class="price-display">${formatIDR(data.price)}</div>
-                                    ${pnlHtml}
-                                    ${bbBadgeHtml}
-                                </div>
-                            `;
-                        }
-
-                        const chartEl = document.querySelector(`#chart-${data.ticker}`);
-                        if (chartEl && data.historyOHLC && data.historyOHLC.length > 0) {
-                            chartEl.innerHTML = '';
-                            new ApexCharts(chartEl, {
-                                chart: { type: 'candlestick', height: 48, width: 110, sparkline: { enabled: true }, animations: { enabled: false } },
-                                series: [{ data: data.historyOHLC }],
-                                plotOptions: { candlestick: { colors: { upward: '#10b981', downward: '#ef4444' }, wick: { useFillColor: true } } },
-                                tooltip: { theme: 'dark', fixed: { enabled: false }, x: { show: false }, y: { title: { formatter: () => '' } }, marker: { show: false } }
-                            }).render();
-                        }
-                    });
-
-                    const winRateEl = document.getElementById('win-rate-value');
-                    if (winRateEl && performanceState.totalProcessed > 0) {
-                        const winRatePct = (performanceState.win / performanceState.totalProcessed) * 100;
-                        winRateEl.innerHTML = `${winRatePct.toFixed(1)}%`;
-                        winRateEl.style.color = winRatePct >= 55 ? '#10b981' : (winRatePct >= 40 ? '#f59e0b' : '#ef4444');
+                    } catch (error) {
+                        batch.forEach(item => {
+                            const cell = document.querySelector(`#price-cell-${item.stock_code}`);
+                            if (cell) cell.innerHTML = `<span style="font-size: 11px; color: #fca5a5;">API Error</span>`;
+                        });
                     }
-
-                } catch (error) {
-                    batch.forEach(item => {
-                        const cell = document.querySelector(`#price-cell-${item.stock_code}`);
-                        if (cell) cell.innerHTML = `<span style="font-size: 11px; color: #fca5a5;">API Error</span>`;
-                    });
                 }
             }
             
-            // --- JALANKAN FILTER CLIENT SETELAH HARGA TERBARU DIMUAT ---
+            // Re-apply filter setelah semua live data selesai dimuat
             applyClientFilters();
         }
 
@@ -538,6 +554,9 @@
                 if (!row) return;
 
                 let isVisible = true;
+                
+                // Ambil data BB langsung dari cache, bukan dari temporary object
+                const liveData = liveDataStore[item.stock_code];
 
                 // 1. Logika Filter Fundamental
                 const status = item.sector || "";
@@ -546,17 +565,15 @@
                 if (state.filters.fundamental === 'hold' && !status.includes('💡') && !status.includes('🟡')) isVisible = false;
                 if (state.filters.fundamental === 'avoid' && !status.includes('⛔') && !status.includes('🚨') && !status.includes('Hindari') && !status.includes('🔴')) isVisible = false;
 
-                // 2. Logika Filter Bollinger Bands
+                // 2. Logika Filter Bollinger Bands (Sekarang kebal terhadap reset)
                 if (state.filters.bb !== 'all') {
-                    if (!item.live_bb) {
-                        // Jika API belum selesai memuat atau gagal, sembunyikan baris saat filter aktif
+                    if (!liveData || !liveData.bbStatus) {
                         isVisible = false; 
                     } else {
-                        // Pencocokan string yang spesifik
-                        if (state.filters.bb === 'lower' && !item.live_bb.includes('Lower 🧊')) isVisible = false;
-                        if (state.filters.bb === 'lower half' && !item.live_bb.includes('Lower Half')) isVisible = false;
-                        if (state.filters.bb === 'upper half' && !item.live_bb.includes('Upper Half')) isVisible = false;
-                        if (state.filters.bb === 'upper' && !item.live_bb.includes('Upper 🔥')) isVisible = false;
+                        if (state.filters.bb === 'lower' && !liveData.bbStatus.includes('Lower 🧊')) isVisible = false;
+                        if (state.filters.bb === 'lower half' && !liveData.bbStatus.includes('Lower Half')) isVisible = false;
+                        if (state.filters.bb === 'upper half' && !liveData.bbStatus.includes('Upper Half')) isVisible = false;
+                        if (state.filters.bb === 'upper' && !liveData.bbStatus.includes('Upper 🔥')) isVisible = false;
                     }
                 }
 
