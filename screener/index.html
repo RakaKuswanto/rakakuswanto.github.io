@@ -120,6 +120,34 @@
                     <div id="date-list-container" class="flex items-center gap-2 overflow-x-auto hide-scrollbar scroll-smooth px-1 sm:px-2 pb-1 sm:pb-0"></div>
                 </div>
                 <div class="w-full sm:w-auto sm:border-l border-slate-700/50 sm:pl-3" id="screener-filter-container"></div>
+                
+                <div class="flex flex-wrap items-center gap-3 mt-2 sm:mt-0 sm:ml-auto w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-700/50">
+                    
+                    <select id="filter-fund" onchange="updateClientFilter('fundamental', this.value)" class="bg-slate-800/50 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-300 outline-none">
+                        <option value="all">Status: Semua</option>
+                        <option value="buy">🔥 Strong Buy</option>
+                        <option value="wonderful">💎 Wonderful</option>
+                        <option value="hold">💡 Hold</option>
+                        <option value="avoid">⛔ Hindari</option>
+                    </select>
+
+                    <select id="filter-bb" onchange="updateClientFilter('bb', this.value)" class="bg-slate-800/50 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-300 outline-none">
+                        <option value="all">BB: Semua</option>
+                        <option value="lower">❄️ Lower Area</option>
+                        <option value="upper">🔥 Upper Area</option>
+                    </select>
+
+                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-300 cursor-pointer hover:text-cyan-400 transition-colors">
+                        <input type="checkbox" onchange="updateClientFilter('volSpike', this.checked)" class="rounded bg-slate-800 border-slate-600 text-cyan-500 accent-cyan-500 cursor-pointer w-4 h-4">
+                        Vol Spike
+                    </label>
+
+                    <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-300 cursor-pointer hover:text-emerald-400 transition-colors">
+                        <input type="checkbox" onchange="updateClientFilter('highWr', this.checked)" class="rounded bg-slate-800 border-slate-600 text-emerald-500 accent-emerald-500 cursor-pointer w-4 h-4">
+                        WR >60%
+                    </label>
+                    
+                </div>
             </div>
         </div>
 
@@ -154,9 +182,24 @@
 
         const supabaseClient = supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
         
-        const state = { data: [], filters: { date: null, screener: null }, page: 1, loading: false, hasMore: true, totalDisplayed: 0 };
+        // --- STATE DIPERBARUI DENGAN FILTER CLIENT-SIDE ---
+        const state = { 
+            data: [], 
+            filters: { 
+                date: null, 
+                screener: null,
+                fundamental: 'all',
+                bb: 'all',
+                volSpike: false,
+                highWr: false
+            }, 
+            page: 1, 
+            loading: false, 
+            hasMore: true, 
+            totalDisplayed: 0 
+        };
         const performanceState = { win: 0, loss: 0, totalProcessed: 0 }; 
-        const emitenPerfMap = new Map(); // Untuk menyimpan Win Rate Emiten per Screener
+        const emitenPerfMap = new Map(); 
 
         const el = {
             tableBody: document.getElementById('stock-table-body'),
@@ -206,11 +249,9 @@
                 let perfMap = new Map();
                 if (!perfError && perfData) perfData.forEach(p => perfMap.set(p.screener_name, p.win_rate_pct));
 
-                // --- TARIK DATA EMITEN PER SCREENER ---
                 const { data: emitenData, error: emitenError } = await supabaseClient.from('emiten_performance').select('stock_code, screener_name, win_rate_pct');
                 if (!emitenError && emitenData) {
                     emitenData.forEach(e => {
-                        // Kuncinya sekarang adalah: NamaScreener_KodeSaham
                         emitenPerfMap.set(`${e.screener_name}_${e.stock_code}`, parseFloat(e.win_rate_pct));
                     });
                 }
@@ -313,6 +354,11 @@
 
                         const priceCell = document.querySelector(`#price-cell-${data.ticker}`);
                         const originalItem = batch.find(b => b.stock_code === data.ticker);
+                        
+                        // --- SIMPAN BB STATUS KE MEMORI UNTUK FILTER ---
+                        if (originalItem && data.bbStatus) {
+                            originalItem.live_bb = data.bbStatus;
+                        }
 
                         if (priceCell && data.price) {
                             let pnlHtml = '';
@@ -373,20 +419,21 @@
                     });
                 }
             }
+            
+            // --- JALANKAN FILTER CLIENT SETELAH HARGA TERBARU DIMUAT ---
+            applyClientFilters();
         }
 
         function renderRows(groupedItems) {
             const html = groupedItems.map(item => {
                 const statusBadge = getStatusBadge(item.sector);
                 
-                // --- RENDER BADGE STRATEGI + WIN RATE DI DALAMNYA ---
                 const strategyLabels = item.screener_names.map(name => {
                     const wrKey = `${name}_${item.stock_code}`;
                     const emitenWR = emitenPerfMap.has(wrKey) ? emitenPerfMap.get(wrKey) : null;
                     
                     let wrHtml = '';
                     if (emitenWR !== null) {
-                        // Tambahkan ikon api jika win rate tinggi
                         const icon = emitenWR >= 60 ? '🔥' : '';
                         wrHtml = `<span style="opacity: 0.8; margin-left: 6px; padding-left: 6px; border-left: 1px solid rgba(255,255,255,0.2);">WR: ${emitenWR}% ${icon}</span>`;
                     }
@@ -474,6 +521,57 @@
             el.loadMore.innerHTML = '';
             el.summary.innerHTML = Array(5).fill('<div class="card-base metric-card skeleton h-24 sm:h-28"></div>').join('');
         }
+
+        // --- FUNGSI MASTER FILTER ---
+        window.updateClientFilter = (key, value) => {
+            state.filters[key] = value;
+            applyClientFilters();
+        };
+
+        window.applyClientFilters = () => {
+            const groupedItems = getGroupedData(state.data);
+            
+            groupedItems.forEach(item => {
+                const row = document.getElementById(`row-${item.stock_code}`);
+                if (!row) return;
+
+                let isVisible = true;
+
+                // 1. Logika Filter Fundamental
+                const status = item.sector || "";
+                if (state.filters.fundamental === 'buy' && !status.includes('🔥') && !status.includes('Strong Buy') && !status.includes('🟢')) isVisible = false;
+                if (state.filters.fundamental === 'wonderful' && !status.includes('💎') && !status.includes('WONDERFUL')) isVisible = false;
+                if (state.filters.fundamental === 'hold' && !status.includes('💡') && !status.includes('🟡')) isVisible = false;
+                if (state.filters.fundamental === 'avoid' && !status.includes('⛔') && !status.includes('🚨') && !status.includes('Hindari') && !status.includes('🔴')) isVisible = false;
+
+                // 2. Logika Filter Bollinger Bands
+                if (state.filters.bb === 'lower') {
+                    if (!item.live_bb || (!item.live_bb.includes('Lower') && !item.live_bb.includes('🧊'))) isVisible = false;
+                }
+                if (state.filters.bb === 'upper') {
+                    if (!item.live_bb || (!item.live_bb.includes('Upper') && !item.live_bb.includes('🔥'))) isVisible = false;
+                }
+
+                // 3. Logika Filter Volume Spike
+                if (state.filters.volSpike) {
+                    const isSpike = item.volume_10d_avg && item.volume_now > (item.volume_10d_avg * 2);
+                    if (!isSpike) isVisible = false;
+                }
+
+                // 4. Logika Filter High Win Rate
+                if (state.filters.highWr) {
+                    let hasHighWr = false;
+                    item.screener_names.forEach(name => {
+                        const wrKey = `${name}_${item.stock_code}`;
+                        const emitenWR = emitenPerfMap.has(wrKey) ? emitenPerfMap.get(wrKey) : null;
+                        if (emitenWR !== null && emitenWR >= 60) hasHighWr = true;
+                    });
+                    if (!hasHighWr) isVisible = false;
+                }
+
+                row.style.display = isVisible ? '' : 'none';
+            });
+        };
 
         (async function init() {
             el.lastUpdated.innerText = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute:'2-digit' });
