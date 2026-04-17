@@ -133,8 +133,10 @@
 
                     <select id="filter-bb" onchange="updateClientFilter('bb', this.value)" class="bg-slate-800/50 border border-slate-600 rounded-lg px-2 py-1.5 text-xs text-slate-300 outline-none">
                         <option value="all">BB: Semua</option>
-                        <option value="lower">❄️ Lower Area</option>
-                        <option value="upper">🔥 Upper Area</option>
+                        <option value="lower">❄️ Lower 🧊</option>
+                        <option value="lower half">🟡 Lower Half</option>
+                        <option value="upper half">🔵 Upper Half</option>
+                        <option value="upper">🔥 Upper 🔥</option>
                     </select>
 
                     <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-300 cursor-pointer hover:text-cyan-400 transition-colors">
@@ -545,11 +547,17 @@
                 if (state.filters.fundamental === 'avoid' && !status.includes('⛔') && !status.includes('🚨') && !status.includes('Hindari') && !status.includes('🔴')) isVisible = false;
 
                 // 2. Logika Filter Bollinger Bands
-                if (state.filters.bb === 'lower') {
-                    if (!item.live_bb || (!item.live_bb.includes('Lower') && !item.live_bb.includes('🧊'))) isVisible = false;
-                }
-                if (state.filters.bb === 'upper') {
-                    if (!item.live_bb || (!item.live_bb.includes('Upper') && !item.live_bb.includes('🔥'))) isVisible = false;
+                if (state.filters.bb !== 'all') {
+                    if (!item.live_bb) {
+                        // Jika API belum selesai memuat atau gagal, sembunyikan baris saat filter aktif
+                        isVisible = false; 
+                    } else {
+                        // Pencocokan string yang spesifik
+                        if (state.filters.bb === 'lower' && !item.live_bb.includes('Lower 🧊')) isVisible = false;
+                        if (state.filters.bb === 'lower half' && !item.live_bb.includes('Lower Half')) isVisible = false;
+                        if (state.filters.bb === 'upper half' && !item.live_bb.includes('Upper Half')) isVisible = false;
+                        if (state.filters.bb === 'upper' && !item.live_bb.includes('Upper 🔥')) isVisible = false;
+                    }
                 }
 
                 // 3. Logika Filter Volume Spike
