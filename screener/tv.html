@@ -140,8 +140,22 @@
                                 window.radDataStore[timeMs] = {
                                     xWAD: radData.xWAD[index],
                                     pelopor: radData.pelopor[index],
-                                    kunci: radData.kunci[index]
+                                    kunci: radData.kunci[index],
+                                    colorIndex: radData.bar_colors[index], // Untuk warna histogram
+                                    dashboard: {
+                                        statusText: radData.dashboard.statusText[index],
+                                        NetST: radData.dashboard.NetST[index],
+                                        sigST: radData.dashboard.sigST[index],
+                                        NetMT: radData.dashboard.NetMT[index],
+                                        sigMT: radData.dashboard.sigMT[index],
+                                        NetLT: radData.dashboard.NetLT[index],
+                                        sigLT: radData.dashboard.sigLT[index],
+                                    }
                                 };
+
+                                if (index === bars.length - 1) {
+                                    updateDashboardUI(window.radDataStore[timeMs].dashboard);
+                                }
                             }
 
                             return {
@@ -188,15 +202,29 @@
                                 isCustomIndicator: true,
                                 format: { type: "price", precision: 2 },
                                 
-                                // STRUKTUR PLOT PALING AMAN (Berdasarkan ID murni)
                                 plots: [
-                                    { id: "plot_xwad", type: "line" },
+                                    { id: "plot_xwad", type: "line" }, 
                                     { id: "plot_pelopor", type: "line" },
-                                    { id: "plot_kunci", type: "line" }
+                                    { id: "plot_kunci", type: "line" },
+                                    // Tambahkan colorer untuk mengubah warna xWAD secara dinamis
+                                    { id: "colorer_xwad", type: "colorer", target: "plot_xwad", palette: "palette_xwad" }
                                 ],
+                                // Definisikan Palet Warna
+                                palettes: {
+                                    palette_xwad: {
+                                        colors: {
+                                            0: { name: "Strong Bull", color: "#00FF00" }, // Lime
+                                            1: { name: "Weak Bull", color: "#00FFFF" },   // Aqua
+                                            2: { name: "Strong Bear", color: "#FF0000" }, // Red
+                                            3: { name: "Weak Bear", color: "#FF00FF" },   // Fuchsia
+                                            4: { name: "Neutral", color: "#808080" }      // Gray
+                                        }
+                                    }
+                                },
                                 defaults: {
                                     styles: {
-                                        plot_xwad: { linestyle: 0, linewidth: 2, plottype: 1, color: "rgba(169, 169, 169, 0.5)", title: "xWAD" },
+                                        // plottype: 5 adalah Histogram/Columns di TradingView
+                                        plot_xwad: { linestyle: 0, linewidth: 2, plottype: 5, color: "#808080", title: "xWAD" },
                                         plot_pelopor: { linestyle: 0, linewidth: 2, plottype: 0, color: "#2962FF", title: "Pelopor" },
                                         plot_kunci: { linestyle: 0, linewidth: 2, plottype: 0, color: "#FF6D00", title: "Kunci" }
                                     },
@@ -210,34 +238,51 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    // JIKA DATA KOSONG, KEMBALIKAN ARRAY NaN SEBANYAK JUMLAH PLOT
-                                    if (!d) return [NaN, NaN, NaN];
+                                    if (!d) return [NaN, NaN, NaN, NaN]; // Tambah 1 NaN untuk warna
                                     
-                                    // Ekstrak angka murni, jika gagal jadikan NaN
                                     let xwad = getSafeNumber(d.xWAD);
                                     let pelopor = getSafeNumber(d.pelopor);
                                     let kunci = getSafeNumber(d.kunci);
+                                    
+                                    // Asumsi: Backend Anda juga mengirimkan ID warna (0-4) ke radDataStore
+                                    // Misalnya: d.colorIndex = 0 (untuk Lime)
+                                    let colorIndex = d.colorIndex !== undefined ? d.colorIndex : 4; 
 
-                                    return [xwad, pelopor, kunci];
+                                    // Return array: [Data1, Data2, Data3, ColorIndex]
+                                    return [xwad, pelopor, kunci, colorIndex];
                                 };
                             }
                         }
                     ]);
-                }
+                }            
             });
 
             // 4. INJEKSI AMAN (Delay untuk mencegah "Unexpected Study ID" error)
             widget.headerReady().then(function() {
                 widget.onChartReady(function() {
-                    console.log("Chart Ready. Menginjeksi RAD...");
-                    // Delay 500ms agar registry Custom Indicators TradingView tersusun sempurna
-                    setTimeout(() => {
-                        widget.chart().createStudy("RAD_Oscillator", false, false).catch(err => {
-                            console.error("Gagal meload indikator:", err);
-                        });
-                    }, 500); 
+                console.log("Chart Ready. Menginjeksi RAD...");
+                
+                setTimeout(() => {
+                    widget.chart().createStudy("RAD_Oscillator", false, false).catch(err => {
+                        console.error("Gagal meload indikator:", err);
+                    });
+                }, 500); 
+
+                // --- TAMBAHAN: Sinkronisasi Dashboard dengan Kursor ---
+                widget.chart().crossHairMoved().subscribe(null, function(obj) {
+                    if (obj && obj.time) {
+                        let timeMs = obj.time * 1000; // TV mengirimkan waktu dalam detik
+                        let dataKursor = window.radDataStore[timeMs];
+                        
+                        if (dataKursor && dataKursor.dashboard) {
+                            // Update dashboard dengan data historis pada titik kursor
+                            updateDashboardUI(dataKursor.dashboard);
+                        }
+                    }
                 });
+
             });
+        });
 
         });
     </script>
