@@ -8,7 +8,6 @@
     <style>
         body { margin: 0; padding: 0; background: #131722; color: #d1d4dc; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Layout Pembagian Layar: 70% Chart Utama, 30% Indikator RAD */
         #main-chart { width: 100%; flex: 1; position: relative; }
         #rad-chart { width: 100%; height: 30vh; border-top: 2px solid #2a2e39; position: relative; }
 
@@ -16,7 +15,6 @@
         .loader { border: 5px solid #2a2e39; border-top: 5px solid #2962ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Dashboard Custom melayang di atas chart */
         #rad-dashboard {
             position: absolute; top: 10px; left: 10px; z-index: 999;
             background-color: rgba(19, 23, 34, 0.9); border: 1px solid #363c4e;
@@ -73,46 +71,61 @@ document.addEventListener('DOMContentLoaded', async function () {
         return num.toFixed(2);
     }
 
-    // Konfigurasi Tema Umum
     const chartOptions = {
         layout: { background: { type: 'solid', color: '#131722' }, textColor: '#d1d4dc' },
         grid: { vertLines: { color: '#2a2e39' }, horzLines: { color: '#2a2e39' } },
-        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        crosshair: { mode: 0 }, // 0 = Normal Mode
         timeScale: { timeVisible: true, borderColor: '#2a2e39' },
         rightPriceScale: { borderColor: '#2a2e39' }
     };
 
-    // 1. Buat Chart Utama (Candlestick)
+    // 1. Buat Chart Utama
     const mainChartElement = document.getElementById('main-chart');
     const mainChart = LightweightCharts.createChart(mainChartElement, chartOptions);
-    const candleSeries = mainChart.addCandlestickSeries({ upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350' });
+    
+    // PERBAIKAN SYNTAX UNTUK LIGHTWEIGHT CHARTS V5
+    const candleSeries = mainChart.addSeries(LightweightCharts.CandlestickSeries, { 
+        upColor: '#26a69a', 
+        downColor: '#ef5350', 
+        borderVisible: false, 
+        wickUpColor: '#26a69a', 
+        wickDownColor: '#ef5350' 
+    });
 
-    // 2. Buat Chart Bawah (RAD Oscillator)
+    // 2. Buat Chart Bawah (RAD)
     const radChartElement = document.getElementById('rad-chart');
     const radChart = LightweightCharts.createChart(radChartElement, {
         ...chartOptions,
-        timeScale: { visible: false } // Sembunyikan sumbu waktu di chart bawah agar rapi
+        timeScale: { visible: false }
     });
 
-    const xwadSeries = radChart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'right' });
-    const peloporSeries = radChart.addLineSeries({ color: '#2962FF', lineWidth: 2 });
-    const kunciSeries = radChart.addLineSeries({ color: '#FF6D00', lineWidth: 2 });
+    // PERBAIKAN SYNTAX UNTUK LIGHTWEIGHT CHARTS V5
+    const xwadSeries = radChart.addSeries(LightweightCharts.HistogramSeries, { 
+        priceFormat: { type: 'volume' }, 
+        priceScaleId: 'right' 
+    });
+    const peloporSeries = radChart.addSeries(LightweightCharts.LineSeries, { 
+        color: '#2962FF', 
+        lineWidth: 2 
+    });
+    const kunciSeries = radChart.addSeries(LightweightCharts.LineSeries, { 
+        color: '#FF6D00', 
+        lineWidth: 2 
+    });
 
-    // Sinkronisasi Sumbu Waktu (Pindah/Zoom bersamaan)
+    // Sinkronisasi Sumbu Waktu
     mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => { radChart.timeScale().setVisibleLogicalRange(range); });
     radChart.timeScale().subscribeVisibleLogicalRangeChange(range => { mainChart.timeScale().setVisibleLogicalRange(range); });
 
-    // Global Store untuk Dashboard
     const dashboardData = {};
 
-    // Fetch Data
     async function loadData() {
         try {
             const url = new URL(CONFIG.supabaseFunctionUrl);
             url.searchParams.append('endpoint', 'bars');
             url.searchParams.append('symbol', CONFIG.symbol);
             url.searchParams.append('interval', CONFIG.interval);
-            url.searchParams.append('cb', Date.now()); // Anti-cache
+            url.searchParams.append('cb', Date.now()); 
 
             const res = await fetch(url);
             const data = await res.json();
@@ -130,24 +143,34 @@ document.addEventListener('DOMContentLoaded', async function () {
             const kunciData = [];
 
             for (let i = 0; i < timestamps.length; i++) {
-                let time = timestamps[i]; // Lightweight Chart butuh UNIX Time (detik)
+                // Di Lightweight Charts, waktu harian butuh format (YYYY-MM-DD) atau timestamp. 
+                // Untuk amannya, kita buat timestamp integer UNIX murni
+                let time = timestamps[i]; 
                 
                 let o = quotes.open[i];
+                let h = quotes.high[i];
+                let l = quotes.low[i];
                 let c = quotes.close[i];
+                
                 if (o == null || c == null || isNaN(o) || isNaN(c)) continue;
 
-                // Push Candlestick
-                candleData.push({ time, open: o, high: quotes.high[i] ?? c, low: quotes.low[i] ?? c, close: c });
+                // Push Candlestick (atasi jika high/low rusak dengan fallback ke close)
+                candleData.push({ 
+                    time, 
+                    open: o, 
+                    high: isNaN(h) ? c : h, 
+                    low: isNaN(l) ? c : l, 
+                    close: c 
+                });
 
-                // Push Indikator RAD
                 if (rad.xWAD && rad.xWAD[i] !== null) {
                     let colIdx = rad.bar_colors ? rad.bar_colors[i] : 4;
+                    // Format khusus untuk Histogram Series -> nilai 'value' dan 'color'
                     xwadData.push({ time, value: rad.xWAD[i], color: colors[colIdx] || colors[4] });
                     
                     if (rad.pelopor[i] !== null) peloporData.push({ time, value: rad.pelopor[i] });
                     if (rad.kunci[i] !== null) kunciData.push({ time, value: rad.kunci[i] });
 
-                    // Simpan data dashboard
                     if (rad.dashboard && rad.dashboard.statusText) {
                         dashboardData[time] = {
                             statusText: rad.dashboard.statusText[i],
@@ -168,7 +191,6 @@ document.addEventListener('DOMContentLoaded', async function () {
             document.getElementById('loading-overlay').style.display = 'none';
             document.getElementById('rad-dashboard').style.display = 'block';
 
-            // Set dashboard awal (data terakhir)
             if (candleData.length > 0) updateDashboard(candleData[candleData.length - 1].time);
 
         } catch (error) {
@@ -177,7 +199,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // Fungsi Update Dashboard
     function updateDashboard(time) {
         const d = dashboardData[time];
         if (!d) return;
@@ -190,7 +211,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         document.getElementById('rad-lt-sig').innerText = formatNumber(d.sigLT);
     }
 
-    // Sinkronisasi Crosshair
     function syncCrosshair(param) {
         if (!param.time) return;
         updateDashboard(param.time);
@@ -199,13 +219,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     mainChart.subscribeCrosshairMove(syncCrosshair);
     radChart.subscribeCrosshairMove(syncCrosshair);
 
-    // Handle Resize
     window.addEventListener('resize', () => {
         mainChart.resize(mainChartElement.clientWidth, mainChartElement.clientHeight);
         radChart.resize(radChartElement.clientWidth, radChartElement.clientHeight);
     });
 
-    // Mulai Fetch Data
     loadData();
 });
 </script>
