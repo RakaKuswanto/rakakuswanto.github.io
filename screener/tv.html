@@ -41,8 +41,14 @@
     <div id="loading-overlay" class="ui-overlay visible"><div class="loader"></div></div>
 
     <script type="text/javascript">
-        // 1. GLOBAL STORE UNTUK INDIKATOR
+        // 1. GLOBAL STORE
         window.radDataStore = {};
+
+        // 2. PARSER AMAN (Wajib return null, bukan NaN, agar TV tidak keracunan)
+        function getSafeNumber(val) {
+            if (val === undefined || val === null || Number.isNaN(Number(val))) return null; 
+            return Number(val);
+        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const loadingOverlay = document.getElementById('loading-overlay');
@@ -117,28 +123,20 @@
                    
                     try {
                         const response = await fetch(url.toString());
-                        if (!response.ok) throw new Error("Server error");
+                        if (!response.ok) throw new Error("Gagal terhubung ke server");
                         const data = await response.json();
                         
-                        // SANITASI AWAL: Tolak mentah-mentah jika response kosong/cacat
-                        if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
+                        // Jika JSON kosong (misal weekend), respon noData dengan aman
+                        if (!data.chart || !data.chart.result || data.chart.result.length === 0 || !data.chart.result[0].timestamp || data.chart.result[0].timestamp.length === 0) {
                             return onHistoryCallback([], { noData: true }); 
                         }
                         
                         const result = data.chart.result[0];
-                        if (!result.timestamp || result.timestamp.length === 0) {
-                            return onHistoryCallback([], { noData: true });
-                        }
-
                         const quotes = result.indicators.quote[0];
-                        if (!quotes || !quotes.close || quotes.close.length === 0) {
-                             return onHistoryCallback([], { noData: true });
-                        }
-
                         const radData = result.indicators.rad || {}; 
+                        
                         const bars = [];
                         
-                        // PARSING AMAN: Kita pastikan hanya memproses indeks di mana HARGA OPEN & CLOSE valid.
                         for (let i = 0; i < result.timestamp.length; i++) {
                             let ts = result.timestamp[i];
                             let o = quotes.open[i];
@@ -147,46 +145,32 @@
                             let c = quotes.close[i];
                             let v = quotes.volume[i];
 
-                            // Skip baris yang harganya cacat (NaN, null, undefined)
-                            if (typeof o !== 'number' || typeof c !== 'number' || isNaN(o) || isNaN(c)) {
-                                continue;
-                            }
+                            // Skip data yang cacat
+                            if (o == null || c == null) continue;
 
                             let timeMs = ts * 1000;
                             
-                            // Ekstrak indikator hanya jika data sejajar. Kalau kosong, berikan null.
-                            let xWAD_val = (radData.xWAD && radData.xWAD[i] != null) ? Number(radData.xWAD[i]) : null;
-                            let pelopor_val = (radData.pelopor && radData.pelopor[i] != null) ? Number(radData.pelopor[i]) : null;
-                            let kunci_val = (radData.kunci && radData.kunci[i] != null) ? Number(radData.kunci[i]) : null;
-                            let col_idx = (radData.bar_colors && radData.bar_colors[i] != null) ? Number(radData.bar_colors[i]) : 4;
+                            if (radData.xWAD) {
+                                window.radDataStore[timeMs] = {
+                                    xWAD: radData.xWAD[i],
+                                    pelopor: radData.pelopor[i],
+                                    kunci: radData.kunci[i],
+                                    colorIndex: radData.bar_colors ? radData.bar_colors[i] : null,
+                                    dashboard: (radData.dashboard && radData.dashboard.statusText) ? {
+                                        statusText: radData.dashboard.statusText[i],
+                                        NetST: radData.dashboard.NetST[i],
+                                        sigST: radData.dashboard.sigST[i],
+                                        NetMT: radData.dashboard.NetMT[i],
+                                        sigMT: radData.dashboard.sigMT[i],
+                                        NetLT: radData.dashboard.NetLT[i],
+                                        sigLT: radData.dashboard.sigLT[i],
+                                    } : null
+                                };
+                            }
 
-                            window.radDataStore[timeMs] = {
-                                xWAD: xWAD_val,
-                                pelopor: pelopor_val,
-                                kunci: kunci_val,
-                                colorIndex: col_idx,
-                                dashboard: (radData.dashboard && radData.dashboard.statusText) ? {
-                                    statusText: radData.dashboard.statusText[i] || "Netral",
-                                    NetST: radData.dashboard.NetST[i] || 0,
-                                    sigST: radData.dashboard.sigST[i] || 0,
-                                    NetMT: radData.dashboard.NetMT[i] || 0,
-                                    sigMT: radData.dashboard.sigMT[i] || 0,
-                                    NetLT: radData.dashboard.NetLT[i] || 0,
-                                    sigLT: radData.dashboard.sigLT[i] || 0,
-                                } : null
-                            };
-
-                            bars.push({ 
-                                time: timeMs, 
-                                open: o, 
-                                high: h || c, // Fallback jika high rusak
-                                low: l || c,  // Fallback jika low rusak
-                                close: c, 
-                                volume: v || 0 
-                            });
+                            bars.push({ time: timeMs, open: o, high: h || c, low: l || c, close: c, volume: v || 0 });
                         }
                         
-                        // Perbarui Dashboard jika ada bar yang diproses
                         if (bars.length > 0) {
                             let lastBarTime = bars[bars.length - 1].time;
                             let lastDataStore = window.radDataStore[lastBarTime];
@@ -197,7 +181,6 @@
 
                         onHistoryCallback(bars, { noData: bars.length === 0 });
                     } catch (error) {
-                        console.error("TradingView GetBars Error: ", error);
                         onErrorCallback(error.message);
                     } finally { hideLoader(); }
                 },
@@ -263,15 +246,15 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    // PENGAMAN UTAMA AUTOSCALE: Jangan pernah mengembalikan array dengan undefined!
-                                    // Jika data hilang (Misal baris hari libur), kembalikan NaN (TradingView standard blank number)
-                                    // Tapi jangan mengembalikan NaN untuk Index Warna.
-                                    if (!d) return [NaN, NaN, NaN, 4]; 
+                                    // ATURAN EMAS: Jika data kosong sepenuhnya, semua array harus null
+                                    if (!d) return [null, null, null, null]; 
                                     
-                                    let xwad = (typeof d.xWAD === 'number' && !isNaN(d.xWAD)) ? d.xWAD : NaN;
-                                    let pelopor = (typeof d.pelopor === 'number' && !isNaN(d.pelopor)) ? d.pelopor : NaN;
-                                    let kunci = (typeof d.kunci === 'number' && !isNaN(d.kunci)) ? d.kunci : NaN;
-                                    let colorIndex = (typeof d.colorIndex === 'number' && !isNaN(d.colorIndex)) ? d.colorIndex : 4; 
+                                    let xwad = getSafeNumber(d.xWAD);
+                                    let pelopor = getSafeNumber(d.pelopor);
+                                    let kunci = getSafeNumber(d.kunci);
+                                    
+                                    // ATURAN EMAS 2: Jika xwad null, warna WAJIB null (Mencegah crash "Mewarnai Angin")
+                                    let colorIndex = (xwad === null) ? null : (getSafeNumber(d.colorIndex) !== null ? getSafeNumber(d.colorIndex) : 4);
 
                                     return [xwad, pelopor, kunci, colorIndex];
                                 };
