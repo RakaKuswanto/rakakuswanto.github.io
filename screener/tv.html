@@ -6,17 +6,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
-        body { margin: 0; padding: 0; background: #131722; color: #d1d4dc; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+        body { 
+            margin: 0; padding: 0; background: #131722; color: #d1d4dc; 
+            font-family: -apple-system, sans-serif; display: flex; 
+            flex-direction: column; height: 100vh; overflow: hidden; 
+        }
         
         #top-toolbar {
-            display: flex; align-items: center; padding: 10px 20px; background: #1e222d; border-bottom: 1px solid #2a2e39; gap: 15px; flex-wrap: wrap;
+            display: flex; align-items: center; padding: 10px 15px; background: #1e222d; 
+            border-bottom: 1px solid #2a2e39; gap: 10px; flex-wrap: wrap; /* Menjadikan responsif */
         }
-        .toolbar-group { display: flex; align-items: center; gap: 8px; font-size: 13px; }
-        input[type="text"], select {
-            background: #2a2e39; color: #d1d4dc; border: 1px solid #363c4e; padding: 6px 10px; border-radius: 4px; font-size: 13px; outline: none;
+        
+        .toolbar-group { display: flex; align-items: center; gap: 6px; font-size: 13px; }
+        
+        input[type="text"], select, input[type="range"] {
+            background: #2a2e39; color: #d1d4dc; border: 1px solid #363c4e; 
+            padding: 6px 8px; border-radius: 4px; font-size: 13px; outline: none; box-sizing: border-box;
         }
+        
         input:focus, select:focus { border-color: #2962ff; }
-        button { background: #2962ff; color: white; cursor: pointer; font-weight: bold; border: none; padding: 6px 15px; border-radius: 4px; }
+        
+        button { 
+            background: #2962ff; color: white; cursor: pointer; font-weight: bold; 
+            border: none; padding: 6px 12px; border-radius: 4px; transition: 0.2s;
+        }
         button:hover { background: #1e53e5; }
         
         #chart-container { display: flex; flex-direction: column; flex: 1; position: relative; }
@@ -36,6 +49,16 @@
         #rad-dashboard table { border-collapse: collapse; width: 100%; }
         #rad-dashboard th, #rad-dashboard td { border: 1px solid #363c4e; padding: 4px 8px; text-align: right; }
         #rad-dashboard th { background-color: #2a2e39; color: #fff; text-align: left; }
+        
+        #status-text { color: #ef5350; font-weight: bold; font-size: 13px; margin-left: auto; }
+        
+        /* Media Query untuk HP Layar Kecil */
+        @media (max-width: 600px) {
+            #top-toolbar { justify-content: flex-start; }
+            .toolbar-group { flex: 1 1 auto; justify-content: flex-start; }
+            #status-text { width: 100%; margin-left: 0; margin-top: 5px; }
+            .divider { display: none; } /* Sembunyikan garis pemisah di mobile */
+        }
     </style>
 </head>
 <body>
@@ -48,6 +71,7 @@
     <div class="toolbar-group">
         <label>TF:</label>
         <select id="interval-input">
+            <option value="5m">5m</option>
             <option value="15m">15m</option>
             <option value="1h">1h</option>
             <option value="1d" selected>1D</option>
@@ -57,21 +81,21 @@
     </div>
     <button id="load-btn">Load</button>
 
-    <div style="border-left: 1px solid #363c4e; height: 20px; margin: 0 5px;"></div>
+    <div class="divider" style="border-left: 1px solid #363c4e; height: 20px; margin: 0 5px;"></div>
 
     <div class="toolbar-group">
         <label>Opasitas Warna:</label>
-        <input type="range" id="opacity-input" min="0.1" max="1.0" step="0.05" value="0.85">
+        <input type="range" id="opacity-input" min="0.1" max="1.0" step="0.05" value="0.85" style="width: 80px;">
     </div>
     <div class="toolbar-group">
-        <label>Sinyal:</label>
+        <label>Ukuran Sinyal:</label>
         <select id="marker-size-input">
             <option value="0.5">Kecil</option>
             <option value="1" selected>Normal</option>
             <option value="2">Besar</option>
         </select>
     </div>
-    <div id="status-text" style="color: #ef5350; font-weight: bold; margin-left: auto;"></div>
+    <div id="status-text"></div>
 </div>
 
 <div id="chart-container">
@@ -93,6 +117,7 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
+    // --- GANTI URL INI JIKA PERLU ---
     const CONFIG = {
         supabaseFunctionUrl: "https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy"
     };
@@ -133,11 +158,8 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     // MENAMBAHKAN GARIS NOL (Zero Line) PUTUS-PUTUS
     xwadSeries.createPriceLine({
-        price: 0,
-        color: '#808080',
-        lineWidth: 1,
-        lineStyle: LightweightCharts.LineStyle.Dashed,
-        axisLabelVisible: false,
+        price: 0, color: '#808080', lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: false,
     });
 
     mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => { 
@@ -150,7 +172,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     let dashboardData = {};
 
     function getParsedColor(index, opacity) {
-        // Warna asli TradingView: Lime, Aqua, Red, Fuchsia, Gray
         const base = { 0: "0, 255, 0", 1: "0, 255, 255", 2: "255, 0, 0", 3: "255, 0, 255", 4: "128, 128, 128" };
         return `rgba(${base[index] || base[4]}, ${opacity})`;
     }
@@ -172,7 +193,12 @@ document.addEventListener('DOMContentLoaded', async function () {
             
             const now = Math.floor(Date.now() / 1000);
             const isIntraday = interval.includes('m') || interval.includes('h');
-            const fromTime = now - (isIntraday ? (59 * 24 * 60 * 60) : (5 * 365 * 24 * 60 * 60)); 
+            
+            // Perbaikan durasi pengambilan data frontend ke backend
+            let fromTime;
+            if (interval === '1m' || interval === '2m') fromTime = now - (5 * 24 * 60 * 60); 
+            else if (isIntraday) fromTime = now - (59 * 24 * 60 * 60); 
+            else fromTime = now - (5 * 365 * 24 * 60 * 60);
             
             url.searchParams.append('from', fromTime);
             url.searchParams.append('to', now);
@@ -204,12 +230,27 @@ document.addEventListener('DOMContentLoaded', async function () {
 
                 candleData.push({ time, open: o, high: h, low: l, close: c });
 
-                if (rad.buy && rad.buy[i] === true) {
-                    markers.push({ time, position: 'belowBar', color: '#00FF00', shape: 'arrowUp', text: 'BUY', size: mSize });
+                // ======= LOGIK DETEKSI SINYAL BUY / SELL =======
+                let isBuy = false, isSell = false;
+
+                // Metode 1: Baca langsung dari server (jika Deno sudah diupdate)
+                if (rad.buy && rad.buy[i] === true) isBuy = true;
+                if (rad.sell && rad.sell[i] === true) isSell = true;
+
+                // Metode 2 (Fallback): Hitung langsung di Frontend jika server lupa mengembalikan array
+                if (!rad.buy && rad.pelopor && rad.kunci && i > 0) {
+                    let p_curr = rad.pelopor[i], p_prev = rad.pelopor[i-1];
+                    let k_curr = rad.kunci[i], k_prev = rad.kunci[i-1];
+                    if (p_curr !== null && k_curr !== null && p_prev !== null && k_prev !== null) {
+                        if (p_curr > k_curr && p_prev <= k_prev) isBuy = true;
+                        if (p_curr < k_curr && p_prev >= k_prev) isSell = true;
+                    }
                 }
-                if (rad.sell && rad.sell[i] === true) {
-                    markers.push({ time, position: 'aboveBar', color: '#FF0000', shape: 'arrowDown', text: 'SELL', size: mSize });
-                }
+
+                // Render Panah Marker
+                if (isBuy) markers.push({ time, position: 'belowBar', color: '#1bff91', shape: 'arrowUp', text: 'BUY', size: mSize });
+                if (isSell) markers.push({ time, position: 'aboveBar', color: '#FF0000', shape: 'arrowDown', text: 'SELL', size: mSize });
+                // ===============================================
 
                 if (rad.xWAD && rad.xWAD[i] !== null && !isNaN(rad.xWAD[i])) {
                     let colIdx = rad.bar_colors ? rad.bar_colors[i] : 4;
@@ -274,9 +315,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (e.key === 'Enter') loadData();
     });
     
-    // Auto-reload saat pengaturan diubah
     document.getElementById('interval-input').addEventListener('change', loadData);
-    document.getElementById('opacity-input').addEventListener('input', loadData);
+    document.getElementById('opacity-input').addEventListener('change', loadData);
     document.getElementById('marker-size-input').addEventListener('change', loadData);
 
     loadData();
