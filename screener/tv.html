@@ -41,14 +41,7 @@
     <div id="loading-overlay" class="ui-overlay visible"><div class="loader"></div></div>
 
     <script type="text/javascript">
-        // 1. GLOBAL STORE
         window.radDataStore = {};
-
-        // 2. SAFE PARSER (PERBAIKAN KRUSIAL: Harus mengembalikan null, bukan NaN)
-        function getSafeNumber(val) {
-            if (val === undefined || val === null || Number.isNaN(val)) return NaN; // Kembalikan ke NaN
-            return Number(val);
-        }
 
         document.addEventListener('DOMContentLoaded', function() {
             const loadingOverlay = document.getElementById('loading-overlay');
@@ -119,51 +112,65 @@
                     url.searchParams.append('interval', interval);
                     url.searchParams.append('from', Math.round(from));
                     url.searchParams.append('to', Math.round(to));
+                    
+                    // ANTI-CACHE: Memaksa browser selalu menembak Supabase terbaru
+                    url.searchParams.append('cb', Date.now());
                    
                     try {
                         const response = await fetch(url.toString());
                         if (!response.ok) throw new Error("Gagal terhubung ke server");
                         const data = await response.json();
                         
-                        if (!data.chart?.result?.length || data.chart.error) return onHistoryCallback([], { noData: true }); 
+                        if (!data.chart || !data.chart.result || data.chart.result.length === 0 || data.chart.error) {
+                            return onHistoryCallback([], { noData: true }); 
+                        }
                         
                         const result = data.chart.result[0];
                         if (!result.timestamp || result.timestamp.length === 0) {
                             return onHistoryCallback([], { noData: true });
                         }
+
                         const quotes = result.indicators.quote[0];
                         const radData = result.indicators.rad; 
+                        const bars = [];
                         
-                        const bars = result.timestamp.map((ts, index) => {
-                            let timeMs = ts * 1000;
-                            
-                            if (radData) {
-                                window.radDataStore[timeMs] = {
-                                    xWAD: radData.xWAD ? radData.xWAD[index] : null,
-                                    pelopor: radData.pelopor ? radData.pelopor[index] : null,
-                                    kunci: radData.kunci ? radData.kunci[index] : null,
-                                    colorIndex: radData.bar_colors ? radData.bar_colors[index] : 4,
-                                    dashboard: radData.dashboard && radData.dashboard.statusText ? {
-                                        statusText: radData.dashboard.statusText[index],
-                                        NetST: radData.dashboard.NetST[index],
-                                        sigST: radData.dashboard.sigST[index],
-                                        NetMT: radData.dashboard.NetMT[index],
-                                        sigMT: radData.dashboard.sigMT[index],
-                                        NetLT: radData.dashboard.NetLT[index],
-                                        sigLT: radData.dashboard.sigLT[index],
-                                    } : null
-                                };
-                            }
+                        // PARSING AMAN: Buang semua baris yang harganya kosong (null/undefined)
+                        if (quotes && quotes.close) {
+                            for (let i = 0; i < result.timestamp.length; i++) {
+                                let ts = result.timestamp[i];
+                                let o = quotes.open[i];
+                                let h = quotes.high[i];
+                                let l = quotes.low[i];
+                                let c = quotes.close[i];
+                                let v = quotes.volume[i];
 
-                            return {
-                                time: timeMs,
-                                open: quotes.open[index],
-                                high: quotes.high[index],
-                                low: quotes.low[index],
-                                close: quotes.close[index],
-                                volume: quotes.volume[index],
-                            };
-                        }).filter(bar => bar.open !== null);
+                                // Jika cacat, tendang baris ini
+                                if (o === undefined || o === null || c === undefined || c === null) continue;
+
+                                let timeMs = ts * 1000;
+                                
+                                // Pengecekan aman untuk array RAD yang sejajar
+                                if (radData && radData.xWAD && radData.xWAD.length > i) {
+                                    window.radDataStore[timeMs] = {
+                                        xWAD: radData.xWAD[i],
+                                        pelopor: radData.pelopor[i],
+                                        kunci: radData.kunci[i],
+                                        colorIndex: (radData.bar_colors && radData.bar_colors[i] !== undefined) ? radData.bar_colors[i] : 4,
+                                        dashboard: (radData.dashboard && radData.dashboard.statusText) ? {
+                                            statusText: radData.dashboard.statusText[i],
+                                            NetST: radData.dashboard.NetST[i],
+                                            sigST: radData.dashboard.sigST[i],
+                                            NetMT: radData.dashboard.NetMT[i],
+                                            sigMT: radData.dashboard.sigMT[i],
+                                            NetLT: radData.dashboard.NetLT[i],
+                                            sigLT: radData.dashboard.sigLT[i],
+                                        } : null
+                                    };
+                                }
+
+                                bars.push({ time: timeMs, open: o, high: h, low: l, close: c, volume: v || 0 });
+                            }
+                        }
                         
                         if (bars.length > 0) {
                             let lastBarTime = bars[bars.length - 1].time;
@@ -181,7 +188,6 @@
                 subscribeBars: () => {}, unsubscribeBars: () => {},
             };
             
-            // 3. WIDGET INITIALIZATION
             const widget = new TradingView.widget({
                 container: 'tv_chart_container',
                 library_path: './charting_library/',
@@ -240,14 +246,14 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    // Kembalikan NaN untuk garis, tapi pertahankan angka 4 (Netral) untuk Index Warna
+                                    // KEAMANAN EKSTRA: Pastikan tidak ada undefined atau null yang dikirim ke plot.
+                                    // TradingView menuntut NaN untuk baris yang kosong (na).
                                     if (!d) return [NaN, NaN, NaN, 4]; 
                                     
-                                    let xwad = getSafeNumber(d.xWAD);
-                                    let pelopor = getSafeNumber(d.pelopor);
-                                    let kunci = getSafeNumber(d.kunci);
-                                    
-                                    let colorIndex = (d.colorIndex !== undefined && d.colorIndex !== null && !isNaN(d.colorIndex)) ? d.colorIndex : 4; 
+                                    let xwad = (d.xWAD !== undefined && d.xWAD !== null && !isNaN(d.xWAD)) ? Number(d.xWAD) : NaN;
+                                    let pelopor = (d.pelopor !== undefined && d.pelopor !== null && !isNaN(d.pelopor)) ? Number(d.pelopor) : NaN;
+                                    let kunci = (d.kunci !== undefined && d.kunci !== null && !isNaN(d.kunci)) ? Number(d.kunci) : NaN;
+                                    let colorIndex = (d.colorIndex !== undefined && d.colorIndex !== null && !isNaN(d.colorIndex)) ? Number(d.colorIndex) : 4; 
 
                                     return [xwad, pelopor, kunci, colorIndex];
                                 };
@@ -257,7 +263,6 @@
                 }
             });
 
-            // 4. INJEKSI AMAN
             widget.headerReady().then(function() {
                 widget.onChartReady(function() {
                     function injectIndicator(attempts = 0) {
@@ -271,7 +276,6 @@
                     }
                     setTimeout(() => injectIndicator(), 500);
 
-                    // Sinkronisasi Dashboard
                     widget.chart().crossHairMoved().subscribe(null, function(obj) {
                         if (obj && obj.time) {
                             let timeMs = obj.time * 1000; 
