@@ -60,7 +60,7 @@
 
 window.radDataStore = {};
 
-// SAFE NUMBER: Mengamankan nilai yang kosong (return NaN)
+// SAFE NUMBER: Wajib return NaN
 function getSafeNumber(val) {
     if (val === null || val === undefined) return NaN;
     const num = Number(val);
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 url.searchParams.append('interval', resolution === '1D' ? '1d' : resolution);
                 url.searchParams.append('from', Math.round(periodParams.from));
                 url.searchParams.append('to', Math.round(periodParams.to));
-                url.searchParams.append('cb', Date.now()); // Mencegah cache yang lama
+                url.searchParams.append('cb', Date.now()); 
 
                 const res = await fetch(url);
                 const data = await res.json();
@@ -178,7 +178,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     let c = getSafeNumber(closes[i]);
                     let v = getSafeNumber(vols[i]);
 
-                    // Jangan proses jika open atau close tidak valid
                     if (isNaN(o) || isNaN(c)) continue;
 
                     let colorRaw = getSafeNumber(radCol[i]);
@@ -201,12 +200,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
 
                     bars.push({
-                        time,
-                        open: o,
-                        high: isNaN(h) ? c : h, // Gunakan fallback jika tidak valid
-                        low: isNaN(l) ? c : l,  // Gunakan fallback jika tidak valid
-                        close: c,
-                        volume: isNaN(v) ? 0 : v
+                        time, open: o, high: isNaN(h) ? c : h, low: isNaN(l) ? c : l, close: c, volume: isNaN(v) ? 0 : v
                     });
                 }
 
@@ -244,12 +238,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
         custom_indicators_getter: function (PineJS) {
             return Promise.resolve([{
-                // Nama di 'name' dan 'description' harus identik, dan ini yang dipanggil di createStudy
                 name: "RAD_Oscillator", 
                 metainfo: {
                     _metainfoVersion: 51,
                     id: "RAD_Oscillator@tv-basicstudies-1",
-                    description: "RAD_Oscillator", // Identik dengan name
+                    description: "RAD_Oscillator", 
                     shortDescription: "RAD",
                     isCustomIndicator: true,
                     format: { type: "price", precision: 2 },
@@ -261,24 +254,38 @@ document.addEventListener('DOMContentLoaded', function () {
                         { id: "colorer", type: "colorer", target: "xwad", palette: "p" }
                     ],
 
+                    // PERBAIKAN: Di sini hanya NAMA palet
                     palettes: {
                         p: {
                             colors: {
-                                0: { color: "#00FF00" },
-                                1: { color: "#00FFFF" },
-                                2: { color: "#FF0000" },
-                                3: { color: "#FF00FF" },
-                                4: { color: "#808080" }
+                                0: { name: "Strong Bull" },
+                                1: { name: "Weak Bull" },
+                                2: { name: "Strong Bear" },
+                                3: { name: "Weak Bear" },
+                                4: { name: "Neutral" }
                             }
                         }
                     },
 
+                    // PERBAIKAN: Di sini WARNA dan STYLE asli untuk palet di-load
                     defaults: {
                         styles: {
                             xwad: { linewidth: 2, plottype: 5 },
                             pelopor: { linewidth: 2 },
                             kunci: { linewidth: 2 }
-                        }
+                        },
+                        palettes: {
+                            p: {
+                                colors: {
+                                    0: { color: "#00FF00", style: 0, width: 1 },
+                                    1: { color: "#00FFFF", style: 0, width: 1 },
+                                    2: { color: "#FF0000", style: 0, width: 1 },
+                                    3: { color: "#FF00FF", style: 0, width: 1 },
+                                    4: { color: "#808080", style: 0, width: 1 }
+                                }
+                            }
+                        },
+                        inputs: {}
                     }
                 },
 
@@ -298,12 +305,10 @@ document.addEventListener('DOMContentLoaded', function () {
                         let k = getSafeNumber(d.kunci);
                         let c = getSafeNumber(d.colorIndex);
 
-                        // Pengaman agar 'colorer' tidak diisi jika 'xWAD' adalah NaN
                         if (isNaN(x)) {
                             return [NaN, NaN, NaN, undefined];
                         }
 
-                        // Menggunakan angka 4 (Abu-abu) jika color index gagal dibaca (NaN)
                         let colorOut = (!isNaN(c) && c >= 0 && c <= 4) ? c : 4;
 
                         return [x, p, k, colorOut];
@@ -316,8 +321,8 @@ document.addEventListener('DOMContentLoaded', function () {
     widget.headerReady().then(() => {
         widget.onChartReady(() => {
             setTimeout(() => {
-                // Pemanggilan nama indicator yang BENAR-BENAR identik dengan bagian definition
-                widget.chart().createStudy("RAD_Oscillator", false, false).catch(e => console.error("RAD Load Error:", e));
+                // Parameter ditambahkan array kosong `[]` untuk menstabilkan input load
+                widget.chart().createStudy("RAD_Oscillator", false, false, []).catch(e => console.error("RAD Load Error:", e));
             }, 500);
 
             widget.chart().crossHairMoved().subscribe(null, function(obj) {
@@ -335,6 +340,5 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 </script>
-
 </body>
 </html>
