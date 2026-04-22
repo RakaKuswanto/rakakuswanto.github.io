@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <title>Grafik Saham & RAD Indicator - Lightweight</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { margin: 0; padding: 0; background: #131722; color: #d1d4dc; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
-        /* Toolbar Kustom di atas */
         #top-toolbar {
             display: flex; align-items: center; padding: 10px 20px; background: #1e222d; border-bottom: 1px solid #2a2e39; gap: 15px;
         }
@@ -20,7 +19,6 @@
         button { background: #2962ff; color: white; cursor: pointer; font-weight: bold; border: none; }
         button:hover { background: #1e53e5; }
         
-        /* Area Grafik */
         #chart-container { display: flex; flex-direction: column; flex: 1; position: relative; }
         #main-chart { width: 100%; flex: 1; position: relative; }
         #rad-chart { width: 100%; height: 30vh; border-top: 2px solid #2a2e39; position: relative; }
@@ -30,7 +28,6 @@
         .loader { border: 5px solid #2a2e39; border-top: 5px solid #2962ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* Dashboard Custom melayang di atas chart */
         #rad-dashboard {
             position: absolute; top: 10px; left: 10px; z-index: 999;
             background-color: rgba(19, 23, 34, 0.9); border: 1px solid #363c4e;
@@ -85,13 +82,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         supabaseFunctionUrl: "https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy"
     };
 
-    // Warna RGBA Lembut (Identik dengan `color.new(color, 15)` di Pine Script -> 85% opacity)
     const colors = {
-        0: "rgba(0, 255, 0, 0.85)",   // Strong Bull (Lime)
-        1: "rgba(0, 255, 255, 0.85)", // Weak Bull (Aqua)
-        2: "rgba(255, 0, 0, 0.85)",   // Strong Bear (Red)
-        3: "rgba(255, 0, 255, 0.85)", // Weak Bear (Fuchsia)
-        4: "rgba(128, 128, 128, 0.85)"// Neutral (Gray)
+        0: "rgba(0, 255, 0, 0.85)",   
+        1: "rgba(0, 255, 255, 0.85)", 
+        2: "rgba(255, 0, 0, 0.85)",   
+        3: "rgba(255, 0, 255, 0.85)", 
+        4: "rgba(128, 128, 128, 0.85)"
     };
 
     function formatNumber(num) {
@@ -104,7 +100,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         return num.toFixed(2);
     }
 
-    // 1. INISIALISASI GRAFIK
     const chartOptions = {
         layout: { background: { type: 'solid', color: '#131722' }, textColor: '#d1d4dc' },
         grid: { vertLines: { color: '#2a2e39' }, horzLines: { color: '#2a2e39' } },
@@ -113,29 +108,34 @@ document.addEventListener('DOMContentLoaded', async function () {
         rightPriceScale: { borderColor: '#2a2e39' }
     };
 
+    // 1. Buat Chart Utama (Karena V4, kita kembali ke addCandlestickSeries)
     const mainChartElement = document.getElementById('main-chart');
     const mainChart = LightweightCharts.createChart(mainChartElement, chartOptions);
-    const candleSeries = mainChart.addSeries(LightweightCharts.CandlestickSeries, { 
+    const candleSeries = mainChart.addCandlestickSeries({ 
         upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350' 
     });
 
+    // 2. Buat Chart Bawah (RAD)
     const radChartElement = document.getElementById('rad-chart');
     const radChart = LightweightCharts.createChart(radChartElement, {
         ...chartOptions,
-        timeScale: { visible: false } // Sembunyikan sumbu X bawah agar menyatu
+        timeScale: { visible: false }
     });
 
-    const xwadSeries = radChart.addSeries(LightweightCharts.HistogramSeries, { priceFormat: { type: 'volume' }, priceScaleId: 'right' });
-    const peloporSeries = radChart.addSeries(LightweightCharts.LineSeries, { color: '#2962FF', lineWidth: 2 });
-    const kunciSeries = radChart.addSeries(LightweightCharts.LineSeries, { color: '#FF6D00', lineWidth: 2 });
+    const xwadSeries = radChart.addHistogramSeries({ priceFormat: { type: 'volume' }, priceScaleId: 'right' });
+    const peloporSeries = radChart.addLineSeries({ color: '#2962FF', lineWidth: 2 });
+    const kunciSeries = radChart.addLineSeries({ color: '#FF6D00', lineWidth: 2 });
 
-    // Sinkronisasi Kursor (Crosshair)
-    mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => { radChart.timeScale().setVisibleLogicalRange(range); });
-    radChart.timeScale().subscribeVisibleLogicalRangeChange(range => { mainChart.timeScale().setVisibleLogicalRange(range); });
+    // PERBAIKAN: Sinkronisasi Kursor dengan Pengaman Null
+    mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => { 
+        if (range !== null) radChart.timeScale().setVisibleLogicalRange(range); 
+    });
+    radChart.timeScale().subscribeVisibleLogicalRangeChange(range => { 
+        if (range !== null) mainChart.timeScale().setVisibleLogicalRange(range); 
+    });
 
     let dashboardData = {};
 
-    // 2. FUNGSI FETCH DATA & PROSES INDIKATOR
     async function loadData() {
         const symbol = document.getElementById('symbol-input').value.toUpperCase() || "BBCA.JK";
         const interval = document.getElementById('interval-input').value || "1d";
@@ -149,10 +149,9 @@ document.addEventListener('DOMContentLoaded', async function () {
             url.searchParams.append('symbol', symbol);
             url.searchParams.append('interval', interval);
             
-            // Hitung mundur waktu (Misal ambil 2 tahun ke belakang jika 1d, ambil lebih sedikit jika 15m)
             const now = Math.floor(Date.now() / 1000);
             const isIntraday = interval.includes('m') || interval.includes('h');
-            const fromTime = now - (isIntraday ? (60 * 24 * 60 * 60) : (2 * 365 * 24 * 60 * 60)); // 60 hari intraday, 2 tahun daily
+            const fromTime = now - (isIntraday ? (60 * 24 * 60 * 60) : (2 * 365 * 24 * 60 * 60)); 
             
             url.searchParams.append('from', fromTime);
             url.searchParams.append('to', now);
@@ -162,7 +161,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             const data = await res.json();
 
             if (!data?.chart?.result?.[0] || !data.chart.result[0].timestamp) {
-                throw new Error("Data tidak ditemukan atau saham tidak valid.");
+                throw new Error("Data tidak ditemukan atau bursa libur.");
             }
 
             const result = data.chart.result[0];
@@ -171,14 +170,13 @@ document.addEventListener('DOMContentLoaded', async function () {
             const rad = result.indicators.rad || {};
 
             const candleData = [];
-            const markers = []; // Array khusus untuk Sinyal Buy/Sell
+            const markers = []; 
             const xwadData = [];
             const peloporData = [];
             const kunciData = [];
-            dashboardData = {}; // Reset Store
+            dashboardData = {}; 
 
             for (let i = 0; i < timestamps.length; i++) {
-                // Di LWC, time dalam format detik (UNIX Timestamp)
                 let time = timestamps[i]; 
                 
                 let o = quotes.open[i];
@@ -188,13 +186,12 @@ document.addEventListener('DOMContentLoaded', async function () {
                 
                 if (o == null || c == null || isNaN(o) || isNaN(c)) continue;
                 
-                // Pastikan H & L tidak rusak
                 if (isNaN(h)) h = Math.max(o, c);
                 if (isNaN(l)) l = Math.min(o, c);
 
                 candleData.push({ time, open: o, high: h, low: l, close: c });
 
-                // LOGIKA MARKERS (Sinyal Buy & Sell)
+                // Set Markers
                 if (rad.buy && rad.buy[i] === true) {
                     markers.push({ time, position: 'belowBar', color: '#00FF00', shape: 'arrowUp', text: 'BUY' });
                 }
@@ -202,7 +199,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     markers.push({ time, position: 'aboveBar', color: '#FF0000', shape: 'arrowDown', text: 'SELL' });
                 }
 
-                // Logika RAD (Bawah)
+                // Set RAD Indikator Bawah
                 if (rad.xWAD && rad.xWAD[i] !== null && !isNaN(rad.xWAD[i])) {
                     let colIdx = rad.bar_colors ? rad.bar_colors[i] : 4;
                     xwadData.push({ time, value: rad.xWAD[i], color: colors[colIdx] || colors[4] });
@@ -210,7 +207,6 @@ document.addEventListener('DOMContentLoaded', async function () {
                     if (rad.pelopor[i] !== null && !isNaN(rad.pelopor[i])) peloporData.push({ time, value: rad.pelopor[i] });
                     if (rad.kunci[i] !== null && !isNaN(rad.kunci[i])) kunciData.push({ time, value: rad.kunci[i] });
 
-                    // Simpan data Dashboard
                     if (rad.dashboard && rad.dashboard.statusText) {
                         dashboardData[time] = {
                             statusText: rad.dashboard.statusText[i],
@@ -222,9 +218,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 }
             }
 
-            // Setel Array ke Grafik (LWC membutuhkan data yang di-sort by Time, Yahoo sudah ter-sort)
             candleSeries.setData(candleData);
-            candleSeries.setMarkers(markers); // Suntikkan panah ke atas Candlestick
+            candleSeries.setMarkers(markers); 
             
             xwadSeries.setData(xwadData);
             peloporSeries.setData(peloporData);
@@ -236,7 +231,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         } catch (error) {
             console.error("Gagal memuat:", error);
             document.getElementById('status-text').innerText = "⚠️ " + error.message;
-            // Kosongkan grafik jika error
             candleSeries.setData([]); candleSeries.setMarkers([]);
             xwadSeries.setData([]); peloporSeries.setData([]); kunciSeries.setData([]);
             document.getElementById('rad-dashboard').style.display = 'none';
@@ -245,7 +239,6 @@ document.addEventListener('DOMContentLoaded', async function () {
         }
     }
 
-    // 3. EVENT LISTENERS
     function updateDashboard(time) {
         const d = dashboardData[time];
         if (!d) return;
@@ -271,14 +264,12 @@ document.addEventListener('DOMContentLoaded', async function () {
         radChart.resize(radChartElement.clientWidth, radChartElement.clientHeight);
     });
 
-    // Pemicu Tombol Load & Enter
     document.getElementById('load-btn').addEventListener('click', loadData);
     document.getElementById('symbol-input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') loadData();
     });
     document.getElementById('interval-input').addEventListener('change', loadData);
 
-    // Initial Load Pertama Kali
     loadData();
 });
 </script>
