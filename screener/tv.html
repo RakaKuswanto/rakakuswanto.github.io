@@ -44,10 +44,9 @@
         // 1. GLOBAL STORE
         window.radDataStore = {};
 
-        // 2. SAFE PARSER
+        // 2. SAFE PARSER (PERBAIKAN KRUSIAL: Harus mengembalikan null, bukan NaN)
         function getSafeNumber(val) {
-            // JSON stringify dari backend mengubah NaN menjadi null.
-            if (val === undefined || val === null || isNaN(val)) return NaN;
+            if (val === undefined || val === null || Number.isNaN(val)) return null; 
             return Number(val);
         }
 
@@ -137,9 +136,9 @@
                             
                             if (radData) {
                                 window.radDataStore[timeMs] = {
-                                    xWAD: radData.xWAD ? radData.xWAD[index] : NaN,
-                                    pelopor: radData.pelopor ? radData.pelopor[index] : NaN,
-                                    kunci: radData.kunci ? radData.kunci[index] : NaN,
+                                    xWAD: radData.xWAD ? radData.xWAD[index] : null,
+                                    pelopor: radData.pelopor ? radData.pelopor[index] : null,
+                                    kunci: radData.kunci ? radData.kunci[index] : null,
                                     colorIndex: radData.bar_colors ? radData.bar_colors[index] : 4,
                                     dashboard: radData.dashboard && radData.dashboard.statusText ? {
                                         statusText: radData.dashboard.statusText[index],
@@ -238,16 +237,14 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    // PERBAIKAN KRUSIAL:
-                                    // Jika data kosong, kembalikan NaN untuk garis, TETAPI berikan angka absolut (4) untuk palet warna.
-                                    if (!d) return [NaN, NaN, NaN, 4];
+                                    // PERBAIKAN KRUSIAL: Mengembalikan NULL, bukan NaN. Warna tetap 4 (Netral).
+                                    if (!d) return [null, null, null, 4];
                                     
                                     let xwad = getSafeNumber(d.xWAD);
                                     let pelopor = getSafeNumber(d.pelopor);
                                     let kunci = getSafeNumber(d.kunci);
                                     
-                                    // Pastikan colorIndex selalu angka valid (0-4), jangan sampai NaN.
-                                    let colorIndex = (d.colorIndex !== undefined && !isNaN(d.colorIndex)) ? d.colorIndex : 4; 
+                                    let colorIndex = (d.colorIndex !== undefined && d.colorIndex !== null && !isNaN(d.colorIndex)) ? d.colorIndex : 4; 
 
                                     return [xwad, pelopor, kunci, colorIndex];
                                 };
@@ -257,7 +254,7 @@
                 }
             });
 
-            // 4. INJEKSI
+            // 4. INJEKSI AMAN
             widget.headerReady().then(function() {
                 widget.onChartReady(function() {
                     function injectIndicator(attempts = 0) {
