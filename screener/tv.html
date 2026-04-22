@@ -44,7 +44,7 @@
         // 1. GLOBAL STORE
         window.radDataStore = {};
 
-        // 2. SAFE NUMBER PARSER (Mengamankan TradingView dari crash)
+        // 2. SAFE NUMBER PARSER
         function getSafeNumber(val) {
             if (val === undefined || val === null || isNaN(val)) return NaN;
             return Number(val);
@@ -86,6 +86,7 @@
 
             const datafeed = {
                 onReady: (callback) => { setTimeout(() => callback({ supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'] }), 0); },
+                
                 resolveSymbol: (symbolName, onSymbolResolvedCallback, onResolveErrorCallback) => {
                     setTimeout(() => onSymbolResolvedCallback({
                         ticker: symbolName, name: symbolName, description: symbolName,
@@ -94,6 +95,7 @@
                         has_intraday: true, has_no_volume: false, supported_resolutions: ['1', '5', '15', '30', '60', '1D', '1W', '1M'], format: 'price',
                     }), 0);
                 },
+                
                 searchSymbols: async (userInput, exchange, symbolType, onResultReadyCallback) => {
                     if (userInput.length < 2) return onResultReadyCallback([]);
                     try {
@@ -104,6 +106,7 @@
                         onResultReadyCallback(await response.json());
                     } catch (error) { onResultReadyCallback([]); }
                 },
+                
                 getBars: async (symbolInfo, resolution, periodParams, onHistoryCallback, onErrorCallback) => {
                     showLoader();
                     const { from, to } = periodParams;
@@ -128,21 +131,17 @@
                         const quotes = result.indicators.quote[0];
                         const radData = result.indicators.rad; 
                         
-                        if (radData && radData.dashboard) {
-                            updateDashboardUI(radData.dashboard);
-                        }
-
+                        // 1. Ekstrak Bar & Simpan ke Global Store
                         const bars = result.timestamp.map((ts, index) => {
                             let timeMs = ts * 1000;
                             
-                            // Simpan data kalkulasi ke Brankas Global
                             if (radData) {
                                 window.radDataStore[timeMs] = {
                                     xWAD: radData.xWAD[index],
                                     pelopor: radData.pelopor[index],
                                     kunci: radData.kunci[index],
-                                    colorIndex: radData.bar_colors[index], // Untuk warna histogram
-                                    dashboard: {
+                                    colorIndex: radData.bar_colors ? radData.bar_colors[index] : 4,
+                                    dashboard: radData.dashboard ? {
                                         statusText: radData.dashboard.statusText[index],
                                         NetST: radData.dashboard.NetST[index],
                                         sigST: radData.dashboard.sigST[index],
@@ -150,12 +149,8 @@
                                         sigMT: radData.dashboard.sigMT[index],
                                         NetLT: radData.dashboard.NetLT[index],
                                         sigLT: radData.dashboard.sigLT[index],
-                                    }
+                                    } : null
                                 };
-
-                                if (index === bars.length - 1) {
-                                    updateDashboardUI(window.radDataStore[timeMs].dashboard);
-                                }
                             }
 
                             return {
@@ -168,6 +163,15 @@
                             };
                         }).filter(bar => bar.open !== null);
                         
+                        // 2. Update UI Dashboard untuk candle terakhir yang ter-load
+                        if (bars.length > 0) {
+                            let lastBarTime = bars[bars.length - 1].time;
+                            let lastDataStore = window.radDataStore[lastBarTime];
+                            if (lastDataStore && lastDataStore.dashboard) {
+                                updateDashboardUI(lastDataStore.dashboard);
+                            }
+                        }
+
                         onHistoryCallback(bars, { noData: bars.length === 0 });
                     } catch (error) {
                         onErrorCallback(error.message);
@@ -191,11 +195,11 @@
                 custom_indicators_getter: function(PineJS) {
                     return Promise.resolve([
                         {
-                            name: "RAD_Oscillator",
+                            name: "rad_oscillator", // WAJIB LOWERCASE AGAR COCOK DENGAN CREATESTUDY
                             metainfo: {
                                 _metainfoVersion: 51,
-                                id: "RAD_Oscillator@tv-basicstudies-1",
-                                name: "RAD_Oscillator",
+                                id: "rad_oscillator@tv-basicstudies-1", // WAJIB LOWERCASE
+                                name: "rad_oscillator", // WAJIB LOWERCASE
                                 description: "RAD Oscillator",
                                 shortDescription: "RAD",
                                 is_price_study: false, 
@@ -206,10 +210,8 @@
                                     { id: "plot_xwad", type: "line" }, 
                                     { id: "plot_pelopor", type: "line" },
                                     { id: "plot_kunci", type: "line" },
-                                    // Tambahkan colorer untuk mengubah warna xWAD secara dinamis
                                     { id: "colorer_xwad", type: "colorer", target: "plot_xwad", palette: "palette_xwad" }
                                 ],
-                                // Definisikan Palet Warna
                                 palettes: {
                                     palette_xwad: {
                                         colors: {
@@ -223,7 +225,6 @@
                                 },
                                 defaults: {
                                     styles: {
-                                        // plottype: 5 adalah Histogram/Columns di TradingView
                                         plot_xwad: { linestyle: 0, linewidth: 2, plottype: 5, color: "#808080", title: "xWAD" },
                                         plot_pelopor: { linestyle: 0, linewidth: 2, plottype: 0, color: "#2962FF", title: "Pelopor" },
                                         plot_kunci: { linestyle: 0, linewidth: 2, plottype: 0, color: "#FF6D00", title: "Kunci" }
@@ -238,51 +239,46 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    if (!d) return [NaN, NaN, NaN, NaN]; // Tambah 1 NaN untuk warna
+                                    if (!d) return [NaN, NaN, NaN, NaN];
                                     
                                     let xwad = getSafeNumber(d.xWAD);
                                     let pelopor = getSafeNumber(d.pelopor);
                                     let kunci = getSafeNumber(d.kunci);
-                                    
-                                    // Asumsi: Backend Anda juga mengirimkan ID warna (0-4) ke radDataStore
-                                    // Misalnya: d.colorIndex = 0 (untuk Lime)
                                     let colorIndex = d.colorIndex !== undefined ? d.colorIndex : 4; 
 
-                                    // Return array: [Data1, Data2, Data3, ColorIndex]
                                     return [xwad, pelopor, kunci, colorIndex];
                                 };
                             }
                         }
                     ]);
-                }            
+                }
             });
 
-            // 4. INJEKSI AMAN (Delay untuk mencegah "Unexpected Study ID" error)
+            // 4. INJEKSI AMAN & SINKRONISASI CROSSHAIR
             widget.headerReady().then(function() {
                 widget.onChartReady(function() {
-                console.log("Chart Ready. Menginjeksi RAD...");
-                
-                setTimeout(() => {
-                    widget.chart().createStudy("RAD_Oscillator", false, false).catch(err => {
-                        console.error("Gagal meload indikator:", err);
-                    });
-                }, 500); 
+                    console.log("Chart Ready. Menginjeksi RAD...");
+                    
+                    // Delay injeksi dipastikan menggunakan nama ID yang sama persis (huruf kecil)
+                    setTimeout(() => {
+                        widget.chart().createStudy("rad_oscillator", false, false).catch(err => {
+                            console.error("Gagal meload indikator:", err);
+                        });
+                    }, 500); 
 
-                // --- TAMBAHAN: Sinkronisasi Dashboard dengan Kursor ---
-                widget.chart().crossHairMoved().subscribe(null, function(obj) {
-                    if (obj && obj.time) {
-                        let timeMs = obj.time * 1000; // TV mengirimkan waktu dalam detik
-                        let dataKursor = window.radDataStore[timeMs];
-                        
-                        if (dataKursor && dataKursor.dashboard) {
-                            // Update dashboard dengan data historis pada titik kursor
-                            updateDashboardUI(dataKursor.dashboard);
+                    // Sinkronisasi Dashboard dengan posisi Kursor (Crosshair)
+                    widget.chart().crossHairMoved().subscribe(null, function(obj) {
+                        if (obj && obj.time) {
+                            let timeMs = obj.time * 1000; 
+                            let dataKursor = window.radDataStore[timeMs];
+                            
+                            if (dataKursor && dataKursor.dashboard) {
+                                updateDashboardUI(dataKursor.dashboard);
+                            }
                         }
-                    }
+                    });
                 });
-
             });
-        });
 
         });
     </script>
