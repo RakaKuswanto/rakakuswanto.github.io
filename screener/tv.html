@@ -180,7 +180,14 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
     // Muat pengaturan terakhir saat pertama kali web dibuka
     loadSettings();
-    // ==============================================================
+    
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlSymbol = urlParams.get('symbol');
+    
+    if (urlSymbol) {
+        document.getElementById('symbol-input').value = urlSymbol.toUpperCase();
+    }
 
     function formatNumber(num) {
         if (!num || isNaN(num)) return "0";
