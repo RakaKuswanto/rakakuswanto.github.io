@@ -128,6 +128,9 @@
                         if (!data.chart?.result?.length || data.chart.error) return onHistoryCallback([], { noData: true }); 
                         
                         const result = data.chart.result[0];
+                        if (!result.timestamp || result.timestamp.length === 0) {
+                            return onHistoryCallback([], { noData: true });
+                        }
                         const quotes = result.indicators.quote[0];
                         const radData = result.indicators.rad; 
                         
