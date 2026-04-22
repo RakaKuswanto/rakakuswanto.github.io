@@ -318,9 +318,22 @@ document.addEventListener('DOMContentLoaded', async function () {
             // ==============================================================
             // --- UPDATE: AUTO-ZOOM & FIT CONTENT SETIAP GANTI EMITEN ---
             // ==============================================================
+            // 1. Matikan sementara auto-scale agar tidak bentrok
+            mainChart.applyOptions({ rightPriceScale: { autoScale: false } });
+            
+            // 2. Beri jeda yang lebih aman (terutama untuk mobile/HP lambat)
             setTimeout(() => {
+                // Paskan lebar waktu (Time Scale)
                 mainChart.timeScale().fitContent();
-            }, 50); // Timeout kecil agar grafik dirender lebih dulu sebelum dizoom
+                
+                // Jika ingin fokus melihat beberapa bulan terakhir saja (bukan seluruh 5 tahun)
+                // Hapus komentar 2 baris di bawah ini:
+                // let visibleBars = Math.min(candleData.length, 120); // Tampilkan 120 candle terakhir
+                // mainChart.timeScale().setVisibleLogicalRange({ from: candleData.length - visibleBars, to: candleData.length });
+
+                // 3. Nyalakan kembali auto-scale agar harga (Price Scale) pas di layar
+                mainChart.applyOptions({ rightPriceScale: { autoScale: true } });
+            }, 150); // 150ms biasanya sangat aman untuk memastikan render selesai
             
             document.getElementById('rad-dashboard').style.display = 'block';
             if (candleData.length > 0) updateDashboard(candleData[candleData.length - 1].time);
