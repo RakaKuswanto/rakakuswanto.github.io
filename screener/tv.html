@@ -2,39 +2,39 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Grafik Saham & RAD Indicator - Lightweight</title>
+    <title>Grafik Saham & RAD Indicator - LWC Pro</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
         body { margin: 0; padding: 0; background: #131722; color: #d1d4dc; font-family: -apple-system, sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
         
         #top-toolbar {
-            display: flex; align-items: center; padding: 10px 20px; background: #1e222d; border-bottom: 1px solid #2a2e39; gap: 15px;
+            display: flex; align-items: center; padding: 10px 20px; background: #1e222d; border-bottom: 1px solid #2a2e39; gap: 15px; flex-wrap: wrap;
         }
-        .toolbar-group { display: flex; align-items: center; gap: 5px; }
-        input, select, button {
-            background: #2a2e39; color: #d1d4dc; border: 1px solid #363c4e; padding: 6px 12px; border-radius: 4px; font-size: 14px; outline: none;
+        .toolbar-group { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        input[type="text"], select {
+            background: #2a2e39; color: #d1d4dc; border: 1px solid #363c4e; padding: 6px 10px; border-radius: 4px; font-size: 13px; outline: none;
         }
         input:focus, select:focus { border-color: #2962ff; }
-        button { background: #2962ff; color: white; cursor: pointer; font-weight: bold; border: none; }
+        button { background: #2962ff; color: white; cursor: pointer; font-weight: bold; border: none; padding: 6px 15px; border-radius: 4px; }
         button:hover { background: #1e53e5; }
         
         #chart-container { display: flex; flex-direction: column; flex: 1; position: relative; }
         #main-chart { width: 100%; flex: 1; position: relative; }
-        #rad-chart { width: 100%; height: 30vh; border-top: 2px solid #2a2e39; position: relative; }
+        #rad-chart { width: 100%; height: 30vh; border-top: 1px solid #2a2e39; position: relative; }
 
-        .ui-overlay { position: absolute; inset: 0; display: none; justify-content: center; align-items: center; background: rgba(19,23,34,0.85); z-index: 1000; }
+        .ui-overlay { position: absolute; inset: 0; display: none; justify-content: center; align-items: center; background: rgba(19,23,34,0.7); z-index: 1000; }
         .ui-overlay.visible { display: flex; }
-        .loader { border: 5px solid #2a2e39; border-top: 5px solid #2962ff; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        .loader { border: 4px solid #2a2e39; border-top: 4px solid #2962ff; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
         @keyframes spin { 100% { transform: rotate(360deg); } }
 
         #rad-dashboard {
             position: absolute; top: 10px; left: 10px; z-index: 999;
-            background-color: rgba(19, 23, 34, 0.9); border: 1px solid #363c4e;
+            background-color: rgba(19, 23, 34, 0.85); border: 1px solid #363c4e;
             border-radius: 6px; padding: 10px; font-size: 12px; pointer-events: none; display: none;
         }
         #rad-dashboard table { border-collapse: collapse; width: 100%; }
-        #rad-dashboard th, #rad-dashboard td { border: 1px solid #363c4e; padding: 5px 10px; text-align: right; }
+        #rad-dashboard th, #rad-dashboard td { border: 1px solid #363c4e; padding: 4px 8px; text-align: right; }
         #rad-dashboard th { background-color: #2a2e39; color: #fff; text-align: left; }
     </style>
 </head>
@@ -43,20 +43,35 @@
 <div id="top-toolbar">
     <div class="toolbar-group">
         <label>Simbol:</label>
-        <input type="text" id="symbol-input" value="BBCA.JK" style="width: 100px; text-transform: uppercase;" />
+        <input type="text" id="symbol-input" value="BBCA.JK" style="width: 80px; text-transform: uppercase;" />
     </div>
     <div class="toolbar-group">
-        <label>Timeframe:</label>
+        <label>TF:</label>
         <select id="interval-input">
-            <option value="15m">15 Menit</option>
-            <option value="1h">1 Jam</option>
-            <option value="1d" selected>1 Hari (Daily)</option>
-            <option value="1wk">1 Minggu (Weekly)</option>
-            <option value="1mo">1 Bulan (Monthly)</option>
+            <option value="15m">15m</option>
+            <option value="1h">1h</option>
+            <option value="1d" selected>1D</option>
+            <option value="1wk">1W</option>
+            <option value="1mo">1M</option>
         </select>
     </div>
-    <button id="load-btn">Load Data</button>
-    <div id="status-text" style="color: #FF6D00; font-weight: bold; margin-left: auto;"></div>
+    <button id="load-btn">Load</button>
+
+    <div style="border-left: 1px solid #363c4e; height: 20px; margin: 0 5px;"></div>
+
+    <div class="toolbar-group">
+        <label>Opasitas Warna:</label>
+        <input type="range" id="opacity-input" min="0.1" max="1.0" step="0.05" value="0.85">
+    </div>
+    <div class="toolbar-group">
+        <label>Sinyal:</label>
+        <select id="marker-size-input">
+            <option value="0.5">Kecil</option>
+            <option value="1" selected>Normal</option>
+            <option value="2">Besar</option>
+        </select>
+    </div>
+    <div id="status-text" style="color: #ef5350; font-weight: bold; margin-left: auto;"></div>
 </div>
 
 <div id="chart-container">
@@ -65,11 +80,11 @@
     
     <div id="rad-dashboard">
         <table>
-            <tr><th colspan="3" id="rad-status" style="text-align: center; font-weight: bold; font-size: 14px;">Memuat...</th></tr>
-            <tr><th>Timeframe</th><th>Net Vol</th><th>Signal</th></tr>
-            <tr><td>ST (5)</td><td id="rad-st-net">0</td><td id="rad-st-sig">0</td></tr>
-            <tr><td>MT (20)</td><td id="rad-mt-net">0</td><td id="rad-mt-sig">0</td></tr>
-            <tr><td>LT (200)</td><td id="rad-lt-net">0</td><td id="rad-lt-sig">0</td></tr>
+            <tr><th colspan="3" id="rad-status" style="text-align: center; font-weight: bold; font-size: 13px;">Memuat...</th></tr>
+            <tr><th>TF</th><th>Net Vol</th><th>Signal</th></tr>
+            <tr><td>ST</td><td id="rad-st-net">0</td><td id="rad-st-sig">0</td></tr>
+            <tr><td>MT</td><td id="rad-mt-net">0</td><td id="rad-mt-sig">0</td></tr>
+            <tr><td>LT</td><td id="rad-lt-net">0</td><td id="rad-lt-sig">0</td></tr>
         </table>
     </div>
     
@@ -80,14 +95,6 @@
 document.addEventListener('DOMContentLoaded', async function () {
     const CONFIG = {
         supabaseFunctionUrl: "https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy"
-    };
-
-    const colors = {
-        0: "rgba(0, 255, 0, 0.85)",   
-        1: "rgba(0, 255, 255, 0.85)", 
-        2: "rgba(255, 0, 0, 0.85)",   
-        3: "rgba(255, 0, 255, 0.85)", 
-        4: "rgba(128, 128, 128, 0.85)"
     };
 
     function formatNumber(num) {
@@ -102,20 +109,18 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     const chartOptions = {
         layout: { background: { type: 'solid', color: '#131722' }, textColor: '#d1d4dc' },
-        grid: { vertLines: { color: '#2a2e39' }, horzLines: { color: '#2a2e39' } },
+        grid: { vertLines: { color: '#1f2933' }, horzLines: { color: '#1f2933' } },
         crosshair: { mode: 0 }, 
         timeScale: { timeVisible: true, borderColor: '#2a2e39' },
         rightPriceScale: { borderColor: '#2a2e39' }
     };
 
-    // 1. Buat Chart Utama (Karena V4, kita kembali ke addCandlestickSeries)
     const mainChartElement = document.getElementById('main-chart');
     const mainChart = LightweightCharts.createChart(mainChartElement, chartOptions);
     const candleSeries = mainChart.addCandlestickSeries({ 
         upColor: '#26a69a', downColor: '#ef5350', borderVisible: false, wickUpColor: '#26a69a', wickDownColor: '#ef5350' 
     });
 
-    // 2. Buat Chart Bawah (RAD)
     const radChartElement = document.getElementById('rad-chart');
     const radChart = LightweightCharts.createChart(radChartElement, {
         ...chartOptions,
@@ -126,7 +131,15 @@ document.addEventListener('DOMContentLoaded', async function () {
     const peloporSeries = radChart.addLineSeries({ color: '#2962FF', lineWidth: 2 });
     const kunciSeries = radChart.addLineSeries({ color: '#FF6D00', lineWidth: 2 });
 
-    // PERBAIKAN: Sinkronisasi Kursor dengan Pengaman Null
+    // MENAMBAHKAN GARIS NOL (Zero Line) PUTUS-PUTUS
+    xwadSeries.createPriceLine({
+        price: 0,
+        color: '#808080',
+        lineWidth: 1,
+        lineStyle: LightweightCharts.LineStyle.Dashed,
+        axisLabelVisible: false,
+    });
+
     mainChart.timeScale().subscribeVisibleLogicalRangeChange(range => { 
         if (range !== null) radChart.timeScale().setVisibleLogicalRange(range); 
     });
@@ -136,9 +149,17 @@ document.addEventListener('DOMContentLoaded', async function () {
 
     let dashboardData = {};
 
+    function getParsedColor(index, opacity) {
+        // Warna asli TradingView: Lime, Aqua, Red, Fuchsia, Gray
+        const base = { 0: "0, 255, 0", 1: "0, 255, 255", 2: "255, 0, 0", 3: "255, 0, 255", 4: "128, 128, 128" };
+        return `rgba(${base[index] || base[4]}, ${opacity})`;
+    }
+
     async function loadData() {
         const symbol = document.getElementById('symbol-input').value.toUpperCase() || "BBCA.JK";
         const interval = document.getElementById('interval-input').value || "1d";
+        const opacity = parseFloat(document.getElementById('opacity-input').value);
+        const mSize = parseFloat(document.getElementById('marker-size-input').value);
         
         document.getElementById('loading-overlay').classList.add('visible');
         document.getElementById('status-text').innerText = "";
@@ -151,17 +172,18 @@ document.addEventListener('DOMContentLoaded', async function () {
             
             const now = Math.floor(Date.now() / 1000);
             const isIntraday = interval.includes('m') || interval.includes('h');
-            const fromTime = now - (isIntraday ? (60 * 24 * 60 * 60) : (2 * 365 * 24 * 60 * 60)); 
+            const fromTime = now - (isIntraday ? (59 * 24 * 60 * 60) : (5 * 365 * 24 * 60 * 60)); 
             
             url.searchParams.append('from', fromTime);
             url.searchParams.append('to', now);
             url.searchParams.append('cb', Date.now()); 
 
             const res = await fetch(url);
+            if (!res.ok) throw new Error("Gagal mengambil data dari server.");
             const data = await res.json();
 
             if (!data?.chart?.result?.[0] || !data.chart.result[0].timestamp) {
-                throw new Error("Data tidak ditemukan atau bursa libur.");
+                throw new Error("Data bursa tidak ditemukan.");
             }
 
             const result = data.chart.result[0];
@@ -169,50 +191,39 @@ document.addEventListener('DOMContentLoaded', async function () {
             const quotes = result.indicators.quote[0];
             const rad = result.indicators.rad || {};
 
-            const candleData = [];
-            const markers = []; 
-            const xwadData = [];
-            const peloporData = [];
-            const kunciData = [];
+            const candleData = [], markers = [], xwadData = [], peloporData = [], kunciData = [];
             dashboardData = {}; 
 
             for (let i = 0; i < timestamps.length; i++) {
                 let time = timestamps[i]; 
-                
-                let o = quotes.open[i];
-                let h = quotes.high[i];
-                let l = quotes.low[i];
-                let c = quotes.close[i];
+                let o = quotes.open[i], h = quotes.high[i], l = quotes.low[i], c = quotes.close[i];
                 
                 if (o == null || c == null || isNaN(o) || isNaN(c)) continue;
-                
                 if (isNaN(h)) h = Math.max(o, c);
                 if (isNaN(l)) l = Math.min(o, c);
 
                 candleData.push({ time, open: o, high: h, low: l, close: c });
 
-                // Set Markers
                 if (rad.buy && rad.buy[i] === true) {
-                    markers.push({ time, position: 'belowBar', color: '#00FF00', shape: 'arrowUp', text: 'BUY' });
+                    markers.push({ time, position: 'belowBar', color: '#00FF00', shape: 'arrowUp', text: 'BUY', size: mSize });
                 }
                 if (rad.sell && rad.sell[i] === true) {
-                    markers.push({ time, position: 'aboveBar', color: '#FF0000', shape: 'arrowDown', text: 'SELL' });
+                    markers.push({ time, position: 'aboveBar', color: '#FF0000', shape: 'arrowDown', text: 'SELL', size: mSize });
                 }
 
-                // Set RAD Indikator Bawah
                 if (rad.xWAD && rad.xWAD[i] !== null && !isNaN(rad.xWAD[i])) {
                     let colIdx = rad.bar_colors ? rad.bar_colors[i] : 4;
-                    xwadData.push({ time, value: rad.xWAD[i], color: colors[colIdx] || colors[4] });
+                    xwadData.push({ time, value: rad.xWAD[i], color: getParsedColor(colIdx, opacity) });
                     
-                    if (rad.pelopor[i] !== null && !isNaN(rad.pelopor[i])) peloporData.push({ time, value: rad.pelopor[i] });
-                    if (rad.kunci[i] !== null && !isNaN(rad.kunci[i])) kunciData.push({ time, value: rad.kunci[i] });
+                    if (rad.pelopor && rad.pelopor[i] !== null && !isNaN(rad.pelopor[i])) peloporData.push({ time, value: rad.pelopor[i] });
+                    if (rad.kunci && rad.kunci[i] !== null && !isNaN(rad.kunci[i])) kunciData.push({ time, value: rad.kunci[i] });
 
                     if (rad.dashboard && rad.dashboard.statusText) {
                         dashboardData[time] = {
-                            statusText: rad.dashboard.statusText[i],
-                            NetST: rad.dashboard.NetST[i], sigST: rad.dashboard.sigST[i],
-                            NetMT: rad.dashboard.NetMT[i], sigMT: rad.dashboard.sigMT[i],
-                            NetLT: rad.dashboard.NetLT[i], sigLT: rad.dashboard.sigLT[i],
+                            txt: rad.dashboard.statusText[i],
+                            st: rad.dashboard.NetST[i], sst: rad.dashboard.sigST[i],
+                            mt: rad.dashboard.NetMT[i], smt: rad.dashboard.sigMT[i],
+                            lt: rad.dashboard.NetLT[i], slt: rad.dashboard.sigLT[i],
                         };
                     }
                 }
@@ -220,7 +231,6 @@ document.addEventListener('DOMContentLoaded', async function () {
 
             candleSeries.setData(candleData);
             candleSeries.setMarkers(markers); 
-            
             xwadSeries.setData(xwadData);
             peloporSeries.setData(peloporData);
             kunciSeries.setData(kunciData);
@@ -229,7 +239,7 @@ document.addEventListener('DOMContentLoaded', async function () {
             if (candleData.length > 0) updateDashboard(candleData[candleData.length - 1].time);
 
         } catch (error) {
-            console.error("Gagal memuat:", error);
+            console.error(error);
             document.getElementById('status-text').innerText = "⚠️ " + error.message;
             candleSeries.setData([]); candleSeries.setMarkers([]);
             xwadSeries.setData([]); peloporSeries.setData([]); kunciSeries.setData([]);
@@ -242,22 +252,17 @@ document.addEventListener('DOMContentLoaded', async function () {
     function updateDashboard(time) {
         const d = dashboardData[time];
         if (!d) return;
-        document.getElementById('rad-status').innerText = d.statusText || "Netral";
-        document.getElementById('rad-st-net').innerText = formatNumber(d.NetST);
-        document.getElementById('rad-st-sig').innerText = formatNumber(d.sigST);
-        document.getElementById('rad-mt-net').innerText = formatNumber(d.NetMT);
-        document.getElementById('rad-mt-sig').innerText = formatNumber(d.sigMT);
-        document.getElementById('rad-lt-net').innerText = formatNumber(d.NetLT);
-        document.getElementById('rad-lt-sig').innerText = formatNumber(d.sigLT);
+        document.getElementById('rad-status').innerText = d.txt || "Netral";
+        document.getElementById('rad-st-net').innerText = formatNumber(d.st);
+        document.getElementById('rad-st-sig').innerText = formatNumber(d.sst);
+        document.getElementById('rad-mt-net').innerText = formatNumber(d.mt);
+        document.getElementById('rad-mt-sig').innerText = formatNumber(d.smt);
+        document.getElementById('rad-lt-net').innerText = formatNumber(d.lt);
+        document.getElementById('rad-lt-sig').innerText = formatNumber(d.slt);
     }
 
-    function syncCrosshair(param) {
-        if (!param.time) return;
-        updateDashboard(param.time);
-    }
-
-    mainChart.subscribeCrosshairMove(syncCrosshair);
-    radChart.subscribeCrosshairMove(syncCrosshair);
+    mainChart.subscribeCrosshairMove(p => { if (p.time) updateDashboard(p.time); });
+    radChart.subscribeCrosshairMove(p => { if (p.time) updateDashboard(p.time); });
 
     window.addEventListener('resize', () => {
         mainChart.resize(mainChartElement.clientWidth, mainChartElement.clientHeight);
@@ -268,7 +273,11 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('symbol-input').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') loadData();
     });
+    
+    // Auto-reload saat pengaturan diubah
     document.getElementById('interval-input').addEventListener('change', loadData);
+    document.getElementById('opacity-input').addEventListener('input', loadData);
+    document.getElementById('marker-size-input').addEventListener('change', loadData);
 
     loadData();
 });
