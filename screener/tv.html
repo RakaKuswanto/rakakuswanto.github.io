@@ -125,6 +125,12 @@
             <option value="2">Besar</option>
         </select>
     </div>
+    <div class="toolbar-group">
+        <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+            <input type="checkbox" id="barcolor-toggle" checked style="width: 14px; height: 14px; margin: 0;">
+            Warna Bar RAD
+        </label>
+    </div>
     
     <button id="load-btn">Load Chart</button>
     <div id="status-text"></div>
@@ -213,7 +219,8 @@ document.addEventListener('DOMContentLoaded', async function () {
         const interval = document.getElementById('interval-input').value || "1d";
         const opacity = parseFloat(document.getElementById('opacity-input').value);
         const mSize = parseFloat(document.getElementById('marker-size-input').value);
-        
+        const enableBarColor = document.getElementById('barcolor-toggle').checked; // <--- TAMBAHKAN INI
+
         document.getElementById('loading-overlay').classList.add('visible');
         document.getElementById('status-text').innerText = "";
 
@@ -260,9 +267,13 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (isNaN(l)) l = Math.min(o, c);
 
                 let colIdx = (rad.bar_colors && rad.bar_colors[i] !== null) ? rad.bar_colors[i] : 4;
-                let hexColor = colIdx === 0 ? "#00FF00" : colIdx === 1 ? "#00FFFF" : colIdx === 2 ? "#FF0000" : colIdx === 3 ? "#FF00FF" : "#808080";
+                let hexColor = colIdx === 0 ? "#03c967" : colIdx === 1 ? "#03a5b7" : colIdx === 2 ? "#d1333e" : colIdx === 3 ? "#c23bd9" : "#808080";
                 
-                candleData.push({ time, open: o, high: h, low: l, close: c, color: hexColor, wickColor: hexColor, borderColor: hexColor });
+                if (enableBarColor) {
+                    candleData.push({ time, open: o, high: h, low: l, close: c, color: hexColor, wickColor: hexColor, borderColor: hexColor });
+                } else {
+                    candleData.push({ time, open: o, high: h, low: l, close: c });
+                }
 
                 let isBuy = false, isSell = false;
 
@@ -406,6 +417,7 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('interval-input').addEventListener('change', loadData);
     document.getElementById('opacity-input').addEventListener('input', loadData);
     document.getElementById('marker-size-input').addEventListener('change', loadData);
+    document.getElementById('barcolor-toggle').addEventListener('change', loadData);
 
     loadData();
 });
