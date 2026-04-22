@@ -60,7 +60,6 @@
 
 window.radDataStore = {};
 
-// SAFE NUMBER: Wajib return NaN
 function getSafeNumber(val) {
     if (val === null || val === undefined) return NaN;
     const num = Number(val);
@@ -247,35 +246,43 @@ document.addEventListener('DOMContentLoaded', function () {
                     isCustomIndicator: true,
                     format: { type: "price", precision: 2 },
 
+                    // PERBAIKAN 1: PENGGUNAAN ID STANDAR
                     plots: [
-                        { id: "xwad", type: "line" },
-                        { id: "pelopor", type: "line" },
-                        { id: "kunci", type: "line" },
-                        { id: "colorer", type: "colorer", target: "xwad", palette: "p" }
+                        { id: "plot_0", type: "line" },
+                        { id: "plot_1", type: "line" },
+                        { id: "plot_2", type: "line" },
+                        { id: "colorer_0", type: "colorer", target: "plot_0", palette: "palette_0" }
                     ],
 
-                    // PERBAIKAN: Di sini hanya NAMA palet
                     palettes: {
-                        p: {
+                        palette_0: {
                             colors: {
                                 0: { name: "Strong Bull" },
                                 1: { name: "Weak Bull" },
                                 2: { name: "Strong Bear" },
                                 3: { name: "Weak Bear" },
                                 4: { name: "Neutral" }
+                            },
+                            // PERBAIKAN 2: VAL TO INDEX MAPPING UNTUK PALET
+                            valToIndex: {
+                                0: 0, 1: 1, 2: 2, 3: 3, 4: 4
                             }
                         }
                     },
 
-                    // PERBAIKAN: Di sini WARNA dan STYLE asli untuk palet di-load
+                    // PERBAIKAN 3: DUMMY INPUT UNTUK MENCEGAH "length" CRASH SAAT START
+                    inputs: [
+                        { id: "dummy_input", name: "Aktifkan RAD", type: "bool", defval: true }
+                    ],
+
                     defaults: {
                         styles: {
-                            xwad: { linewidth: 2, plottype: 5 },
-                            pelopor: { linewidth: 2 },
-                            kunci: { linewidth: 2 }
+                            plot_0: { linewidth: 2, plottype: 5 }, // 5 = Histogram
+                            plot_1: { linewidth: 2 },
+                            plot_2: { linewidth: 2 }
                         },
                         palettes: {
-                            p: {
+                            palette_0: {
                                 colors: {
                                     0: { color: "#00FF00", style: 0, width: 1 },
                                     1: { color: "#00FFFF", style: 0, width: 1 },
@@ -285,7 +292,9 @@ document.addEventListener('DOMContentLoaded', function () {
                                 }
                             }
                         },
-                        inputs: {}
+                        inputs: {
+                            dummy_input: true
+                        }
                     }
                 },
 
@@ -311,6 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                         let colorOut = (!isNaN(c) && c >= 0 && c <= 4) ? c : 4;
 
+                        // Mengembalikan data berdasarkan urutan 'plots' di atas: xwad, pelopor, kunci, colorIndex
                         return [x, p, k, colorOut];
                     };
                 }
@@ -321,8 +331,7 @@ document.addEventListener('DOMContentLoaded', function () {
     widget.headerReady().then(() => {
         widget.onChartReady(() => {
             setTimeout(() => {
-                // Parameter ditambahkan array kosong `[]` untuk menstabilkan input load
-                widget.chart().createStudy("RAD_Oscillator", false, false, []).catch(e => console.error("RAD Load Error:", e));
+                widget.chart().createStudy("RAD_Oscillator", false, false, [true]).catch(e => console.error("RAD Load Error:", e));
             }, 500);
 
             widget.chart().crossHairMoved().subscribe(null, function(obj) {
