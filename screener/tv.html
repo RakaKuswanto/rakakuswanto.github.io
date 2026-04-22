@@ -328,8 +328,8 @@ document.addEventListener('DOMContentLoaded', async function () {
                 
                 // Jika ingin fokus melihat beberapa bulan terakhir saja (bukan seluruh 5 tahun)
                 // Hapus komentar 2 baris di bawah ini:
-                // let visibleBars = Math.min(candleData.length, 120); // Tampilkan 120 candle terakhir
-                // mainChart.timeScale().setVisibleLogicalRange({ from: candleData.length - visibleBars, to: candleData.length });
+                let visibleBars = Math.min(candleData.length, 50); // Tampilkan 120 candle terakhir
+                mainChart.timeScale().setVisibleLogicalRange({ from: candleData.length - visibleBars, to: candleData.length });
 
                 // 3. Nyalakan kembali auto-scale agar harga (Price Scale) pas di layar
                 mainChart.applyOptions({ rightPriceScale: { autoScale: true } });
