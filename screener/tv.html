@@ -46,7 +46,7 @@
 
         // 2. SAFE PARSER (PERBAIKAN KRUSIAL: Harus mengembalikan null, bukan NaN)
         function getSafeNumber(val) {
-            if (val === undefined || val === null || Number.isNaN(val)) return null; 
+            if (val === undefined || val === null || Number.isNaN(val)) return NaN; // Kembalikan ke NaN
             return Number(val);
         }
 
@@ -237,8 +237,8 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    // PERBAIKAN KRUSIAL: Mengembalikan NULL, bukan NaN. Warna tetap 4 (Netral).
-                                    if (!d) return [null, null, null, 4];
+                                    // Kembalikan NaN untuk garis, tapi pertahankan angka 4 (Netral) untuk Index Warna
+                                    if (!d) return [NaN, NaN, NaN, 4]; 
                                     
                                     let xwad = getSafeNumber(d.xWAD);
                                     let pelopor = getSafeNumber(d.pelopor);
