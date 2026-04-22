@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Grafik Saham & RAD Indicator - LWC Pro</title>
+    <title>RAD Indicator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
     <style>
@@ -112,11 +112,6 @@
     </div>
     
     <div class="divider"></div>
-
-    <div class="toolbar-group">
-        <label>Opasitas:</label>
-        <input type="range" id="opacity-input" min="0.1" max="1.0" step="0.05" value="0.85" style="width: 80px;">
-    </div>
     <div class="toolbar-group">
         <label>Sinyal:</label>
         <select id="marker-size-input">
@@ -164,6 +159,28 @@ document.addEventListener('DOMContentLoaded', async function () {
     const CONFIG = {
         supabaseFunctionUrl: "https://yvmfenyirwzmgbzzrbfw.supabase.co/functions/v1/yahoo-tv-proxy"
     };
+
+    // ==============================================================
+    // --- FITUR SAVE/LOAD SETTING (LOCALSTORAGE) ---
+    // ==============================================================
+    function loadSettings() {
+        if (localStorage.getItem('rad_symbol')) document.getElementById('symbol-input').value = localStorage.getItem('rad_symbol');
+        if (localStorage.getItem('rad_interval')) document.getElementById('interval-input').value = localStorage.getItem('rad_interval');
+        if (localStorage.getItem('rad_markerSize')) document.getElementById('marker-size-input').value = localStorage.getItem('rad_markerSize');
+        if (localStorage.getItem('rad_barColor') !== null) {
+            document.getElementById('barcolor-toggle').checked = localStorage.getItem('rad_barColor') === 'true';
+        }
+    }
+
+    function saveSettings() {
+        localStorage.setItem('rad_symbol', document.getElementById('symbol-input').value.toUpperCase());
+        localStorage.setItem('rad_interval', document.getElementById('interval-input').value);
+        localStorage.setItem('rad_markerSize', document.getElementById('marker-size-input').value);
+        localStorage.setItem('rad_barColor', document.getElementById('barcolor-toggle').checked);
+    }
+    // Muat pengaturan terakhir saat pertama kali web dibuka
+    loadSettings();
+    // ==============================================================
 
     function formatNumber(num) {
         if (!num || isNaN(num)) return "0";
@@ -217,7 +234,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     async function loadData() {
         const symbol = document.getElementById('symbol-input').value.toUpperCase() || "BBCA.JK";
         const interval = document.getElementById('interval-input').value || "1d";
-        const opacity = parseFloat(document.getElementById('opacity-input').value);
         const mSize = parseFloat(document.getElementById('marker-size-input').value);
         const enableBarColor = document.getElementById('barcolor-toggle').checked; // <--- TAMBAHKAN INI
 
@@ -293,7 +309,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                 if (isSell) markers.push({ time, position: 'aboveBar', color: '#FF0000', shape: 'arrowDown', text: 'SELL', size: mSize });
 
                 if (rad.xWAD && rad.xWAD[i] !== null && !isNaN(rad.xWAD[i])) {
-                    xwadData.push({ time, value: rad.xWAD[i], color: getParsedColor(colIdx, opacity) });
+                    xwadData.push({ time, value: rad.xWAD[i], color: getParsedColor(colIdx, 100) });
                     
                     if (rad.pelopor && rad.pelopor[i] !== null && !isNaN(rad.pelopor[i])) peloporData.push({ time, value: rad.pelopor[i] });
                     if (rad.kunci && rad.kunci[i] !== null && !isNaN(rad.kunci[i])) kunciData.push({ time, value: rad.kunci[i] });
@@ -415,7 +431,6 @@ document.addEventListener('DOMContentLoaded', async function () {
     });
     
     document.getElementById('interval-input').addEventListener('change', loadData);
-    document.getElementById('opacity-input').addEventListener('input', loadData);
     document.getElementById('marker-size-input').addEventListener('change', loadData);
     document.getElementById('barcolor-toggle').addEventListener('change', loadData);
 
