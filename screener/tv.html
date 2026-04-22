@@ -7,14 +7,15 @@
     <script src="./charting_library/charting_library.standalone.js"></script>
 
     <style>
-        body { margin: 0; background: #131722; }
+        body { margin: 0; background: #131722; color: #d1d4dc; font-family: -apple-system, sans-serif; overflow: hidden; }
         #tv_chart_container { width: 100%; height: 100vh; }
 
         .ui-overlay {
             position: absolute; inset: 0;
-            display: flex; justify-content: center; align-items: center;
+            display: none; justify-content: center; align-items: center;
             background: rgba(19,23,34,0.85); z-index: 1000;
         }
+        .ui-overlay.visible { display: flex; }
 
         .loader {
             border: 5px solid #2a2e39;
@@ -27,22 +28,43 @@
         @keyframes spin {
             100% { transform: rotate(360deg); }
         }
+
+        #rad-dashboard {
+            position: absolute; top: 60px; right: 20px; z-index: 999;
+            background-color: rgba(19, 23, 34, 0.9); border: 1px solid #363c4e;
+            border-radius: 6px; padding: 10px; font-size: 12px; pointer-events: none; display: none;
+        }
+        #rad-dashboard table { border-collapse: collapse; width: 100%; }
+        #rad-dashboard th, #rad-dashboard td { border: 1px solid #363c4e; padding: 5px 10px; text-align: right; }
+        #rad-dashboard th { background-color: #2a2e39; color: #fff; text-align: left; }
     </style>
 </head>
 
 <body>
 
 <div id="tv_chart_container"></div>
+
+<div id="rad-dashboard">
+    <table>
+        <tr><th colspan="3" id="rad-status" style="text-align: center; font-weight: bold; font-size: 14px;">Memuat RAD...</th></tr>
+        <tr><th>Timeframe</th><th>Net Volume</th><th>Signal</th></tr>
+        <tr><td>ST (5)</td><td id="rad-st-net">0</td><td id="rad-st-sig">0</td></tr>
+        <tr><td>MT (20)</td><td id="rad-mt-net">0</td><td id="rad-mt-sig">0</td></tr>
+        <tr><td>LT (200)</td><td id="rad-lt-net">0</td><td id="rad-lt-sig">0</td></tr>
+    </table>
+</div>
+
 <div id="loading-overlay" class="ui-overlay"><div class="loader"></div></div>
 
 <script>
 
 window.radDataStore = {};
 
-// ✅ SAFE NUMBER (ANTI NaN / undefined)
+// ✅ SAFE NUMBER: Wajib return NaN (standar aman TradingView untuk plot kosong)
 function getSafeNumber(val) {
+    if (val === null || val === undefined) return NaN;
     const num = Number(val);
-    return Number.isFinite(num) ? num : null;
+    return Number.isFinite(num) ? num : NaN;
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -52,16 +74,33 @@ document.addEventListener('DOMContentLoaded', function () {
         defaultSymbol: "BBCA.JK"
     };
 
-    function showLoader() {
-        document.getElementById('loading-overlay').style.display = "flex";
+    function showLoader() { document.getElementById('loading-overlay').classList.add('visible'); }
+    function hideLoader() { document.getElementById('loading-overlay').classList.remove('visible'); }
+
+    function formatNumber(num) {
+        if(!num || isNaN(num)) return "0";
+        let absNum = Math.abs(num);
+        if(absNum >= 1e12) return (num / 1e12).toFixed(2) + "T";
+        if(absNum >= 1e9) return (num / 1e9).toFixed(2) + "B";
+        if(absNum >= 1e6) return (num / 1e6).toFixed(2) + "M";
+        if(absNum >= 1e3) return (num / 1e3).toFixed(2) + "K";
+        return num.toFixed(2);
     }
 
-    function hideLoader() {
-        document.getElementById('loading-overlay').style.display = "none";
+    function updateDashboardUI(dashData) {
+        if (!dashData) return;
+        const dash = document.getElementById('rad-dashboard');
+        dash.style.display = "block";
+        document.getElementById('rad-status').innerText = dashData.statusText || "Netral";
+        document.getElementById('rad-st-net').innerText = formatNumber(dashData.NetST);
+        document.getElementById('rad-st-sig').innerText = formatNumber(dashData.sigST);
+        document.getElementById('rad-mt-net').innerText = formatNumber(dashData.NetMT);
+        document.getElementById('rad-mt-sig').innerText = formatNumber(dashData.sigMT);
+        document.getElementById('rad-lt-net').innerText = formatNumber(dashData.NetLT);
+        document.getElementById('rad-lt-sig').innerText = formatNumber(dashData.sigLT);
     }
 
     const datafeed = {
-
         onReady: (cb) => {
             setTimeout(() => cb({
                 supported_resolutions: ['1', '5', '15', '30', '60', '1D']
@@ -79,70 +118,105 @@ document.addEventListener('DOMContentLoaded', function () {
                 minmov: 1,
                 pricescale: 100,
                 has_intraday: true,
-                visible_plots_set: "ohlcv"
+                visible_plots_set: "ohlcv" // ✅ Ini menyelesaikan warning "has_no_volume deprecated"
             }), 0);
         },
 
+        searchSymbols: async (userInput, exchange, symbolType, onResult) => {
+            if (userInput.length < 2) return onResult([]);
+            try {
+                const url = new URL(CONFIG.supabaseFunctionUrl);
+                url.searchParams.append('endpoint', 'search');
+                url.searchParams.append('query', userInput);
+                const response = await fetch(url.toString());
+                onResult(await response.json());
+            } catch (error) { onResult([]); }
+        },
+
         getBars: async (symbolInfo, resolution, periodParams, onHistory, onError) => {
-
             showLoader();
-
             try {
                 const url = new URL(CONFIG.supabaseFunctionUrl);
                 url.searchParams.append('endpoint', 'bars');
                 url.searchParams.append('symbol', symbolInfo.ticker);
+                url.searchParams.append('interval', resolution === '1D' ? '1d' : resolution);
+                url.searchParams.append('from', Math.round(periodParams.from));
+                url.searchParams.append('to', Math.round(periodParams.to));
+                url.searchParams.append('cb', Date.now());
 
                 const res = await fetch(url);
                 const data = await res.json();
 
-                if (!data?.chart?.result?.[0]) {
+                if (!data?.chart?.result?.[0] || !data.chart.result[0].timestamp) {
                     return onHistory([], { noData: true });
                 }
 
                 const result = data.chart.result[0];
-                const quotes = result.indicators.quote[0];
-                const rad = result.indicators.rad || {};
+                const timestamps = result.timestamp;
+                const quotes = result.indicators?.quote?.[0] || {};
+                const rad = result.indicators?.rad || {};
+
+                const opens = quotes.open || [];
+                const highs = quotes.high || [];
+                const lows = quotes.low || [];
+                const closes = quotes.close || [];
+                const vols = quotes.volume || [];
+
+                const radWAD = rad.xWAD || [];
+                const radPel = rad.pelopor || [];
+                const radKun = rad.kunci || [];
+                const radCol = rad.bar_colors || [];
 
                 const bars = [];
 
-                for (let i = 0; i < result.timestamp.length; i++) {
+                for (let i = 0; i < timestamps.length; i++) {
+                    let time = timestamps[i] * 1000;
 
-                    let ts = result.timestamp[i];
-                    let time = ts * 1000;
+                    let o = getSafeNumber(opens[i]);
+                    let h = getSafeNumber(highs[i]);
+                    let l = getSafeNumber(lows[i]);
+                    let c = getSafeNumber(closes[i]);
+                    let v = getSafeNumber(vols[i]);
 
-                    let o = getSafeNumber(quotes.open[i]);
-                    let h = getSafeNumber(quotes.high[i]);
-                    let l = getSafeNumber(quotes.low[i]);
-                    let c = getSafeNumber(quotes.close[i]);
-                    let v = getSafeNumber(quotes.volume[i]);
+                    // Skip baris harga yang invalid (NaN)
+                    if (isNaN(o) || isNaN(c)) continue;
 
-                    if (o === null || c === null) continue;
-
-                    // ✅ AMANKAN SEMUA DATA RAD
-                    const xwad = getSafeNumber(rad?.xWAD?.[i]);
-                    const pelopor = getSafeNumber(rad?.pelopor?.[i]);
-                    const kunci = getSafeNumber(rad?.kunci?.[i]);
-
-                    const colorRaw = getSafeNumber(rad?.bar_colors?.[i]);
-                    const colorIndex = (colorRaw !== null && colorRaw >= 0 && colorRaw <= 4)
-                        ? colorRaw
-                        : null;
+                    // Ambil warna (Default ke 4 / Abu-abu jika undefined)
+                    let colorRaw = getSafeNumber(radCol[i]);
+                    let colorIndex = (!isNaN(colorRaw) && colorRaw >= 0 && colorRaw <= 4) ? colorRaw : 4;
 
                     window.radDataStore[time] = {
-                        xWAD: xwad,
-                        pelopor: pelopor,
-                        kunci: kunci,
-                        colorIndex: colorIndex
+                        xWAD: getSafeNumber(radWAD[i]),
+                        pelopor: getSafeNumber(radPel[i]),
+                        kunci: getSafeNumber(radKun[i]),
+                        colorIndex: colorIndex,
+                        dashboard: (rad.dashboard && rad.dashboard.statusText) ? {
+                            statusText: rad.dashboard.statusText[i],
+                            NetST: rad.dashboard.NetST[i],
+                            sigST: rad.dashboard.sigST[i],
+                            NetMT: rad.dashboard.NetMT[i],
+                            sigMT: rad.dashboard.sigMT[i],
+                            NetLT: rad.dashboard.NetLT[i],
+                            sigLT: rad.dashboard.sigLT[i],
+                        } : null
                     };
 
                     bars.push({
                         time,
                         open: o,
-                        high: h ?? c,
-                        low: l ?? c,
+                        high: isNaN(h) ? c : h, // Fallback jika high rusak
+                        low: isNaN(l) ? c : l,  // Fallback jika low rusak
                         close: c,
-                        volume: v ?? 0
+                        volume: isNaN(v) ? 0 : v
                     });
+                }
+
+                if (bars.length > 0) {
+                    let lastBarTime = bars[bars.length - 1].time;
+                    let lastDataStore = window.radDataStore[lastBarTime];
+                    if (lastDataStore && lastDataStore.dashboard) {
+                        updateDashboardUI(lastDataStore.dashboard);
+                    }
                 }
 
                 onHistory(bars, { noData: bars.length === 0 });
@@ -170,15 +244,14 @@ document.addEventListener('DOMContentLoaded', function () {
         autosize: true,
 
         custom_indicators_getter: function (PineJS) {
-
             return Promise.resolve([{
-
                 name: "RAD",
                 metainfo: {
                     _metainfoVersion: 51,
                     id: "RAD@custom",
                     description: "RAD Indicator",
                     isCustomIndicator: true,
+                    format: { type: "price", precision: 2 },
 
                     plots: [
                         { id: "xwad", type: "line" },
@@ -201,7 +274,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     defaults: {
                         styles: {
-                            xwad: { linewidth: 2 },
+                            xwad: { linewidth: 2, plottype: 5 }, // ✅ Dikembalikan ke 5 (Histogram/Column) agar enak dilihat
                             pelopor: { linewidth: 2 },
                             kunci: { linewidth: 2 }
                         }
@@ -209,48 +282,58 @@ document.addEventListener('DOMContentLoaded', function () {
                 },
 
                 constructor: function () {
-
                     this.init = function (context) {
                         this._context = context;
                     };
 
                     this.main = function () {
-
                         let time = PineJS.Std.time(this._context);
                         let d = window.radDataStore[time];
 
-                        // ✅ HARD GUARD TOTAL
-                        if (!d) return [null, null, null, null];
+                        // ✅ HARD GUARD TOTAL: Pakai NaN untuk plot, dan undefined untuk warna.
+                        if (!d) return [NaN, NaN, NaN, undefined];
 
                         let x = getSafeNumber(d.xWAD);
                         let p = getSafeNumber(d.pelopor);
                         let k = getSafeNumber(d.kunci);
                         let c = getSafeNumber(d.colorIndex);
 
-                        // ❗ kalau x null → semua null
-                        if (x === null) {
-                            return [null, null, null, null];
+                        // ❗ Kalau nilai xWAD tidak ada, kita harus matikan juga warnanya dengan `undefined`
+                        if (isNaN(x)) {
+                            return [NaN, NaN, NaN, undefined];
                         }
 
-                        if (c === null) c = 4;
+                        // Pastikan warna selalu integer 0-4 (Bukan null atau NaN)
+                        let colorOut = (!isNaN(c) && c >= 0 && c <= 4) ? c : 4;
 
-                        return [x, p ?? null, k ?? null, c];
+                        return [x, p, k, colorOut];
                     };
                 }
-
             }]);
         }
     });
 
-    widget.onChartReady(() => {
-        setTimeout(() => {
-            widget.chart().createStudy("RAD", false, false);
-        }, 500);
+    widget.headerReady().then(() => {
+        widget.onChartReady(() => {
+            setTimeout(() => {
+                widget.chart().createStudy("RAD", false, false).catch(e => console.error("RAD Load Error:", e));
+            }, 500);
+
+            // Sinkronisasi crosshair dashboard
+            widget.chart().crossHairMoved().subscribe(null, function(obj) {
+                if (obj && obj.time) {
+                    let timeMs = obj.time * 1000; 
+                    let dataKursor = window.radDataStore[timeMs];
+                    if (dataKursor && dataKursor.dashboard) {
+                        updateDashboardUI(dataKursor.dashboard);
+                    }
+                }
+            });
+        });
     });
 
 });
 
 </script>
-
 </body>
 </html>
