@@ -235,7 +235,10 @@ document.addEventListener('DOMContentLoaded', async function () {
         const symbol = document.getElementById('symbol-input').value.toUpperCase() || "BBCA.JK";
         const interval = document.getElementById('interval-input').value || "1d";
         const mSize = parseFloat(document.getElementById('marker-size-input').value);
-        const enableBarColor = document.getElementById('barcolor-toggle').checked; // <--- TAMBAHKAN INI
+        const enableBarColor = document.getElementById('barcolor-toggle').checked;
+
+        // Simpan setting terbaru setiap kali load
+        saveSettings();
 
         document.getElementById('loading-overlay').classList.add('visible');
         document.getElementById('status-text').innerText = "";
