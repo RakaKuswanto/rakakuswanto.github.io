@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <title>Grafik Saham & RAD Indicator</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script type="text/javascript" src="./charting_library/charting_library.js"></script>
+    <script type="text/javascript" src="./charting_library/charting_library.standalone.js"></script>
     <style>
         body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #131722; overflow: hidden; }
         #tv_chart_container { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
@@ -41,6 +41,7 @@
     <div id="loading-overlay" class="ui-overlay visible"><div class="loader"></div></div>
 
     <script type="text/javascript">
+        // 1. GLOBAL STORE UNTUK INDIKATOR
         window.radDataStore = {};
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -112,16 +113,15 @@
                     url.searchParams.append('interval', interval);
                     url.searchParams.append('from', Math.round(from));
                     url.searchParams.append('to', Math.round(to));
-                    
-                    // ANTI-CACHE: Memaksa browser selalu menembak Supabase terbaru
-                    url.searchParams.append('cb', Date.now());
+                    url.searchParams.append('cb', Date.now()); // Bypass Cache
                    
                     try {
                         const response = await fetch(url.toString());
-                        if (!response.ok) throw new Error("Gagal terhubung ke server");
+                        if (!response.ok) throw new Error("Server error");
                         const data = await response.json();
                         
-                        if (!data.chart || !data.chart.result || data.chart.result.length === 0 || data.chart.error) {
+                        // SANITASI AWAL: Tolak mentah-mentah jika response kosong/cacat
+                        if (!data.chart || !data.chart.result || data.chart.result.length === 0) {
                             return onHistoryCallback([], { noData: true }); 
                         }
                         
@@ -131,47 +131,62 @@
                         }
 
                         const quotes = result.indicators.quote[0];
-                        const radData = result.indicators.rad; 
+                        if (!quotes || !quotes.close || quotes.close.length === 0) {
+                             return onHistoryCallback([], { noData: true });
+                        }
+
+                        const radData = result.indicators.rad || {}; 
                         const bars = [];
                         
-                        // PARSING AMAN: Buang semua baris yang harganya kosong (null/undefined)
-                        if (quotes && quotes.close) {
-                            for (let i = 0; i < result.timestamp.length; i++) {
-                                let ts = result.timestamp[i];
-                                let o = quotes.open[i];
-                                let h = quotes.high[i];
-                                let l = quotes.low[i];
-                                let c = quotes.close[i];
-                                let v = quotes.volume[i];
+                        // PARSING AMAN: Kita pastikan hanya memproses indeks di mana HARGA OPEN & CLOSE valid.
+                        for (let i = 0; i < result.timestamp.length; i++) {
+                            let ts = result.timestamp[i];
+                            let o = quotes.open[i];
+                            let h = quotes.high[i];
+                            let l = quotes.low[i];
+                            let c = quotes.close[i];
+                            let v = quotes.volume[i];
 
-                                // Jika cacat, tendang baris ini
-                                if (o === undefined || o === null || c === undefined || c === null) continue;
-
-                                let timeMs = ts * 1000;
-                                
-                                // Pengecekan aman untuk array RAD yang sejajar
-                                if (radData && radData.xWAD && radData.xWAD.length > i) {
-                                    window.radDataStore[timeMs] = {
-                                        xWAD: radData.xWAD[i],
-                                        pelopor: radData.pelopor[i],
-                                        kunci: radData.kunci[i],
-                                        colorIndex: (radData.bar_colors && radData.bar_colors[i] !== undefined) ? radData.bar_colors[i] : 4,
-                                        dashboard: (radData.dashboard && radData.dashboard.statusText) ? {
-                                            statusText: radData.dashboard.statusText[i],
-                                            NetST: radData.dashboard.NetST[i],
-                                            sigST: radData.dashboard.sigST[i],
-                                            NetMT: radData.dashboard.NetMT[i],
-                                            sigMT: radData.dashboard.sigMT[i],
-                                            NetLT: radData.dashboard.NetLT[i],
-                                            sigLT: radData.dashboard.sigLT[i],
-                                        } : null
-                                    };
-                                }
-
-                                bars.push({ time: timeMs, open: o, high: h, low: l, close: c, volume: v || 0 });
+                            // Skip baris yang harganya cacat (NaN, null, undefined)
+                            if (typeof o !== 'number' || typeof c !== 'number' || isNaN(o) || isNaN(c)) {
+                                continue;
                             }
+
+                            let timeMs = ts * 1000;
+                            
+                            // Ekstrak indikator hanya jika data sejajar. Kalau kosong, berikan null.
+                            let xWAD_val = (radData.xWAD && radData.xWAD[i] != null) ? Number(radData.xWAD[i]) : null;
+                            let pelopor_val = (radData.pelopor && radData.pelopor[i] != null) ? Number(radData.pelopor[i]) : null;
+                            let kunci_val = (radData.kunci && radData.kunci[i] != null) ? Number(radData.kunci[i]) : null;
+                            let col_idx = (radData.bar_colors && radData.bar_colors[i] != null) ? Number(radData.bar_colors[i]) : 4;
+
+                            window.radDataStore[timeMs] = {
+                                xWAD: xWAD_val,
+                                pelopor: pelopor_val,
+                                kunci: kunci_val,
+                                colorIndex: col_idx,
+                                dashboard: (radData.dashboard && radData.dashboard.statusText) ? {
+                                    statusText: radData.dashboard.statusText[i] || "Netral",
+                                    NetST: radData.dashboard.NetST[i] || 0,
+                                    sigST: radData.dashboard.sigST[i] || 0,
+                                    NetMT: radData.dashboard.NetMT[i] || 0,
+                                    sigMT: radData.dashboard.sigMT[i] || 0,
+                                    NetLT: radData.dashboard.NetLT[i] || 0,
+                                    sigLT: radData.dashboard.sigLT[i] || 0,
+                                } : null
+                            };
+
+                            bars.push({ 
+                                time: timeMs, 
+                                open: o, 
+                                high: h || c, // Fallback jika high rusak
+                                low: l || c,  // Fallback jika low rusak
+                                close: c, 
+                                volume: v || 0 
+                            });
                         }
                         
+                        // Perbarui Dashboard jika ada bar yang diproses
                         if (bars.length > 0) {
                             let lastBarTime = bars[bars.length - 1].time;
                             let lastDataStore = window.radDataStore[lastBarTime];
@@ -182,12 +197,14 @@
 
                         onHistoryCallback(bars, { noData: bars.length === 0 });
                     } catch (error) {
+                        console.error("TradingView GetBars Error: ", error);
                         onErrorCallback(error.message);
                     } finally { hideLoader(); }
                 },
                 subscribeBars: () => {}, unsubscribeBars: () => {},
             };
             
+            // 3. WIDGET INITIALIZATION
             const widget = new TradingView.widget({
                 container: 'tv_chart_container',
                 library_path: './charting_library/',
@@ -246,14 +263,15 @@
                                     let time = PineJS.Std.time(this._context);
                                     let d = window.radDataStore[time];
                                     
-                                    // KEAMANAN EKSTRA: Pastikan tidak ada undefined atau null yang dikirim ke plot.
-                                    // TradingView menuntut NaN untuk baris yang kosong (na).
+                                    // PENGAMAN UTAMA AUTOSCALE: Jangan pernah mengembalikan array dengan undefined!
+                                    // Jika data hilang (Misal baris hari libur), kembalikan NaN (TradingView standard blank number)
+                                    // Tapi jangan mengembalikan NaN untuk Index Warna.
                                     if (!d) return [NaN, NaN, NaN, 4]; 
                                     
-                                    let xwad = (d.xWAD !== undefined && d.xWAD !== null && !isNaN(d.xWAD)) ? Number(d.xWAD) : NaN;
-                                    let pelopor = (d.pelopor !== undefined && d.pelopor !== null && !isNaN(d.pelopor)) ? Number(d.pelopor) : NaN;
-                                    let kunci = (d.kunci !== undefined && d.kunci !== null && !isNaN(d.kunci)) ? Number(d.kunci) : NaN;
-                                    let colorIndex = (d.colorIndex !== undefined && d.colorIndex !== null && !isNaN(d.colorIndex)) ? Number(d.colorIndex) : 4; 
+                                    let xwad = (typeof d.xWAD === 'number' && !isNaN(d.xWAD)) ? d.xWAD : NaN;
+                                    let pelopor = (typeof d.pelopor === 'number' && !isNaN(d.pelopor)) ? d.pelopor : NaN;
+                                    let kunci = (typeof d.kunci === 'number' && !isNaN(d.kunci)) ? d.kunci : NaN;
+                                    let colorIndex = (typeof d.colorIndex === 'number' && !isNaN(d.colorIndex)) ? d.colorIndex : 4; 
 
                                     return [xwad, pelopor, kunci, colorIndex];
                                 };
