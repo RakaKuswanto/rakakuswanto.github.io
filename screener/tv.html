@@ -195,12 +195,13 @@
                 custom_indicators_getter: function(PineJS) {
                     return Promise.resolve([
                         {
-                            name: "rad_oscillator", // WAJIB LOWERCASE AGAR COCOK DENGAN CREATESTUDY
+                            // 1. SAMAKAN SEMUA NAMA DI SINI
+                            name: "RAD_Oscillator", 
                             metainfo: {
                                 _metainfoVersion: 51,
-                                id: "rad_oscillator@tv-basicstudies-1", // WAJIB LOWERCASE
-                                name: "rad_oscillator", // WAJIB LOWERCASE
-                                description: "RAD Oscillator",
+                                id: "RAD_Oscillator@tv-basicstudies-1", 
+                                name: "RAD_Oscillator",
+                                description: "RAD_Oscillator", // <--- INI YANG DICARI OLEH TRADINGVIEW
                                 shortDescription: "RAD",
                                 is_price_study: false, 
                                 isCustomIndicator: true,
@@ -215,11 +216,11 @@
                                 palettes: {
                                     palette_xwad: {
                                         colors: {
-                                            0: { name: "Strong Bull", color: "#00FF00" }, // Lime
-                                            1: { name: "Weak Bull", color: "#00FFFF" },   // Aqua
-                                            2: { name: "Strong Bear", color: "#FF0000" }, // Red
-                                            3: { name: "Weak Bear", color: "#FF00FF" },   // Fuchsia
-                                            4: { name: "Neutral", color: "#808080" }      // Gray
+                                            0: { name: "Strong Bull", color: "#00FF00" },
+                                            1: { name: "Weak Bull", color: "#00FFFF" },  
+                                            2: { name: "Strong Bear", color: "#FF0000" }, 
+                                            3: { name: "Weak Bear", color: "#FF00FF" },  
+                                            4: { name: "Neutral", color: "#808080" }     
                                         }
                                     }
                                 },
@@ -251,20 +252,31 @@
                             }
                         }
                     ]);
-                }
+                }            
             });
 
             // 4. INJEKSI AMAN & SINKRONISASI CROSSHAIR
             widget.headerReady().then(function() {
                 widget.onChartReady(function() {
-                    console.log("Chart Ready. Menginjeksi RAD...");
+                    console.log("Chart Ready. Memulai Injeksi RAD...");
                     
-                    // Delay injeksi dipastikan menggunakan nama ID yang sama persis (huruf kecil)
-                    setTimeout(() => {
-                        widget.chart().createStudy("rad_oscillator", false, false).catch(err => {
-                            console.error("Gagal meload indikator:", err);
+                    // Fungsi untuk menginjeksi dengan sistem "coba terus sampai bisa" (mengatasi race-condition)
+                    function injectIndicator(attempts = 0) {
+                        // 2. NAMA PANGGILAN HARUS SAMA PERSIS DENGAN 'description'
+                        widget.chart().createStudy("RAD_Oscillator", false, false).then(() => {
+                            console.log("RAD Indicator berhasil diinjeksi!");
+                        }).catch(err => {
+                            if (attempts < 5) {
+                                console.warn(`Gagal meload indikator (Percobaan ${attempts + 1}). Mencoba lagi...`);
+                                setTimeout(() => injectIndicator(attempts + 1), 500);
+                            } else {
+                                console.error("Gagal total meload indikator setelah 5 percobaan:", err);
+                            }
                         });
-                    }, 500); 
+                    }
+                    
+                    // Mulai injeksi
+                    setTimeout(() => injectIndicator(), 500);
 
                     // Sinkronisasi Dashboard dengan posisi Kursor (Crosshair)
                     widget.chart().crossHairMoved().subscribe(null, function(obj) {
