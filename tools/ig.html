@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+  <title>IG Story Converter</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+
+    *{
+      margin:0;
+      padding:0;
+      box-sizing:border-box;
+    }
+
+    body{
+      font-family:'Poppins',sans-serif;
+      min-height:100vh;
+      background:
+      radial-gradient(circle at top left,#ff0080 0%,transparent 30%),
+      radial-gradient(circle at bottom right,#7928ca 0%,transparent 30%),
+      #0f0f12;
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+      overflow-x:hidden;
+      color:white;
+    }
+
+    .card{
+      width:100%;
+      max-width:450px;
+
+      background:rgba(255,255,255,0.08);
+      backdrop-filter:blur(20px);
+
+      border:1px solid rgba(255,255,255,0.1);
+
+      border-radius:28px;
+
+      padding:30px;
+
+      box-shadow:
+      0 10px 40px rgba(0,0,0,0.4);
+    }
+
+    .logo{
+      width:75px;
+      height:75px;
+
+      margin:auto;
+
+      border-radius:24px;
+
+      background:linear-gradient(135deg,#ff0080,#7928ca);
+
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      font-size:34px;
+
+      box-shadow:
+      0 10px 30px rgba(255,0,128,0.4);
+    }
+
+    h1{
+      text-align:center;
+      margin-top:18px;
+      font-size:28px;
+      font-weight:700;
+    }
+
+    .subtitle{
+      text-align:center;
+      opacity:0.7;
+      margin-top:8px;
+      font-size:14px;
+      line-height:1.6;
+    }
+
+    .upload-box{
+      margin-top:30px;
+
+      border:2px dashed rgba(255,255,255,0.2);
+
+      border-radius:24px;
+
+      padding:35px 20px;
+
+      text-align:center;
+
+      transition:0.3s;
+      cursor:pointer;
+    }
+
+    .upload-box:hover{
+      border-color:#ff0080;
+      background:rgba(255,255,255,0.04);
+    }
+
+    .upload-icon{
+      font-size:50px;
+    }
+
+    .upload-text{
+      margin-top:15px;
+      font-size:15px;
+      opacity:0.8;
+    }
+
+    input{
+      display:none;
+    }
+
+    .btn{
+      width:100%;
+      height:56px;
+
+      border:none;
+
+      border-radius:18px;
+
+      margin-top:22px;
+
+      background:linear-gradient(
+      135deg,
+      #ff0080,
+      #7928ca
+      );
+
+      color:white;
+
+      font-size:16px;
+      font-weight:600;
+
+      cursor:pointer;
+
+      transition:0.3s;
+
+      box-shadow:
+      0 10px 30px rgba(255,0,128,0.3);
+    }
+
+    .btn:hover{
+      transform:translateY(-2px) scale(1.01);
+    }
+
+    .btn:disabled{
+      opacity:0.5;
+      cursor:not-allowed;
+    }
+
+    .status{
+      margin-top:20px;
+      text-align:center;
+      font-size:14px;
+      opacity:0.8;
+    }
+
+    .progress{
+      width:100%;
+      height:10px;
+
+      border-radius:999px;
+
+      background:rgba(255,255,255,0.08);
+
+      overflow:hidden;
+
+      margin-top:15px;
+
+      display:none;
+    }
+
+    .progress-bar{
+      width:0%;
+      height:100%;
+
+      background:linear-gradient(
+      90deg,
+      #ff0080,
+      #7928ca
+      );
+
+      transition:0.2s;
+    }
+
+    .video-wrapper{
+      margin-top:25px;
+      display:none;
+    }
+
+    video{
+      width:100%;
+      border-radius:24px;
+      overflow:hidden;
+    }
+
+    .download-btn{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+
+      gap:10px;
+
+      text-decoration:none;
+
+      width:100%;
+      height:54px;
+
+      margin-top:15px;
+
+      border-radius:18px;
+
+      background:white;
+      color:black;
+
+      font-weight:600;
+    }
+
+    .badge{
+      margin-top:18px;
+
+      display:flex;
+      justify-content:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .badge span{
+      padding:8px 14px;
+
+      border-radius:999px;
+
+      background:rgba(255,255,255,0.08);
+
+      font-size:12px;
+
+      opacity:0.8;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <div class="card">
+
+    <div class="logo">
+      🎬
+    </div>
+
+    <h1>IG Story Converter</h1>
+
+    <p class="subtitle">
+      Convert video jadi Instagram Story<br>
+      kualitas tinggi anti pecah
+    </p>
+
+    <label class="upload-box" for="upload">
+
+      <div class="upload-icon">
+        ⬆️
+      </div>
+
+      <div class="upload-text">
+        Klik untuk upload video
+      </div>
+
+    </label>
+
+    <input
+      type="file"
+      id="upload"
+      accept="video/*"
+    />
+
+    <button
+      class="btn"
+      id="convertBtn"
+      onclick="convertVideo()"
+    >
+      Convert Sekarang
+    </button>
+
+    <div class="status" id="status">
+      Menunggu upload video
+    </div>
+
+    <div class="progress" id="progress">
+      <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="badge">
+      <span>1080x1920</span>
+      <span>30 FPS</span>
+      <span>Anti Pecah</span>
+      <span>IG Optimized</span>
+    </div>
+
+    <div class="video-wrapper" id="videoWrapper">
+
+      <video
+        controls
+        id="preview"
+      ></video>
+
+      <a
+        id="download"
+        class="download-btn"
+      >
+        ⬇️ Download Video
+      </a>
+
+    </div>
+
+  </div>
+
+  <script type="module">
+
+    import { FFmpeg } from "https://cdn.jsdelivr.net/npm/@ffmpeg/ffmpeg@0.12.6/dist/esm/index.js"
+
+    import { fetchFile } from "https://cdn.jsdelivr.net/npm/@ffmpeg/util@0.12.1/dist/esm/index.js"
+
+    const ffmpeg = new FFmpeg()
+
+    const status = document.getElementById("status")
+    const progress = document.getElementById("progress")
+    const progressBar = document.getElementById("progressBar")
+    const preview = document.getElementById("preview")
+    const download = document.getElementById("download")
+    const videoWrapper = document.getElementById("videoWrapper")
+    const convertBtn = document.getElementById("convertBtn")
+
+    async function loadFFmpeg(){
+
+      status.innerText = "Loading engine..."
+
+      await ffmpeg.load()
+
+      status.innerText = "Ready 🚀"
+    }
+
+    loadFFmpeg()
+
+    ffmpeg.on("progress", ({ progress:p }) => {
+
+      const percent = Math.min(
+        100,
+        Math.round(p * 100)
+      )
+
+      progressBar.style.width =
+      percent + "%"
+
+      status.innerText =
+      "Converting " + percent + "%"
+    })
+
+    window.convertVideo = async () => {
+
+      const input =
+      document.getElementById("upload")
+
+      if(!input.files.length){
+
+        alert("Upload video dulu")
+        return
+      }
+
+      convertBtn.disabled = true
+
+      progress.style.display = "block"
+
+      const file = input.files[0]
+
+      status.innerText = "Uploading..."
+
+      await ffmpeg.writeFile(
+        "input.mp4",
+        await fetchFile(file)
+      )
+
+      await ffmpeg.exec([
+
+        "-i",
+        "input.mp4",
+
+        "-vf",
+
+        "scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2,unsharp=5:5:0.8:3:3:0.4",
+
+        "-c:v",
+        "libx264",
+
+        "-preset",
+        "fast",
+
+        "-crf",
+        "22",
+
+        "-r",
+        "30",
+
+        "-pix_fmt",
+        "yuv420p",
+
+        "-c:a",
+        "aac",
+
+        "-b:a",
+        "128k",
+
+        "output.mp4"
+
+      ])
+
+      const data =
+      await ffmpeg.readFile(
+        "output.mp4"
+      )
+
+      const videoBlob =
+      new Blob(
+      [data.buffer],
+      { type:"video/mp4" }
+      )
+
+      const videoURL =
+      URL.createObjectURL(videoBlob)
+
+      preview.src = videoURL
+
+      download.href = videoURL
+
+      download.download =
+      "instagram-story.mp4"
+
+      videoWrapper.style.display =
+      "block"
+
+      status.innerText =
+      "Selesai ✅"
+
+      convertBtn.disabled = false
+    }
+
+  </script>
+
+</body>
+</html>
