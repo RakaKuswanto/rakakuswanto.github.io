@@ -1,6 +1,6 @@
 
 
-var arrBaloes = [
+export var arrBaloes = [
 	{
 		scale:10,
 		y:70,
@@ -9,7 +9,7 @@ var arrBaloes = [
 ];
 
 
-function Balao(){
+export function Balao(){
 	
 	this.peso = 10;
 	this.balao = undefined

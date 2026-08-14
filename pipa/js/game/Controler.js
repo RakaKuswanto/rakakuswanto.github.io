@@ -2,7 +2,7 @@
 
 
 
-function emitEvt(a, paiPipa){
+export function emitEvt(a, paiPipa){
 
 	if(paiPipa.pipaPrincipal && type == 'online'){
 	
@@ -41,7 +41,7 @@ function emitEvt(a, paiPipa){
 
 
 
-function getPaiPipaPrincipal(){
+export function getPaiPipaPrincipal(){
 	if(type == 'twoPlayer'){
 		return persos[0];
 	}else{
@@ -49,7 +49,7 @@ function getPaiPipaPrincipal(){
 	}
 }
 
-function controlerClicks(){
+export function controlerClicks(){
 
 //INI TOUCHS / MOBILE EVENTS ==========================================
 
@@ -291,7 +291,7 @@ function controlerClicks(){
 
 }
 
-function updateSpritePerso(pai){
+export function updateSpritePerso(pai){
 	if(!usageAvatar) {
 		var a = -1;
 		if(pai.pressUp) a = 0;
@@ -318,7 +318,7 @@ function updateSpritePerso(pai){
 	}
 }
 
-function puxar(paiPipa){
+export function puxar(paiPipa){
 
 	
     //console.log(paiPipa.posZ);
@@ -414,7 +414,7 @@ function puxar(paiPipa){
 	
 }
 
-function descarregar(paiPipa, force){
+export function descarregar(paiPipa, force){
 
 	if(paiPipa == undefined) paiPipa = getPaiPipaPrincipal().paiPipa;
 	if((!paiPipa.podeCortar || paiPipa.autoDescarregar) && force == undefined) return;
@@ -522,17 +522,17 @@ function descarregar(paiPipa, force){
 
 }
 
-function ajustBugRotacaoPosZ(paiPipa){
+export function ajustBugRotacaoPosZ(paiPipa){
 	var vai = Math.round(paiPipa.posZ / _360graus);
 	paiPipa.posZ = paiPipa.posZ - (vai * _360graus);
 }
 
-function ajustBugRotacaoPipaZ(pipa){
+export function ajustBugRotacaoPipaZ(pipa){
 	var vai = Math.round(pipa.rotation.z / _360graus);
 	pipa.rotation.z = pipa.rotation.z - (vai * _360graus);
 }
 
-function disbicar(paiPipa){
+export function disbicar(paiPipa){
 
 	if(paiPipa == undefined) paiPipa = getPaiPipaPrincipal().paiPipa;
 	if(!paiPipa.podeCortar || paiPipa.autoDescarregar) return;
@@ -687,7 +687,7 @@ function disbicar(paiPipa){
 
 }
 	
-function disbicarDescarregar(paiPipa){
+export function disbicarDescarregar(paiPipa){
 
 	if(paiPipa == undefined) paiPipa = persos[0].paiPipa;
 

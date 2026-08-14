@@ -1,8 +1,8 @@
 
-var typeSelect = "",
+export var typeSelect = "",
 comprar = "";
 
-function initMenu(){
+export function initMenu(){
 
 	$('#usageAvatar').on(getTap(), function(e){
 		playSom('clickPu', 1);
@@ -270,7 +270,7 @@ function initMenu(){
 
 //== Pop Select ============================================
 
-function addPopSelect(){
+export function addPopSelect(){
 
 	var htmlCenario = '';
 
@@ -358,20 +358,20 @@ function addPopSelect(){
 
 //==========================================================	
 
-function initPopSelect(){
+export function initPopSelect(){
 	$('#popSelect .cenario a').removeClass('ativo').eq(parseInt($('#popSelect .cenario a').length*Math.random())).addClass('ativo');
 	//$('#popSelect .perso a').removeClass('ativo').eq(parseInt($('#popSelect .perso a').length*Math.random())).addClass('ativo');
 	$('#popSelect .perso a').removeClass('ativo').eq(parseInt($('#popSelect .perso a').length*Math.random())).addClass('ativo');
 }
 
-function closePopSelect(){
+export function closePopSelect(){
 	TweenMax.to($('#popSelect'), 0.4, { delay:0, css:{opacity:0}, ease:Cubic.easeOut });
 	TweenMax.to($('#popSelect .bx'), 0.4, { css:{marginTop:'+=200px'}, ease:Cubic.easeOut, onComplete:function(){
 		$('#popSelect').remove();	
 	} });
 }
 
-function setCam(func){
+export function setCam(func){
 	playSom('clickPu', 1); 
 	controls.enabled = false;
 	cameraTypeFunc = func;
@@ -381,7 +381,7 @@ function setCam(func){
 	updateBD();
 }
 
-function verifAntesPosEmpinar(){
+export function verifAntesPosEmpinar(){
 	if(type == 'festival' || type == 'online'){
 		var pode = paiPipaPrincipal.verifPosEmpinar({ x:paiPipaPrincipal.perso.position.x, y:paiPipaPrincipal.perso.position.y, z:paiPipaPrincipal.perso.position.z }, true)
 		//console.log('pode:',pode)
@@ -400,7 +400,7 @@ function verifAntesPosEmpinar(){
 	}
 }
 
-function montarPipas(_comprar){
+export function montarPipas(_comprar){
 
 	comprar = _comprar;
 	
@@ -643,7 +643,7 @@ function montarPipas(_comprar){
 
 }
 
-function embaralharItens(){
+export function embaralharItens(){
 	//shuffe - sorteando ordem das pipas
 	if(type != 'twoPlayer' && typeSelect == ""){
 		var its = $("#pipas .it");
@@ -656,11 +656,11 @@ function embaralharItens(){
 	$("#pipas #type a:contains('"+((typeSelect == '') ? 'All' : typeSelect)+"')" ).addClass('ativo');//seleciona item de menu ativo
 }
 
-function initBannerPipas(){
-	if($('#ads').length == 1) $('#pipas .swiper-slide').append('<div id="bannerPipas"><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle" style="display:inline-block;width:300px;height:250px" data-ad-client="ca-pub-4736032489372828" data-ad-slot="7986008910"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>');
+export function initBannerPipas(){
+	//if($('#ads').length == 1) $('#pipas .swiper-slide').append('<div id="bannerPipas"><script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle" style="display:inline-block;width:300px;height:250px" data-ad-client="ca-pub-4736032489372828" data-ad-slot="7986008910"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script></div>');
 }
 
-function montarLinhas(comprar, player){
+export function montarLinhas(comprar, player){
 
 	viewBanner();
 
@@ -789,8 +789,8 @@ function montarLinhas(comprar, player){
 
 			if(singlePlayer){
 				infoTwoPlayer.player1.linha = idc;
-				persos[0].initPipa();
-				persos[1].initPipa();
+				if(persos[0] != undefined) persos[0].initPipa();
+				if(persos[1] != undefined) persos[1].initPipa();
 				menuPipaNoAlto();
 				closeBanner();
 				removeSwipperPipas();
@@ -813,9 +813,9 @@ function montarLinhas(comprar, player){
 				$('#pipas.'+player+' .swiper-slide').html('');
 
 				if(player == 'player1'){
-					persos[0].initPipa();
+					if(persos[0] != undefined) persos[0].initPipa();
 				}else{
-					persos[1].initPipa();
+					if(persos[1] != undefined) persos[1].initPipa();
 				}
 
 				if(infoTwoPlayer.player1.linha != undefined && infoTwoPlayer.player2.linha != undefined){
@@ -871,7 +871,7 @@ function montarLinhas(comprar, player){
 
 }
 
-function viewBanner(){
+export function viewBanner(){
 	//if(startPhonegap) Appodeal.show(Appodeal.BANNER);
 	//$('#banner').show();
 
@@ -879,7 +879,7 @@ function viewBanner(){
 
 }
 
-function closeBanner(){
+export function closeBanner(){
 	//if(startPhonegap) Appodeal.hide(Appodeal.BANNER);	
 	//$('#banner').hide();
 
@@ -887,7 +887,7 @@ function closeBanner(){
 
 }
 
-function montarInfo(){
+export function montarInfo(){
 
 	$('#pipas').hide();
 
@@ -950,7 +950,7 @@ function montarInfo(){
 
 }
 
-function addSwipperPipas(){
+export function addSwipperPipas(){
 	removeSwipperPipas();
 	if(type != 'twoPlayer' || singlePlayer){
 		swiper = new Swiper('#pipas .swiper-container', {
@@ -974,7 +974,7 @@ function addSwipperPipas(){
 	    });
 	}
 }
-function removeSwipperPipas(){
+export function removeSwipperPipas(){
 	if(swiper != undefined){
 		swiper.destroy();
         swiper = undefined;
@@ -989,7 +989,7 @@ function removeSwipperPipas(){
 	}
 }
 
-function setStatusVisiblePerso(){
+export function setStatusVisiblePerso(){
 	if(type == "festival" || type == "online" ){
 		if(paiPipaPrincipal != undefined) {
 			if(cameraTypeFunc == cam2){
@@ -1001,7 +1001,7 @@ function setStatusVisiblePerso(){
 	}
 }
 
-function menuPipaNoAlto(){
+export function menuPipaNoAlto(){
 	removeSwipperPipas();
 	$('#pipas').remove();
 	$('#menu, .estancar').css('display', 'block');
@@ -1023,7 +1023,7 @@ function menuPipaNoAlto(){
 
 }
 
-function menuSemPipaNoAlto(){
+export function menuSemPipaNoAlto(){
 	removeSwipperPipas();
 	$('#pipas').remove();
 	$('.estancar, .camera, .cameras').hide();

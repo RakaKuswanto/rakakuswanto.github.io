@@ -1,4 +1,4 @@
-function addPos3DobjArr(obj){
+export function addPos3DobjArr(obj){
 
 	var _x = obj.geometry.parameters.width * 0.5,
 	_y = obj.geometry.parameters.height * 0.5,
@@ -15,7 +15,7 @@ function addPos3DobjArr(obj){
 
 }
 
-function setPanoramic(){
+export function setPanoramic(){
 	cenario.scale.set(0.15, 0.15, 0.15);
 	cenario.position.y = -10;//ajusta risco união chão cenario
 	
@@ -59,7 +59,7 @@ function setPanoramic(){
     scene.add(cenario);
 }
 
-function setCenario1(){
+export function setCenario1(){
 
 	//return;
 

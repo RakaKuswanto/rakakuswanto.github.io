@@ -264,18 +264,9 @@ audio{
 }
 
 #pipas{
-  background:rgba(70, 68, 68, 0.95);
-
-  /*background-image:url(../img/cenario/pz.jpg);
-  background-repeat:no-repeat;
-  background-position:center center;
-  
-  -webkit-background-size: cover;
-  -moz-background-size: cover;
-  -o-background-size: cover;
-  background-size: cover;*/
-
-  background-opacity:0.2;
+  background: rgba(10, 15, 20, 0.85);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 
   position:absolute;
   left:0;
@@ -344,32 +335,32 @@ audio{
   background:url(../img/close.png) no-repeat;
   width:48px;
   height:48px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+#pipas .fechar:hover {
+  transform: scale(1.1);
 }
 
 #pipas .it{
-
-  -webkit-border-radius:6px;
-  -moz-border-radius:6px;
-  border-radius:6px;
-
-  background:rgba(0,0,0,0.4);
+  border-radius:8px;
+  background:rgba(20, 25, 30, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   float:left;
   position:relative;
-
-  font-family:Verdana;
+  font-family:'Outfit', Verdana, sans-serif;
   font-size:14px;
   color:#FFF;
-
-  /*width:5.666666%;
-  margin:0.25%;
-  padding:0.25%;
-  min-width:90px;
-  max-width:160px;*/
   min-height:92px;
-
   width:90px;
   margin:2px;
-  
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+#pipas .it:hover{
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
 }
 
 #pipas.comprar .it{
@@ -380,6 +371,10 @@ audio{
   position:relative;
   width:80%;
   padding:20px 10% 0 10%;
+  transition: transform 0.2s ease;
+}
+#pipas .it:hover img{
+  transform: scale(1.1);
 }
 #pipas.player1 .it img,
 #pipas.player2 .it img{
@@ -387,12 +382,12 @@ audio{
 }
 #pipas .it ._linha{
   margin:30px auto 0 auto;
-  /*width:100px;*/
-  /*background:blue;*/
 }
 
 #pipas .it.selected{
-  background:#b1cc49;
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 #pipas .it ._linha img{
@@ -401,15 +396,6 @@ audio{
   padding:0;
   width:100%;
 }
-
-/*#pipas .it .carretelpeq{
-  position:absolute;
-  z-index:1;
-  width:36px;
-  height:41px;
-  margin:32px 31px;
-}*/
-
 
 #pipas .it.off img{
   opacity:0.5;
@@ -426,8 +412,16 @@ audio{
   position:absolute;
   width:96%;
   text-align:center;
-  font-size:11px;
-  color:#FFF;
+  font-size:10px;
+  font-weight:600;
+  color:#ddd;
+  background: rgba(0,0,0,0.4);
+  border-radius: 4px;
+  padding: 2px 0;
+  margin: 2px 2%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 #pipas .it .num2{
@@ -483,66 +477,90 @@ audio{
 
 #select *{
     outline:none;
-    font-family:'yoshisst';
-
-    color:#ff001d;
+    font-family:'Outfit', 'yoshisst', sans-serif;
+    color:#fff;
     text-align:center;
+    box-sizing: border-box;
 }
 
 #select{
-    display:block;
-    position:relative;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    position:absolute;
     left:0;
     top:0;
     z-index:9999;
-    /*width:100%;*/
+    width:100%;
     height:100%;
-    /*overflow-x:auto;*/
+    background: radial-gradient(circle at center, rgba(30,40,50,0.5) 0%, rgba(0,0,0,0.8) 100%);
+    animation: fadeIn 0.4s ease-out;
 }
 
 #select nav{
-    position:absolute;
-    display:block;
-    width:100%;
-    height:100%;
-    line-height:54px;
+    display:flex;
+    justify-content: center;
+    align-items: flex-end;
+    padding-bottom: 12vh;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
 }
 
 #select nav .menu{
-  font-size:32px;
-  position:absolute;
-  left:50%;
-  top:50%;
-  width:320px;
-  margin:-78px 0 0 -160px;/*margin:-108px 0 0 -160px;*/
-  height:200px;
-  z-index:1;
+    font-size:32px;
+    position:relative;
+    width: 360px;
+    padding: 30px 20px;
+    z-index:1;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    pointer-events: auto;
+
+    /* Clean Glassmorphism */
+    background: rgba(20, 25, 30, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 #select .menu .estrelas{
-  font-family:verdana;
-  font-weight:bold;
+  font-family: 'Outfit', sans-serif;
+  font-weight:600;
   display:block;
   margin:10px 0 0 0;
   font-size:12px;
-  line-height:7px;
-  color:#000;
-  -webkit-text-stroke-width:0;
-  -webkit-text-stroke-color:#000;
+  line-height:12px;
+  color:#ddd;
+  letter-spacing: 1px;
 }
 #select .menu .estrelas img{
-  margin:0 auto;
+  margin:5px auto;
+  opacity: 0.9;
 }
 
 .menu .reward{
   cursor:pointer;
   display:block;
   position:fixed;
-  bottom:0;
-  right:0;
+  bottom:20px;
+  right:20px;
   width:80px;
   height:72px;
   background:url(../img/reward.png) no-repeat;
+  transition: transform 0.2s ease;
+}
+.menu .reward:hover {
+  transform: scale(1.05);
 }
 
 .menu .reward img{
@@ -558,83 +576,125 @@ audio{
 
 #select nav .ita{
   position:relative;
-  float:left;
-  display:block;
-  border:2px solid #ff001d;
-  -webkit-border-radius:8px;
-  -moz-border-radius:8px;
-  border-radius:8px;
-  background-color:rgba(0, 0, 0, 0.2);
-  width:150px;
-  margin:0 0 8px 0;
-  font-size:25px;
-  line-height:37px;
-  -webkit-text-stroke-width:2px;
-  -webkit-text-stroke-color:#000;
-}
-
-#select nav .ita.online,
-#select nav .ita.twoPlayer{
-  float:right;
+  display:flex;
+  justify-content: center;
+  align-items: center;
+  width: 48%;
+  margin-bottom: 12px;
+  font-size:18px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  padding: 12px 0;
+  cursor: pointer;
+  
+  /* 3D Game Button */
+  background: linear-gradient(180deg, rgba(30,30,40,0.8) 0%, rgba(10,10,20,0.9) 100%);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  border-bottom: 4px solid rgba(0, 150, 150, 0.8);
+  border-radius: 8px;
+  color: #fff;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+  box-shadow: 0 6px 15px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+  
+  transition: all 0.15s ease;
 }
 
 #select nav .ita.online{
-  color:#b1cc49;
-  border:2px solid #b1cc49;
+  background: linear-gradient(180deg, rgba(60,20,30,0.8) 0%, rgba(30,10,15,0.9) 100%);
+  border: 1px solid rgba(255, 50, 100, 0.3);
+  border-bottom: 4px solid rgba(200, 20, 60, 0.8);
+  color: #ffb3c6;
+}
+
+/* Hover effects */
+#select nav .ita:hover{
+  background: linear-gradient(180deg, rgba(40,40,60,0.9) 0%, rgba(20,20,40,1) 100%);
+  border-color: rgba(0, 255, 255, 0.8);
+  box-shadow: 0 8px 20px rgba(0, 255, 255, 0.3), inset 0 1px 1px rgba(255,255,255,0.2);
+  transform: translateY(-2px);
+  color: #0ff;
+  text-shadow: 0 0 10px rgba(0,255,255,0.5);
+}
+#select nav .ita.online:hover{
+  background: linear-gradient(180deg, rgba(80,30,40,0.9) 0%, rgba(50,15,25,1) 100%);
+  border-color: rgba(255, 50, 100, 0.8);
+  box-shadow: 0 8px 20px rgba(255, 50, 100, 0.3), inset 0 1px 1px rgba(255,255,255,0.2);
+  color: #fff;
+  text-shadow: 0 0 10px rgba(255,50,100,0.5);
 }
 
 #select nav .ita:active{
-  -webkit-text-stroke-width:1px;
+  transform: translateY(2px);
+  border-bottom: 2px solid rgba(0, 150, 150, 0.8);
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+  margin-top: 2px;
+  margin-bottom: 10px;
+}
+#select nav .ita.online:active{
+  border-bottom: 2px solid rgba(200, 20, 60, 0.8);
 }
 
 #select nav .ita b{
     position:absolute;
-    right:4px;
-    top:25px;
-    font-size:11px;
-    line-height:14px;
-    color:#000;
-    font-family:Verdana;
-    -webkit-text-stroke-width:0px;
+    right:6px;
+    top: -8px;
+    font-size:10px;
+    font-weight: 800;
+    line-height:10px;
+    color:#fff;
+    background: #0ff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-shadow: none;
+    box-shadow: 0 0 5px #0ff;
+}
+#select nav .ita.online b{
+    background: #ff0055;
+    box-shadow: 0 0 5px #ff0055;
 }
 
 #select nav .ita span{
-    top:0;
-    right:-84px;
+    top:-10px;
+    right:-10px;
     position:absolute;
-    display:block;
-    padding:3px 10px;
-    width:55px;
-    min-height:24px;
-    font-family:Arial;
-    font-size:9px;
-    line-height:9px;
-    background:#FFF;
-    color:#000;
-    text-align:center;
-    -webkit-text-stroke-width:0;
-
-    -webkit-border-radius:6px;
-    -moz-border-radius:6px;
+    display:flex;
+    justify-content: center;
+    align-items: center;
+    padding:4px 8px;
+    font-size:10px;
+    font-weight: 800;
+    color:#fff;
+    background: #ffcc00;
+    text-shadow: none;
     border-radius:6px;
-    background-color:rgba(255, 255, 255, 0.5);
+    box-shadow: 0 0 10px rgba(255, 204, 0, 0.6);
+    z-index: 2;
 }
 
 #select nav .classico,
 #select nav .videos{
-  margin:2px 0 0 0;
+  margin:10px 0 0 0;
   padding:2px 0 0 0;
-  color:#000;
+  color:#fff;
   font-size:13px;
   line-height:12px;
-  float:left;
-  width:154px;
-  height:84px;/*73px;*/
+  width: 48%;
+  height:84px;
   background: url(../img/ini.png) no-repeat 0 bottom;
+  background-size: cover;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.2);
+  transition: all 0.3s ease;
+  filter: drop-shadow(0 0 5px rgba(0,0,0,0.5));
 }
 #select nav .videos{
-  float:right;
-  background-position:-154px bottom;
+  background-position: right bottom;
+}
+#select nav .classico:hover, #select nav .videos:hover {
+  transform: scale(1.05);
+  border-color: rgba(255,255,255,0.6);
+  filter: drop-shadow(0 0 10px rgba(255,255,255,0.3));
 }
 
 /*#lang{
@@ -962,12 +1022,16 @@ audio{
 
 #topDir{
   position:absolute;
-  top:0;
-  right:0;
+  top:10px;
+  right:10px;
   z-index:99999;
   -webkit-transition:all 0.2s ease;
   -moz-transition:all 0.2s ease;
   transition:all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
 }
 
 #topDir .pipas{
@@ -1960,32 +2024,33 @@ audio{
 
 #type{
   width:92%;
-  /*background:red;
-  height:20px;*/
+  margin: 10px auto;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px;
 }
 
 #type a{
   display:block;
-  width:auto;
-  background:#FFF;
-  float:left;
-  margin:2px 2px; 
-  padding:3px 3px; 
-  -webkit-border-radius:4px;
-  -moz-border-radius:4px;
-  border-radius:4px;
-
-  -webkit-transition:all 0.3s ease;
-  -moz-transition:all 0.3s ease;
-  transition:all 0.3s ease;
-
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding:4px 10px; 
+  border-radius:6px;
+  transition:all 0.2s ease;
+  font-family: 'Outfit', Verdana, sans-serif;
   font-size:13px;
-
+  cursor: pointer;
 }
-#type a:hover,
+#type a:hover{
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-2px);
+}
 #type .ativo{
-  background:#000;
-  color:#FFF;
+  background: rgba(255, 255, 255, 0.3);
+  border-color: #fff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 #popSelect{
@@ -2023,15 +2088,13 @@ audio{
   max-width:700px;
   height:392px; 
   position:absolute;
-  /*top:50%;
-  left:50%;
-  transform: translate(-50%, -50%);*/
 
-  background:#FFF;
-  -webkit-border-radius:10px;
-  -moz-border-radius:10px;
-  border-radius:10px;
-  
+  background: rgba(20, 25, 30, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius:16px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
 }
 
 @media screen and (max-width:600px) {
@@ -2046,16 +2109,6 @@ audio{
   #popSelect .bx{width:250px;height:220px; }
 }
 
-/*@media screen and (max-height:370px) {
-  #popSelect .bx{width:80%;}
-}
-@media screen and (max-height:337px) {
-  #popSelect .bx{width:70%;}
-}
-@media screen and (max-height:300px) {
-  #popSelect .bx{width:60%;}
-}*/
-
 #popSelect .fechar{
   display:block;
   position:absolute;
@@ -2064,12 +2117,18 @@ audio{
   background:url(../img/close.png) no-repeat;
   width:48px;
   height:48px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+#popSelect .fechar:hover {
+  transform: scale(1.1);
 }
 
 #popSelect .bx img{
   display:block;
   width:100%;
   height:auto;
+  border-radius: 8px;
 }
 
 
@@ -2088,15 +2147,19 @@ audio{
   float:left;
   width:48%;
   margin:1%;
-  /*max-width:200px;*/
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
+}
+#popSelect .cenario a:hover, #popSelect .perso a:hover {
+  transform: scale(1.05);
 }
 
 #popSelect .cenario a.ativo,
 #popSelect .perso a.ativo{
-  -webkit-box-shadow:0px 0px 0px 1px rgba(255,0,29,1);
-  -moz-box-shadow:0px 0px 0px 1px rgba(255,0,29,1);
-  box-shadow:0px 0px 0px 1px rgba(255,0,29,1);
-  outline:3px solid red;
+  box-shadow: 0 0 15px rgba(255, 255, 255, 0.4);
+  outline: 2px solid #fff;
+  border-radius: 8px;
 }
 
 #popSelect .perso a{
@@ -2104,35 +2167,866 @@ audio{
   float:left;
   width:11.5%;
   margin:0.5%;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: transform 0.2s ease;
 }
 
 #popSelect .play{
   display:block;
-  border:2px solid #ff001d;
-  -webkit-border-radius:8px;
-  -moz-border-radius:8px;
-  border-radius:8px;
-  background-color:rgba(0, 0, 0, 0.2);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  color: #fff;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   width:150px;
-  margin:10px auto 20px auto;
-  font-size:25px;
+  margin:15px auto 20px auto;
+  font-size:22px;
   line-height:37px;
-  -webkit-text-stroke-width:2px;
-  -webkit-text-stroke-color:#000;
-
-  color:#ff001d;
-  border:2px solid #ff001d;
-  font-family:'yoshisst';
+  font-family:'Outfit', 'yoshisst', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   text-align:center;
-
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
+
+#popSelect .play:hover{
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateY(-2px);
+}
+#popSelect .play:active{
+  transform: translateY(1px);
+}
+
 
 #logo{
   position:absolute;
   left:50%;
-  top:50%;
-  width:300px;
-  height:223px;/*220px*/
-  margin:-70px 0 0 -150px;
+  top:8vh;
+  width:320px;
+  height:auto;
+  margin-left:-160px;
   z-index:10000;
+  animation: floatLogo 4s ease-in-out infinite;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+}
+
+/* --- NEW FEATURES HUD --- */
+#btnToggleNight {
+    width: 98% !important; /* Full width for the toggle button */
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
+}
+#btnToggleNight.night-active {
+    background: rgba(0, 255, 255, 0.2) !important;
+    border-color: #0ff !important;
+    color: #0ff !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+}
+
+#killStreakHud {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.5);
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 50px;
+    color: #fff;
+    text-shadow: 0 0 20px rgba(255, 0, 85, 0.8), 0 0 40px rgba(255, 0, 85, 0.8);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10000;
+    text-align: center;
+    text-transform: uppercase;
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+#killStreakHud.show {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+}
+#killStreakHud.show-double { color: #0ff; text-shadow: 0 0 20px #0ff, 0 0 40px #0ff; }
+#killStreakHud.show-triple { color: #ff00ff; text-shadow: 0 0 20px #ff00ff, 0 0 40px #ff00ff; }
+#killStreakHud.show-rampage { color: #ff0055; text-shadow: 0 0 20px #ff0055, 0 0 40px #ff0055; font-size: 60px; }
+#killStreakHud.show-unstoppable { color: #ffff00; text-shadow: 0 0 20px #ffff00, 0 0 40px #ffff00; font-size: 70px; }
+
+#windHud {
+    position: absolute;
+    top: 20%;
+    left: -200px; /* start offscreen */
+    background: rgba(0, 255, 255, 0.2);
+    border: 1px solid #0ff;
+    padding: 10px 30px;
+    font-family: 'Outfit', sans-serif;
+    font-weight: 800;
+    font-size: 24px;
+    color: #0ff;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 9999;
+    text-transform: uppercase;
+    transition: all 0.5s ease;
+    border-radius: 0 8px 8px 0;
+}
+#windHud.show {
+    left: 0;
+    opacity: 1;
+}
+
+
+/* --- GLOBAL GLASSMORPHISM UI OVERHAUL --- */
+
+/* 1. CONFIG MENU */
+#config {
+    background: rgba(10, 10, 20, 0.4) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    font-family: 'Outfit', sans-serif !important;
+}
+#config nav {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
+    width: 60% !important;
+    height: 70% !important;
+    top: 15% !important;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#config nav .bx {
+    text-align: center;
+}
+#config h1, #config h2 {
+    font-weight: 600;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+#config .mais, #config .menos {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255,255,255,0.3) !important;
+    border-radius: 50% !important;
+    transition: all 0.3s ease;
+}
+#config .mais:hover, #config .menos:hover {
+    background: rgba(0, 255, 255, 0.3) !important;
+    border-color: #0ff !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    transform: scale(1.1);
+}
+#config .fechar {
+    filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));
+    transition: transform 0.2s;
+}
+#config .fechar:hover {
+    transform: scale(1.2);
+}
+
+/* 2. MENU ONLINE (LOBBY) */
+#menuOnline {
+    background: rgba(10, 10, 20, 0.5) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    font-family: 'Outfit', sans-serif !important;
+}
+#menuOnline aside {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(0, 255, 255, 0.4) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px rgba(0,255,255,0.1), inset 0 0 20px rgba(255,255,255,0.05) !important;
+}
+#menuOnline input.nick {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    padding: 10px !important;
+    font-family: 'Outfit', sans-serif !important;
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
+    transition: border 0.3s;
+}
+#menuOnline input.nick:focus {
+    border: 1px solid #0ff !important;
+    box-shadow: 0 0 10px rgba(0, 255, 255, 0.4), inset 0 2px 5px rgba(0,0,0,0.5) !important;
+    outline: none;
+}
+#menuOnline h3 {
+    color: #0ff !important;
+    text-shadow: 0 0 10px rgba(0,255,255,0.5);
+    font-weight: 600;
+}
+#menuOnline .servers a {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 10px !important;
+    transition: all 0.3s;
+}
+#menuOnline .servers a:hover {
+    background: rgba(0, 255, 255, 0.2) !important;
+    border-color: #0ff !important;
+    box-shadow: 0 0 15px rgba(0,255,255,0.4);
+    transform: translateY(-2px);
+}
+
+/* 3. HOW TO PLAY (COMO JOGAR) */
+#comojogar {
+    background: rgba(10, 10, 20, 0.5) !important;
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    font-family: 'Outfit', sans-serif !important;
+}
+#comojogar nav {
+    background: rgba(255, 255, 255, 0.05) url(../img/icosComoJogarPC.png) no-repeat 0 10px !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 20px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05) !important;
+    padding-top: 80px !important;
+    height: auto !important;
+    padding-bottom: 20px !important;
+}
+#comojogar nav div {
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    font-weight: 600;
+}
+#comojogar nav .ok {
+    background: rgba(177, 204, 73, 0.1) !important;
+    border: 1px solid #b1cc49 !important;
+    color: #b1cc49 !important;
+    box-shadow: 0 0 10px rgba(177, 204, 73, 0.2);
+    transition: all 0.3s;
+    cursor: pointer;
+}
+#comojogar nav .ok:hover {
+    background: rgba(177, 204, 73, 0.3) !important;
+    box-shadow: 0 0 20px rgba(177, 204, 73, 0.6);
+    transform: scale(1.05);
+}
+
+/* 4. IN-GAME HUD (#menu & #topDir) */
+#menu .btnConfig, #menu .voltar, #menu .left .lang {
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+    transition: transform 0.2s, filter 0.2s;
+}
+#menu .btnConfig:hover, #menu .voltar:hover, #menu .left .lang:hover {
+    transform: scale(1.1);
+    filter: drop-shadow(0 0 8px rgba(0, 255, 255, 0.6));
+}
+#menu .cameras a {
+    background: rgba(0, 0, 0, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    border-radius: 50% !important;
+    backdrop-filter: blur(5px);
+    transition: all 0.3s;
+    font-family: 'Outfit', sans-serif;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+#menu .cameras a:hover, #menu .cameras a.ativo {
+    background: rgba(0, 255, 255, 0.3) !important;
+    border-color: #0ff !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.5);
+    color: #fff !important;
+    transform: translateY(-2px);
+}
+
+#topDir .btn {
+    background: rgba(10, 10, 20, 0.4) !important;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    font-family: 'Outfit', sans-serif !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+    transition: all 0.3s;
+    text-align: center;
+    cursor: pointer;
+}
+#topDir .btn:hover {
+    background: rgba(0, 255, 255, 0.2) !important;
+    border-color: #0ff !important;
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4);
+    transform: scale(1.05);
+}
+#topDir .bots {
+    display: flex !important;
+    align-items: center;
+    background: rgba(10, 10, 20, 0.4);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 5px 8px;
+    gap: 6px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+}
+#topDir .bots .clear { display: none; }
+#topDir .bots div:not(.clear) {
+    color: #fff;
+    font-family: 'Outfit', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    margin-right: 4px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+#topDir .bots .btn {
+    margin: 0;
+    padding: 4px 12px !important;
+    font-size: 14px !important;
+    border-radius: 8px !important;
+    min-width: auto !important;
+    float: none !important;
+}
+#topDir .dinheiro {
+    font-family: 'Outfit', sans-serif !important;
+    font-weight: 800;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 10px rgba(177, 204, 73, 0.5) !important;
+    background: rgba(0,0,0,0.3);
+    padding: 6px 16px;
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(177, 204, 73, 0.3);
+    color: #fff;
+}
+
+
+/* ===================================================================
+   COMPREHENSIVE MOBILE RESPONSIVE OVERHAUL
+   Breakpoints: 800px (tablet), 600px (phone landscape), 480px (phone)
+   =================================================================== */
+
+/* --- TABLET & SMALL DESKTOP (max-width: 800px) --- */
+@media screen and (max-width: 800px) {
+
+    /* MAIN MENU SELECT */
+    #select nav .menu {
+        width: 80% !important;
+        max-width: 340px !important;
+        padding: 24px 16px !important;
+    }
+    #select nav .ita {
+        font-size: 15px !important;
+        padding: 11px 0 !important;
+        letter-spacing: 0.5px !important;
+    }
+
+    /* POP SELECT (Scene/Character) */
+    #popSelect .bx {
+        width: 92% !important;
+        max-width: none !important;
+        height: auto !important;
+        max-height: 85vh !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        overflow-y: auto !important;
+        padding: 15px 10px !important;
+    }
+    #popSelect h1 {
+        font-size: 18px !important;
+        color: #fff !important;
+    }
+    #popSelect .cenario {
+        width: 70% !important;
+    }
+    #popSelect .perso a {
+        width: 22% !important;
+        margin: 1% !important;
+    }
+    #popSelect .play {
+        font-size: 18px !important;
+        line-height: 32px !important;
+        width: 130px !important;
+        margin: 12px auto 16px auto !important;
+    }
+
+    /* CONFIG MENU */
+    #config nav {
+        width: 90% !important;
+        max-width: 500px !important;
+        height: auto !important;
+        max-height: 85vh !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        padding: 20px 15px !important;
+        overflow-y: auto !important;
+    }
+    #config h1 {
+        font-size: 16px !important;
+    }
+    #config h2 {
+        font-size: 14px !important;
+    }
+
+    /* MENU ONLINE (LOBBY) */
+    #menuOnline aside {
+        width: 90% !important;
+        max-width: 400px !important;
+        height: auto !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        padding: 20px 15px !important;
+    }
+    #menuOnline input.nick {
+        width: 100% !important;
+        box-sizing: border-box !important;
+        font-size: 18px !important;
+    }
+
+    /* HOW TO PLAY */
+    #comojogar nav {
+        width: 90% !important;
+        max-width: 420px !important;
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%) !important;
+        margin: 0 !important;
+        height: auto !important;
+        padding-bottom: 15px !important;
+    }
+
+    /* KITES PANEL (#pipas) */
+    #pipas .it {
+        width: 80px !important;
+        min-height: 80px !important;
+        font-size: 12px !important;
+    }
+    #pipas .it .num {
+        font-size: 9px !important;
+    }
+
+    /* KITE FILTER TABS (#type) */
+    #type a {
+        font-size: 11px !important;
+        padding: 3px 7px !important;
+    }
+
+    /* TOP RIGHT HUD */
+    #topDir .btn {
+        padding: 7px 10px !important;
+        font-size: 11px !important;
+        min-width: auto !important;
+    }
+    #topDir .dinheiro {
+        font-size: 14px !important;
+        padding: 4px 10px !important;
+    }
+    #topDir .bots div {
+        font-size: 10px !important;
+    }
+
+    /* IN-GAME HUD */
+    #killStreakHud {
+        font-size: 36px !important;
+    }
+    #killStreakHud.show-rampage {
+        font-size: 44px !important;
+    }
+    #killStreakHud.show-unstoppable {
+        font-size: 50px !important;
+    }
+    #windHud {
+        font-size: 18px !important;
+        padding: 8px 20px !important;
+    }
+
+    /* LOGO */
+    #logo {
+        width: 240px !important;
+        height: auto !important;
+        margin: -55px 0 0 -120px !important;
+    }
+
+    /* MESSAGE CENTER */
+    #msgCenter {
+        width: 80% !important;
+        max-width: 340px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        margin-left: 0 !important;
+        margin-top: -50px !important;
+        font-size: 13px !important;
+        padding: 8px !important;
+    }
+
+    /* POPUP / INFO */
+    #info nav {
+        width: 90% !important;
+        max-width: 500px !important;
+    }
+    #popup .tx2, #popup .tx3, #popup .tx4 {
+        width: 85% !important;
+        max-width: 340px !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        margin-left: 0 !important;
+    }
+
+    /* SKIP BUTTON */
+    #pular {
+        width: 60px !important;
+        height: 60px !important;
+        line-height: 60px !important;
+        bottom: 12px !important;
+        right: 12px !important;
+        font-size: 10px !important;
+    }
+}
+
+
+/* --- PHONE LANDSCAPE & SMALL TABLET (max-width: 600px) --- */
+@media screen and (max-width: 600px) {
+
+    /* MAIN MENU - stack buttons vertically */
+    #select nav .menu {
+        width: 88% !important;
+        max-width: 300px !important;
+        padding: 20px 14px !important;
+    }
+    #select nav .ita {
+        width: 100% !important;
+        font-size: 14px !important;
+        padding: 10px 0 !important;
+        margin-bottom: 8px !important;
+    }
+    #select nav .classico,
+    #select nav .videos {
+        width: 100% !important;
+        height: 70px !important;
+        margin: 6px 0 !important;
+    }
+
+    /* POP SELECT */
+    #popSelect .bx {
+        width: 96% !important;
+        max-height: 90vh !important;
+        padding: 12px 8px !important;
+        border-radius: 12px !important;
+    }
+    #popSelect .cenario {
+        width: 80% !important;
+    }
+    #popSelect .cenario a {
+        width: 48% !important;
+    }
+    #popSelect .perso a {
+        width: 22% !important;
+    }
+
+    /* HOW TO PLAY - stack instructions vertically */
+    #comojogar nav {
+        width: 94% !important;
+        max-width: none !important;
+        padding: 60px 10px 15px 10px !important;
+        background-size: 100% auto !important;
+        background-position: center 5px !important;
+    }
+    #comojogar nav div {
+        width: 100% !important;
+        float: none !important;
+        text-align: center !important;
+        margin-bottom: 6px !important;
+    }
+    #comojogar nav .ok {
+        margin-top: 15px !important;
+    }
+
+    /* CONFIG */
+    #config nav {
+        width: 94% !important;
+        padding: 15px 10px !important;
+    }
+    #config .icoSom, #config .icoSom2, #config .icoSom3 {
+        margin-right: 40px !important;
+    }
+
+    /* ONLINE MENU */
+    #menuOnline aside {
+        width: 94% !important;
+        padding: 15px 12px !important;
+    }
+
+    /* KITE FILTER TABS */
+    #type {
+        gap: 3px !important;
+    }
+    #type a {
+        font-size: 10px !important;
+        padding: 3px 5px !important;
+    }
+
+    /* KITES GRID */
+    #pipas .it {
+        width: 70px !important;
+        min-height: 72px !important;
+    }
+    #pipas.comprar .it {
+        width: 30% !important;
+    }
+}
+
+
+/* --- PHONE PORTRAIT (max-width: 480px) --- */
+@media screen and (max-width: 480px) {
+
+    /* MAIN MENU */
+    #select nav .menu {
+        width: 92% !important;
+        max-width: 280px !important;
+        padding: 18px 12px !important;
+    }
+    #select nav .ita {
+        font-size: 13px !important;
+        padding: 9px 0 !important;
+    }
+    .menu .reward {
+        width: 60px !important;
+        height: 54px !important;
+        background-size: contain !important;
+        bottom: 10px !important;
+        right: 10px !important;
+    }
+
+    /* POP SELECT */
+    #popSelect h1 {
+        font-size: 15px !important;
+        padding: 3px !important;
+    }
+    #popSelect .cenario {
+        width: 90% !important;
+    }
+    #popSelect .perso a {
+        width: 22% !important;
+    }
+    #popSelect .play {
+        font-size: 16px !important;
+        line-height: 28px !important;
+        width: 110px !important;
+    }
+
+    /* CONFIG */
+    #config h1 {
+        font-size: 14px !important;
+    }
+    #config h2 {
+        font-size: 12px !important;
+    }
+    #config .mais, #config .menos {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 34px !important;
+        line-height: 34px !important;
+    }
+
+    /* ONLINE */
+    #menuOnline input.nick {
+        font-size: 16px !important;
+    }
+    #menuOnline h3 {
+        font-size: 14px !important;
+    }
+
+    /* HOW TO PLAY */
+    #comojogar nav {
+        font-size: 11px !important;
+        line-height: 15px !important;
+    }
+    #comojogar nav .ok {
+        width: 90px !important;
+        height: 30px !important;
+        font-size: 15px !important;
+        line-height: 28px !important;
+    }
+
+    /* LOGO */
+    #logo {
+        width: 200px !important;
+        margin: -45px 0 0 -100px !important;
+    }
+
+    /* MESSAGE CENTER */
+    #msgCenter {
+        width: 90% !important;
+        font-size: 12px !important;
+        line-height: 18px !important;
+        padding: 6px !important;
+    }
+
+    /* KILL STREAK */
+    #killStreakHud {
+        font-size: 28px !important;
+    }
+    #killStreakHud.show-rampage {
+        font-size: 34px !important;
+    }
+    #killStreakHud.show-unstoppable {
+        font-size: 40px !important;
+    }
+    #windHud {
+        font-size: 15px !important;
+        padding: 6px 15px !important;
+    }
+
+    /* POPUP */
+    #popup .tx4 {
+        width: 90% !important;
+        max-width: 300px !important;
+        height: auto !important;
+        min-height: 180px !important;
+    }
+    #popup .tx4.ms {
+        width: 90% !important;
+        max-width: 300px !important;
+    }
+}
+
+
+/* --- VERY SHORT SCREENS (landscape phone) --- */
+@media screen and (max-height: 400px) {
+
+    #select nav .menu {
+        padding: 10px 12px !important;
+    }
+    #select nav .ita {
+        padding: 6px 0 !important;
+        font-size: 12px !important;
+        margin-bottom: 4px !important;
+    }
+
+    #popSelect .bx {
+        max-height: 95vh !important;
+        padding: 8px !important;
+    }
+    #popSelect h1 {
+        font-size: 14px !important;
+        padding: 2px !important;
+    }
+    #popSelect .play {
+        margin: 6px auto 8px auto !important;
+        font-size: 15px !important;
+        line-height: 26px !important;
+    }
+
+    #config nav {
+        max-height: 95vh !important;
+        padding: 10px !important;
+    }
+
+    #comojogar nav {
+        padding-top: 50px !important;
+    }
+    #comojogar nav .ok {
+        margin-top: 8px !important;
+    }
+
+    #logo {
+        width: 180px !important;
+        margin: -40px 0 0 -90px !important;
+    }
+
+    #killStreakHud {
+        font-size: 24px !important;
+        top: 20% !important;
+    }
+}
+
+
+/* --- TOUCH-FRIENDLY ENHANCEMENTS --- */
+@media (hover: none) and (pointer: coarse) {
+
+    /* Bigger tap targets on touch devices */
+    #select nav .ita {
+        padding: 14px 0 !important;
+        min-height: 44px !important;
+    }
+
+    #config .mais, #config .menos {
+        width: 44px !important;
+        height: 44px !important;
+        line-height: 44px !important;
+    }
+
+    #config .fechar,
+    #popSelect .fechar,
+    #pipas .fechar,
+    #info .fechar {
+        width: 52px !important;
+        height: 52px !important;
+        background-size: contain !important;
+    }
+
+    .cameras a {
+        min-width: 36px !important;
+        min-height: 36px !important;
+        padding: 10px 8px !important;
+    }
+
+    .camera {
+        width: 50px !important;
+        height: 50px !important;
+    }
+
+    #pular {
+        width: 70px !important;
+        height: 70px !important;
+        line-height: 70px !important;
+    }
+
+    /* Remove hover states that don't work on touch */
+    #select nav .ita:hover,
+    #topDir .btn:hover,
+    #config .mais:hover, #config .menos:hover,
+    #comojogar nav .ok:hover {
+        transform: none !important;
+    }
+
+    /* Active state for touch feedback */
+    #select nav .ita:active {
+        background: rgba(255, 255, 255, 0.2) !important;
+        transform: scale(0.97) !important;
+    }
+    #topDir .btn:active {
+        background: rgba(0, 255, 255, 0.3) !important;
+        transform: scale(0.97) !important;
+    }
+    #config .mais:active, #config .menos:active {
+        background: rgba(0, 255, 255, 0.3) !important;
+        transform: scale(0.95) !important;
+    }
+    #comojogar nav .ok:active {
+        background: rgba(177, 204, 73, 0.4) !important;
+        transform: scale(0.97) !important;
+    }
+}
+
+
+/* --- GAME UI ANIMATIONS --- */
+@keyframes floatLogo {
+    0% { transform: translateY(0px) rotate(0deg); }
+    50% { transform: translateY(-15px) rotate(1deg); }
+    100% { transform: translateY(0px) rotate(0deg); }
+}
+@keyframes slideUpFade {
+    0% { opacity: 0; transform: translateY(30px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0px) scale(1); }
+}
+
+#select nav .menu, #config nav, #comojogar nav, #menuOnline aside, #popSelect .bx {
+    animation: slideUpFade 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+}
+
+#topDir .btn {
+    border-bottom: 3px solid rgba(255,255,255,0.4) !important;
+}
+#topDir .btn:active {
+    border-bottom: 1px solid rgba(255,255,255,0.4) !important;
+    transform: translateY(2px);
 }

@@ -4,13 +4,13 @@
     <head>
 
         <meta charset="utf-8" />
-        <meta name="language" content="pt-br" />
+        <meta name="language" content="en" />
         <meta name="author" content="rafaelmayworm@gmail.com" />
 
         <meta name="title" content="Pipa Combate 3D" />
         <title>Pipa Combate 3D</title>
 
-        <meta name="description" content="O popular Pipa Combate agora em versão 3D, com pipas e linhas de todo o mundo, um verdadeiro simulador de pipas." />
+        <meta name="description" content="The popular Kite Flying game now in 3D, with kites and lines from all over the world, a true kite simulator." />
         <meta name="keywords" content="pipa, pipa combate, jogo de pipa, game kite, layang layang, raia, volantines, tukkal, patang, cafifa, morcego" />
         <meta name="robots" content="index, follow" />
 
@@ -21,6 +21,12 @@
         <!--<meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'">-->
         <link rel="shortcut icon" type="image/x-icon" href="img/favicon.png" />
         <link rel="stylesheet" type="text/css" href="css/index.css?20" />
+        
+        <!-- Modern Google Fonts -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+
         <!-- // WebApp Config -->
         <link rel="manifest" href="manifest.json">
         <meta name="mobile-web-app-capable" content="yes">
@@ -40,7 +46,7 @@
 
         <div id="menuOnline">
             <aside>
-                <input class="nick" type="text" maxlength="14" name="nickname" placeholder="Digite seu nome">
+                <input class="nick" type="text" maxlength="14" name="nickname" placeholder="Type your name">
                 <h3>Server</h3>
                 <div class="servers"></div>
                 <div class="clear"></div>
@@ -55,9 +61,9 @@
 
             <div id="comojogar">
                 <nav>
-                    <div>PUXAR<br><article>TECLA A ou<br></article>DESLIZE P/ BAIXO</div>
-                    <div>DISBICAR<br><article>TECLA S ou<br></article>TOQUE NA TELA</div>
-                    <div>DESCARREGAR<br><article>TECLA D ou<br></article>DESLIZE P/ CIMA</div>
+                    <div>PULL<br><article>KEY A or<br></article>SLIDE DOWN</div>
+                    <div>TO SWING<br><article>KEY S or<br></article>TAP SCREEN</div>
+                    <div>SEND LINE<br><article>KEY D or<br></article>SLIDE UP</div>
                     <aside><span class="esq"><---------- PLAYER 1</span> - <span class="dir">PLAYER 2 ---------></span></aside>
                     <a class="ok">OK</a>
                 </nav>
@@ -77,6 +83,7 @@
                         <a class="ita online">Online</a>
                         <a class="ita singlePlayer">1 Player</a>
                         <a class="ita twoPlayer">2 Player</a>
+                        <a class="ita toggleNight" id="btnToggleNight">Day Mode</a>
 
                                                 <div id="ads">
                             <!--<ins class="adsbygoogle bannerIni" data-ad-client="ca-pub-4736032489372828" data-ad-slot="7035137997"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script><script src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>-->
@@ -92,16 +99,16 @@
                     <a class="fechar"></a>
                     <div class="bx">
 
-                        <h1>Sons do jogo:</h1><br>
+                        <h1>Game sounds:</h1><br>
 
-                        <a class="icoSom"><div>TODOS</div><figure></figure></a>
+                        <a class="icoSom"><div>ALL</div><figure></figure></a>
                         <a class="icoSom2"><div>INTRO</div><figure></figure></a>
-                        <a class="icoSom3"><div>GRITOS</div><figure></figure></a>
+                        <a class="icoSom3"><div>SHOUTING</div><figure></figure></a>
                         <div class="clear"></div><br>
 
                         <h2>
-                            Para melhor desempenho, configure a qualidade gráfica do seu jogo<br>
-                            Gráfico <span class="qualidade">100%</span>
+                            For best performance, set the chart quality of your game<br>
+                            Quality <span class="qualidade">100%</span>
                         </h2>
 
                         <a class="mais">+</a>
@@ -120,7 +127,7 @@
             <div id="placar"></div>
 
             <div id="topDir">
-                <a class="btn pipas">PIPAS</a><div class="clear"></div>
+                <a class="btn pipas">KITES</a><div class="clear"></div>
                 <!--<a class="btn comprarLinhas"></a>
                 <a class="btn comprarPipas"></a>-->
                 <div class="bots">
@@ -132,7 +139,7 @@
                 <div class="dinheiro"></div>
             </div>
 
-            <a id="pular">PULAR</a>
+            <a id="pular">SKIP</a>
 
             <div id="menu">
                 <div class="left">
@@ -162,6 +169,10 @@
                 <div id="touch2"></div>
             </div>
 
+            <!-- HUD Elements for New Features -->
+            <div id="killStreakHud"></div>
+            <div id="windHud">WIND SHIFT!</div>
+
         </main>
 
         <div id="console"></div>
@@ -186,36 +197,7 @@
         <script src="js/OrbitControls.js"></script>
         
         <!-- Game -->
-        <script src="js/game/BigVars.js"></script>
-        <script src="js/game/Menu.js"></script>
-        <script src="js/game/Functions.js"></script>
-        <script src="js/game/Perso.js"></script>
-        <script src="js/game/Pipa.js"></script>
-        <script src="js/game/Balao.js"></script>
-        <script src="js/game/Cenarios.js"></script>
-        <script src="js/game/Controler.js"></script>
-        <script src="js/game/Pipas.js"></script>
-        <script src="js/game/Relo.js"></script>
-        <script src="js/game/Armacoes.js"></script>
-        <script src="js/game/Camera.js"></script>
-        <script src="js/game/Controler.js"></script>
-        <script src="js/game/Main.js"></script>
-        
-
-        <!-- Cordova -->
-       
-        <!--<script type="text/javascript" src="js/index.js"></script>-->
-       
-        
-
-
-
-        
-
-        
-        <script type="text/javascript">init();</script>
-        
-
+        <script type="module" src="js/main.js"></script>
         
     </body>
 </html>

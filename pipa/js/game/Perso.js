@@ -1,5 +1,5 @@
 
-function Perso(){
+export function Perso(){
 	
 	this.cont = 0;	
 	this.idc = undefined;//indice array perso
@@ -950,7 +950,7 @@ function Perso(){
 
 			if(podemover || podecolidirparede){
 
-				var colidiuUp = colidiuDown = colidiuLeft = colidiuRight = colidiuSpace = false;
+				var colidiuUp = false, colidiuDown = false, colidiuLeft = false, colidiuRight = false, colidiuSpace = false;
 
 			    while(tot--){
 

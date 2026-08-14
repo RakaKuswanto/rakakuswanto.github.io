@@ -1,9 +1,9 @@
 
-var left = true,
+export var left = true,
 vecCam = undefined,
 posLookAt = new THREE.Vector3(0, 0, 0);
 
-function camTwoPlayer(){
+export function camTwoPlayer(){
 
     if(persos.length == 2){
 
@@ -65,7 +65,7 @@ function camTwoPlayer(){
 
 }
 
-function camAndandoPerso(){
+export function camAndandoPerso(){
 
     //return;
 
@@ -100,7 +100,7 @@ function camAndandoPerso(){
 
 }
 
-function setCameraAutoDirect(){
+export function setCameraAutoDirect(){
 
     cameraTypeFunc = undefined; 
     
@@ -118,7 +118,7 @@ function setCameraAutoDirect(){
 
 }
 
-function setCameraAuto(){
+export function setCameraAuto(){
 
     controls.enabled = true;
     cameraTypeFunc = undefined; 
@@ -140,14 +140,14 @@ function setCameraAuto(){
 
 }
 
-function cam1(){//primeira pessoa default pipa no alto
+export function cam1(){//primeira pessoa default pipa no alto
 
     var paiPipa = paiPipaPrincipal.paiPipa;
     if(paiPipa != undefined){
 
         var calcX = paiPipa.quad.x1 - paiPipa.quad.x2,
         calcZ = paiPipa.quad.z1 - paiPipa.quad.z2;
-        vai = 85,
+        var vai = 85,
         vaiY = paiPipa.quad.y1 + 40;
         
         if(left){
@@ -184,7 +184,7 @@ function cam1(){//primeira pessoa default pipa no alto
 
 }
 
-function cam2(){//frente perso
+export function cam2(){//frente perso
     var paiPipa = paiPipaPrincipal.paiPipa;
     if(paiPipa != undefined){
 
@@ -207,7 +207,7 @@ function cam2(){//frente perso
     }
 }
 
-function cam3(){//meio linha
+export function cam3(){//meio linha
 
     var paiPipa = paiPipaPrincipal.paiPipa;
     if(paiPipa != undefined){
@@ -227,7 +227,7 @@ function cam3(){//meio linha
 
 }
 
-function cam4(){//tras
+export function cam4(){//tras
     var paiPipa = paiPipaPrincipal.paiPipa;
     if(paiPipa != undefined){
 
@@ -245,7 +245,7 @@ function cam4(){//tras
     }
 }
 
-function camTrasVerBalao(){//tras
+export function camTrasVerBalao(){//tras
     var balao = baloes[0];
     if(balao != undefined){
         //=== LOOAK - DELAY

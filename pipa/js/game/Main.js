@@ -1,116 +1,8 @@
-var persos = [],
-pipas = [],
-baloes = [],
-pipasName = {},
-stats = undefined,
-socket = undefined,
-json = undefined,
-infosOnline = {},
-font = undefined,
-controlsUsage = false,
 
-cores = ['eec400','00b200','ca37ef','04a6e4','f468e8','f29500','ff3939','79858a'],
-
-spriteSlc = "",
-cenarioSlc = "",
-
-/*online*/
-indiceServer = undefined,
-sala = undefined,
-nick = undefined,
-timeClickOnline = undefined,
-nomePlayer = undefined,
-
-sons = {},
-//som = true,//true
-//somIntro = true,
-//somGritos = true,
-idcSomCortou = parseInt(Math.random() * 32),
-idcSomDelay = parseInt(Math.random() * 13),
-
-umDivididoPorOito = 1/8,
-
-paused = false,
-//clock = new THREE.Clock(),
-type = undefined,
-infoTwoPlayer = undefined,
-singlePlayer = false,
-
-camYini = 90,
-cameraDefault = cam1,//setCameraAuto,
-cameraTypeFunc = undefined,
-
-timeout = undefined,
-mobile = isMobileAll(),
-_90graus = de2ra(90),
-_180graus = de2ra(180),
-_360graus = de2ra(360),
-paiPipaPrincipal = undefined,
-
-cenario = undefined,
-cristo = undefined,
-
-timeoutInterstitial = 0,
-
-//pressLeft = false, pressRight = false, pressUp = false, pressDown = false, pressSpace = false,
-
-vec3D = new THREE.Vector3(0, 0, 0),//usage uma vez apenas, clone instance not refactor
-
-rotPersoOnline = 0,
-//directionCamera = 0,
-cameraAngle = 0,
-
-scene = undefined,
-camera = undefined,
-controls = undefined,
-requestAnimation = undefined,
-renderer = undefined,
-
-joystick = undefined,
-controlePipa = true,
-
-chao = undefined,
-ceu = undefined,
-
-msgComoJogar = {festival:false, twoPlayer: false, singlePlayer:false},
-placarFestival = { cortou:0 },
-
-BD = {
-	/*dinheiro:undefined,
-	minhasPipas:undefined,
-	minhasLinhas:undefined*/
-},
-
-swiper = undefined,
-swiperPlayer1 = undefined,
-swiperPlayer2 = undefined,
-
-
-android = isMobile.Android(),
-iOS = isMobile.iOS(),
-mobile = isMobileAll(),
-startPhonegap = false,//index.js active
-
-//limitecenario = {x1:1200, x2:-1200, z1:1200, z2:-930},
-limitecenario = {x1:1200+1000, x2:-1200-1000, z1:1200+500, z2:-930-500},
-
-
-//xmlPerso = undefined,
-//pathPerso = undefined,
-//teste = undefined,
-//allPersos = [],
-maxPersos = 4,//4 default
-timeoutGrito = undefined,
-extJpg = 'jpg',
-extPng = 'png',
-usageAvatar = false,
-noturno = false,
-
-isTestingAdMob = false;
 
 //var timeTeste = 0;
 
-function init(){
+export function init(){
 
 	try{
 		if(AndroidFullScreen != undefined) AndroidFullScreen.immersiveMode();//important - sem isso BUG input text nick    
@@ -135,7 +27,7 @@ function init(){
 
 }
 
-function loadingCenario(){
+export function loadingCenario(){
 
 //Ceu ==
 
@@ -214,7 +106,7 @@ function loadingCenario(){
 }
 
 			
-function loadingPersos(){
+export function loadingPersos(){
 
 //Security - deixar ativado apenas no site PC
 	//if(top.location != window.location) return;//não usar
@@ -264,7 +156,7 @@ function loadingPersos(){
 
 }
 
-function init2(){
+export function init2(){
 
 	//AdMob - Start memory
 	criarBannerAdMob();
@@ -272,11 +164,21 @@ function init2(){
 
 	//desativa scrool mobile ios
 	document.getElementById('main').addEventListener('touchmove', function(e) {
-      	e.preventDefault();
+      	// Only prevent default on the 3D canvas area, not on menu buttons
+      	var tag = e.target.tagName.toLowerCase();
+      	var isUI = e.target.closest('#select, #config, #comojogar, #menuOnline, #pipas, #popSelect, #topDir, #menu, #info, #popup');
+      	if(!isUI && tag !== 'input' && tag !== 'textarea') {
+      		e.preventDefault();
+      	}
     }, { passive:false, useCapture: false });
 	//desativa double tap zoom ios
     document.getElementById('main').addEventListener('touchstart', function(e) {
-      	e.preventDefault();
+      	// Only prevent default on the 3D canvas area, not on menu buttons
+      	var tag = e.target.tagName.toLowerCase();
+      	var isUI = e.target.closest('#select, #config, #comojogar, #menuOnline, #pipas, #popSelect, #topDir, #menu, #info, #popup');
+      	if(!isUI && tag !== 'input' && tag !== 'textarea') {
+      		e.preventDefault();
+      	}
     }, { passive:false, useCapture: false });
 
     
@@ -335,7 +237,7 @@ function init2(){
 
 }
 
-function setVento(_vento){
+export function setVento(_vento){
 	if(_vento != undefined) BD.vento = _vento;
 	$('.menu .vento .cima, .menu .vento .baixo').removeClass('on');
 	if(BD.vento == 0) $('.menu .vento .cima').addClass('on');
@@ -343,7 +245,7 @@ function setVento(_vento){
     updateBD();
 }
 
-function fechar(viewAdMob){
+export function fechar(viewAdMob){
 
 	/*if(type == 'twoPlayer') {
 		window.location.reload();
@@ -421,7 +323,7 @@ function fechar(viewAdMob){
 	cancelAnimationFrame(requestAnimation);// Stop the animation
 
 	renderer.renderLists.dispose();
-	renderer.dispose();
+	try { renderer.dispose(); } catch(e) {}
 	renderer.forceContextLoss(); //renderer.forceContextRestore()
 	renderer.context = undefined;
 	renderer.domElement = undefined;
@@ -470,7 +372,7 @@ function fechar(viewAdMob){
 		//if(viewAdMob == undefined){//browser banner
 		if(!startPhonegap){
 			initAdsBannerIni();
-			if($('#ads').length == 1) initAds();
+			if($('#ads').length == 1 && typeof window.initAds === 'function') window.initAds();
 			//console.log('ADSENSE SITE');
 		}else{
 			//console.log('ADMOB APP');
@@ -493,7 +395,7 @@ function fechar(viewAdMob){
 
 
 
-function initAdsBannerIni(){
+export function initAdsBannerIni(){
 	if($('#ads').length == 1){
 		if(mobile){
 			$('#ads').html('<script async src="//pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script><ins class="adsbygoogle bannerIniPq" style="display:inline-block;width:320px;height:100px" data-ad-client="ca-pub-4736032489372828" data-ad-slot="5774245713"></ins><script>(adsbygoogle = window.adsbygoogle || []).push({});</script>');
@@ -512,7 +414,7 @@ function initAdsBannerIni(){
 	} );
 }*/
 
-function init3D(){
+export function init3D(){
 
 	removeBannerAdMob();
 
@@ -706,7 +608,7 @@ for (var i = 0; i < 1000; i++) {
 
 }
 
-var cubes = new THREE.Mesh(mergedGeometry, material);
+export var cubes = new THREE.Mesh(mergedGeometry, material);
 scene.add(cubes);
 
 console.log(cubes);*/
@@ -828,7 +730,7 @@ setInterval(function(){
 
 }
 
-function resize(){
+export function resize(){
 
 	var stageWidth = document.documentElement.clientWidth,
     stageHeight = document.documentElement.clientHeight;  
@@ -867,9 +769,9 @@ function resize(){
 
 }
 
-var arrScene = [];
-function addMesh( geometry, scale, x, y, z, rx, ry, rz, material ) {
-	mesh = new THREE.Mesh( geometry, material );
+export var arrScene = [];
+export function addMesh( geometry, scale, x, y, z, rx, ry, rz, material ) {
+	var mesh = new THREE.Mesh( geometry, material );
 	mesh.scale.x = mesh.scale.y = mesh.scale.z = scale;
 	mesh.position.set(x,y,z);
 	mesh.rotation.set(rx,ry,rz);
@@ -879,7 +781,7 @@ function addMesh( geometry, scale, x, y, z, rx, ry, rz, material ) {
 	return mesh;
 }
 
-function criarBannerAdMob(view){
+export function criarBannerAdMob(view){
 	//console.log('CRIAR BANNER:', Math.random());
 	if(startPhonegap){
 		try{
@@ -906,8 +808,8 @@ function criarBannerAdMob(view){
 		}catch(err){}
 	}
 }
-var timeoutBannerAdMob = undefined;
-function removeBannerAdMob(){
+export var timeoutBannerAdMob = undefined;
+export function removeBannerAdMob(){
 	if(startPhonegap){
 		try{
 			if(AdMob) {
@@ -919,8 +821,8 @@ function removeBannerAdMob(){
 		}catch(err){}
 	}
 }
-var timeUltBannerView = 0;
-function criarInterstitialAdMob(view){
+export var timeUltBannerView = 0;
+export function criarInterstitialAdMob(view){
 	
 	//console.log('CRIAR Interstitial:', Math.random());
 
@@ -973,7 +875,7 @@ function criarInterstitialAdMob(view){
 	}
 }
 document.addEventListener('onAdPresent', completedRewardVideoAdMob);
-function completedRewardVideoAdMob(data){
+export function completedRewardVideoAdMob(data){
 	if(data.adType == 'rewardvideo'){
 		//console.log(data.rewardType, data.rewardAmount); 
 		if(rewardType == 'pipa') BD.pipas[parseInt($('.reward').attr('attr-id'))] += 5;
@@ -983,8 +885,8 @@ function completedRewardVideoAdMob(data){
 	}
 }
 
-var rewardType = 'pipa';
-function sortReward(){
+export var rewardType = 'pipa';
+export function sortReward(){
 
 	var arrSort = [];
 	$('.reward img').removeClass('linha');
@@ -1015,7 +917,7 @@ function sortReward(){
 
 }*/
 
-function gritoDelay(apenasDelay){
+export function gritoDelay(apenasDelay){
 
 	//FORCE verif se perso != 0, está com pipa no alto *BUG - se não tiver empina
 	if(apenasDelay == undefined){
@@ -1039,17 +941,17 @@ function gritoDelay(apenasDelay){
 	timeoutGrito = setTimeout(gritoDelay, 13000);
 }
 
-function getSomDelay(){
+export function getSomDelay(){
     if(++idcSomDelay > 13) idcSomDelay = 1;
     return idcSomDelay;
 }
 
-function getSomCortou(){
+export function getSomCortou(){
     if(++idcSomCortou > 32) idcSomCortou = 1;
     return idcSomCortou;
 }
 
-function setBalao(){
+export function setBalao(){
 	
 	var loader = new THREE.ColladaLoader();
 	loader.load('models/baloes/piao.dae', function(collada){
@@ -1078,7 +980,7 @@ function setBalao(){
 	
 }
 
-function setBalaoJapones(){
+export function setBalaoJapones(){
 	var balao = new Balao();
 	balao.init(arrBaloes[0]);
 	var paiPipa = getPaiPipaPrincipal();
@@ -1087,8 +989,8 @@ function setBalaoJapones(){
 	baloes.push(balao);
 }
 
-var timeoutTwoPlayer = undefined;
-function setInfoTwoPlayer(playerVenceu){
+export var timeoutTwoPlayer = undefined;
+export function setInfoTwoPlayer(playerVenceu){
 
 	if(playerVenceu != undefined){
 
@@ -1166,7 +1068,7 @@ function setInfoTwoPlayer(playerVenceu){
 	
 }
 
-function setZerou(){
+export function setZerou(){
 
 	setMsg('ZEROU!!');
 	clearTimeout(timeoutGrito);
@@ -1175,7 +1077,7 @@ function setZerou(){
 
 }
 
-function soltarFogos(){
+export function soltarFogos(){
 	
 	for(var c = 0;c < 212;c++){
 		
@@ -1203,7 +1105,7 @@ function soltarFogos(){
 
 }
 
-function soltarTremeterra(){
+export function soltarTremeterra(){
 	
 	var a = new THREE.Mesh( 
 		new THREE.PlaneGeometry( 34/4, 500/4, 1, 1 ), 
@@ -1225,14 +1127,14 @@ function soltarTremeterra(){
 
 }
 
-function removeJoystick(){
+export function removeJoystick(){
 	if(joystick != undefined) {
 		joystick.destroy();
 		joystick = undefined;
 	}
 }
 
-function createJoystick(){
+export function createJoystick(){
 	removeJoystick();
 	if(type == 'festival' || type == 'online'){
 		joystick = nipplejs.create({
@@ -1355,7 +1257,7 @@ function createJoystick(){
 
 }
 
-function openMessage(){
+export function openMessage(){
 
 	var html = '' + 		
 	'<div id="popup" class="animated zoomInDown">' +
@@ -1396,7 +1298,7 @@ function openMessage(){
 
 }
 
-function addPerso(c){
+export function addPerso(c){
 
 	if(type == undefined) return;
 	
@@ -1440,7 +1342,7 @@ function addPerso(c){
 
 }
 
-function removePerso(name){
+export function removePerso(name){
 	if(pipasName[name] != undefined){
 		//console.log('removePerso -----', name, pipasName[name])
 		pipasName[name].removePerso();
@@ -1448,7 +1350,7 @@ function removePerso(name){
 	}
 }
 
-function clearTweenPipa(paiPipa){
+export function clearTweenPipa(paiPipa){
 	TweenMax.killTweensOf(paiPipa);
 	TweenMax.killTweensOf(paiPipa.myObject);
 	TweenMax.killTweensOf(paiPipa.myObject2);
@@ -1458,8 +1360,45 @@ function clearTweenPipa(paiPipa){
 	//TweenMax.killTweensOf(paiPipa.pipa2.rotation);
 }
 
+// ==============================================================
+// CAMERA SHAKE - efek getaran kamera saat tali beradu
+// ==============================================================
+export function cameraShake(intensity, duration){
+	if(camera == undefined) return;
+	intensity = intensity || 3;
+	duration  = duration  || 0.35;
 
-function animate(){
+	var origX = camera.position.x,
+	    origY = camera.position.y,
+	    origZ = camera.position.z,
+	    elapsed = 0,
+	    startTime = Date.now();
+
+	// Kill qualquer shake anterior
+	if(window._shakeInterval) clearInterval(window._shakeInterval);
+
+	window._shakeInterval = setInterval(function(){
+		elapsed = (Date.now() - startTime) / 1000;
+		if(elapsed >= duration){
+			camera.position.x = origX;
+			camera.position.y = origY;
+			camera.position.z = origZ;
+			clearInterval(window._shakeInterval);
+			window._shakeInterval = null;
+			return;
+		}
+		var decay = 1 - (elapsed / duration),
+		    r = intensity * decay;
+		camera.position.x = origX + (Math.random() * 2 - 1) * r;
+		camera.position.y = origY + (Math.random() * 2 - 1) * r * 0.5;
+		camera.position.z = origZ + (Math.random() * 2 - 1) * r;
+	}, 16); // ~60fps
+}
+window.cameraShake = cameraShake;
+
+
+
+export function animate(){
     requestAnimation = requestAnimationFrame(animate);
 	if(!paused) render();
 
@@ -1473,12 +1412,12 @@ cont = 0,
 gravar = true;
 console.log('GRAVANDO');
 
-function setGravar(type){
+export function setGravar(type){
 	// 1:disbicar 2:puxar 3:descarregar
 	if(gravar) arrGravar[cont-1] = type;
 }
 
-function getGravar(){
+export function getGravar(){
 	var html = '',
 	tot2 = arrGravar.length;
 	arrGravar.reverse();
@@ -1488,7 +1427,7 @@ function getGravar(){
 	$('body').html('<textarea style="width:100%;height:100%;">['+html+']</textarea>');
 }*/
 
-function render(){
+export function render(){
 
 	/*if(gravar){
 		arrGravar[cont] = 0;
@@ -1707,7 +1646,7 @@ function render(){
 
 /* SOCKET */
 
-function initOnlineGame(){
+export function initOnlineGame(){
 
 	
 	type = 'online';
@@ -1748,7 +1687,7 @@ function initOnlineGame(){
 
 }
 
-function disconnectSocket(){
+export function disconnectSocket(){
 	if(socket != undefined) {
 		//console.log("disconnectSocket!!");
 		socket.off('disconnect');
@@ -1760,7 +1699,7 @@ function disconnectSocket(){
 	}
 }
 
-function startSocket(i){
+export function startSocket(i){
 
 	$('.msgConect').show().html('Conectando Server '+servers[i].n+'<div id="loadingSvg"></div>');
 	
@@ -1824,12 +1763,12 @@ function startSocket(i){
 
 }
 
-function setMsgConect(){
+export function setMsgConect(){
 	var s = ((sala != undefined) ? ' - Sala ' + sala : '');
 	$('.msgConect').show().html('Conectado Server ' + servers[indiceServer].n + s);
 }
 
-function initServers(){
+export function initServers(){
 
 	if(!verificOnline()) return;
 
@@ -1890,7 +1829,7 @@ function initServers(){
 
 }
 
-function initSalasLivres(){
+export function initSalasLivres(){
 
 	window.localStorage["nick"] = $('.nick').val();
 
@@ -1976,7 +1915,7 @@ function initSalasLivres(){
 
 }
 
-function setPublicidade(img, lk){
+export function setPublicidade(img, lk){
 
 
 	var ultPublicidade = window.localStorage["publicidade"];
@@ -2002,7 +1941,7 @@ function setPublicidade(img, lk){
     
 }
 
-function setPopupSalas(){
+export function setPopupSalas(){
     $('#popup').remove();
     $('main').append(
         '<div id="popup" class="animated zoomInDown">' + 
@@ -2017,7 +1956,7 @@ function setPopupSalas(){
     });
 }
 
-function addEventsSala(){
+export function addEventsSala(){
 
 	removeEventsSala();
 
@@ -2328,7 +2267,7 @@ function addEventsSala(){
 
 }
 
-function getPipaVoadaName(name){
+export function getPipaVoadaName(name){
 	var tot = pipas.length;
 	while(tot--){
 		var pipa = pipas[tot];
@@ -2341,7 +2280,7 @@ function getPipaVoadaName(name){
 	}
 }
 
-function updatePlacar(obj){
+export function updatePlacar(obj){
 
 	//console.log('PLACAR::::')
 	//console.log(obj);
@@ -2395,7 +2334,7 @@ function updatePlacar(obj){
 
 }
 
-function voltarSelectOnline(){
+export function voltarSelectOnline(){
 	
 	if(type == 'online'){
 		initServers();
@@ -2409,7 +2348,7 @@ function voltarSelectOnline(){
 	
 }
 
-function removeEventsSala(){
+export function removeEventsSala(){
 
 	/*if(salaEvent != undefined){
 		socket.off('game');
@@ -2445,3 +2384,69 @@ function removeEventsSala(){
 	}
 
 }
+// --- DYNAMIC WEATHER & WIND NEW FEATURES ---
+window.noturno = false;
+window.toggleNightMode = function() {
+    window.noturno = !window.noturno;
+    var btn = document.getElementById('btnToggleNight');
+    if (btn) {
+        if (window.noturno) {
+            btn.innerHTML = 'Night Mode';
+            btn.classList.add('night-active');
+        } else {
+            btn.innerHTML = 'Day Mode';
+            btn.classList.remove('night-active');
+        }
+    }
+    
+    // Update Sky (ceu)
+    if(typeof ceu !== 'undefined' && ceu) {
+        for(var c = 0;c < 6;c++) {
+            if(ceu.material[c]) {
+                ceu.material[c].transparent = true;
+                ceu.material[c].opacity = window.noturno ? 0.1 : 1.0;
+                ceu.material[c].needsUpdate = true;
+            }
+        }
+    }
+    // Update Floor (chao)
+    if(typeof chao !== 'undefined' && chao && chao.material) {
+        chao.material.transparent = true;
+        chao.material.opacity = window.noturno ? 0.4 : 1.0;
+        chao.material.needsUpdate = true;
+    }
+    // Update cenario
+    if(typeof cenario !== 'undefined' && cenario && cenario.children) {
+        for(var c=0; c<cenario.children.length; c++) {
+            if(cenario.children[c] && cenario.children[c].material) {
+                cenario.children[c].material.transparent = true;
+                cenario.children[c].material.opacity = window.noturno ? 0.4 : 1.0;
+                cenario.children[c].material.needsUpdate = true;
+            }
+        }
+    }
+};
+
+$(document).ready(function() {
+    $('#btnToggleNight').on(typeof getTap !== 'undefined' ? getTap() : 'click', function(e) {
+        if(e) e.preventDefault();
+        window.toggleNightMode();
+    });
+});
+
+// Dynamic Wind
+setInterval(function() {
+    if(typeof jogando !== 'undefined' && jogando) {
+        var novoVento = Math.random() < 0.5 ? 0 : 1;
+        if(typeof BD !== 'undefined' && BD.vento != novoVento) {
+            if(typeof setVento === 'function') setVento(novoVento);
+            var hud = document.getElementById('windHud');
+            if(hud) {
+                hud.classList.add('show');
+                setTimeout(function() {
+                    hud.classList.remove('show');
+                }, 3000);
+            }
+        }
+    }
+}, 10000); // Check every 10 seconds

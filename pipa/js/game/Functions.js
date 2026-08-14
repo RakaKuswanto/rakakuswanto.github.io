@@ -1,4 +1,4 @@
-var isMobile = {
+export var isMobile = {
     Android: function() {
         return navigator.userAgent.match(/Android/i);
     },
@@ -19,21 +19,21 @@ var isMobile = {
     }
 }
 
-function isMobileAll(){
+export function isMobileAll(){
     return (/Android|webOS|iPhone|iPad|iPod|pocket|psp|kindle|avantgo|blazer|midori|Tablet|Palm|maemo|plucker|phone|BlackBerry|symbian|IEMobile|mobile|ZuneWP7|Windows Phone|Opera Mini/i.test(navigator.userAgent));
 }
 
-function de2ra(degree){ return degree*(Math.PI/180); }
+export function de2ra(degree){ return degree*(Math.PI/180); }
 
-function getCameraAngle(cameraVector){
+export function getCameraAngle(cameraVector){
     return radiansToDegrees(Math.atan2(cameraVector.x, cameraVector.z));
 }
 
-function radiansToDegrees(radians){
+export function radiansToDegrees(radians){
     return radians * 180 / Math.PI;
 }
 
-function getPositionMatrixWordSum(_x, _y, _z, obj){
+export function getPositionMatrixWordSum(_x, _y, _z, obj){
     var a = new THREE.Vector3( _x, _y, _z ).applyQuaternion( obj.quaternion );
     a.x += obj.position.x;
     a.y += obj.position.y;
@@ -41,11 +41,11 @@ function getPositionMatrixWordSum(_x, _y, _z, obj){
     return a;
 }
 
-function getFromMatrixPosition(obj){//usage direct = 
+export function getFromMatrixPosition(obj){//usage direct = 
     return new THREE.Vector3().setFromMatrixPosition(obj.matrixWorld);//testar se processing
 }
 
-function removeScene(obj, _scene){
+export function removeScene(obj, _scene){
     if(_scene == undefined) _scene = scene;
     if(obj != undefined){
         dispose3D(obj);
@@ -65,56 +65,53 @@ function removeScene(obj, _scene){
     //console.log(obj);
 }
 
-function rand(min, max){            
+export function rand(min, max){            
     return (Math.floor(Math.random() * (max - min + 1)) + min);
 }
 
-function randNumber(min, max){            
+export function randNumber(min, max){            
     return (Math.random() * (max - min + 1)) + min;
 }
 
-function getTextureLoader(src){
+export function getTextureLoader(src){
     var loader = new THREE.TextureLoader();
     return loader.load(src);
 }
 
-function isMobileAll(){
-    return (/Android|webOS|iPhone|iPad|iPod|pocket|psp|kindle|avantgo|blazer|midori|Tablet|Palm|maemo|plucker|phone|BlackBerry|symbian|IEMobile|mobile|ZuneWP7|Windows Phone|Opera Mini/i.test(navigator.userAgent));
-}
 
-function setAutoUpdateMatrix(obj, bool){
+export function setAutoUpdateMatrix(obj, bool){
     if(obj != undefined){
         obj.matrixAutoUpdate = bool;
         obj.updateMatrix();
     }
 }
 
-function getTap(){
+export function getTap(){
     var a = 'tap';
     //if(windowsPhone) a = 'MSPointerUp';
     return a;
 }
 
-function getTouchStart(){
+export function getTouchStart(){
     var a = 'mousedown'
     if(mobile) a = 'touchstart';
     //if(windowsPhone) a = 'MSPointerDown';
     return a;
 }
 
-function getTouchEnd(){
+export function getTouchEnd(){
     var a = 'mouseup'
     if(mobile) a = 'touchend';
     //if(windowsPhone) a = 'MSPointerUp';   
     return a;
 }
 
-function getDelay(valueAtual, valueVai, delay){
+export function getDelay(valueAtual, valueVai, delay){
     //this._x = this._x + (_parent._xmouse - this._x) / 10;
     return valueAtual + (valueVai - valueAtual) / delay;
 }
 
-function getBD(){
+export function getBD(){
     //localStorage.clear();
     if(!window.localStorage["PipaCombate10"]) {//se não existe Storage criar
         localStorage.clear();//reseta oq já tiver sido gravado
@@ -160,7 +157,7 @@ function getBD(){
             somGrito:true,
             //vento:1,//inicia com vento p/ praia
             pixelRatio:pixelRatio,
-            lang:'pt'
+            lang:'en'
         });
     }
 
@@ -172,7 +169,7 @@ function getBD(){
 
 }
 
-function updateBD(){
+export function updateBD(){
 
     window.localStorage["PipaCombate10"] = JSON.stringify({
         //dinheiro:BD.dinheiro,
@@ -198,7 +195,7 @@ function updateBD(){
     .html('$'+convertDinheiro(BD.dinheiro));
 }*/
 
-function updatePlacarFestival(){
+export function updatePlacarFestival(){
 
     if(type == 'festival' && paiPipaPrincipal != undefined && paiPipaPrincipal.paiPipa != undefined){
         $('.dinheiro')
@@ -228,12 +225,29 @@ function updatePlacarFestival(){
 
 }*/
 
-function convertDinheiro(n, c, d, t){
+export function convertDinheiro(n, c, d, t){
     c = isNaN(c = Math.abs(c)) ? 2 : c, d = d == undefined ? "," : d, t = t == undefined ? "." : t, s = n < 0 ? "-" : "", i = parseInt(n = Math.abs(+n || 0).toFixed(c)) + "", j = (j = i.length) > 3 ? j % 3 : 0;
     return s + (j ? i.substr(0, j) + t : "") + i.substr(j).replace(/(\d{3})(?=\d)/g, "$1" + t) + (c ? d + Math.abs(n - i).toFixed(c).slice(2) : "");
 }
 
-function setMaisUm(_x, _y, _z, morreu){
+export function setMaisUm(_x, _y, _z, morreu){
+    // --- KILL STREAK LOGIC ---
+    if (morreu == undefined) { // The player scored a cut
+        var now = Date.now();
+        if (now - (window.lastKillTime || 0) < 15000) {
+            window.killStreakCount = (window.killStreakCount || 1) + 1;
+        } else {
+            window.killStreakCount = 1;
+        }
+        window.lastKillTime = now;
+        
+        if (window.killStreakCount > 1 && window.showKillStreak) {
+            window.showKillStreak(window.killStreakCount);
+        }
+    } else { // The player died or lost points
+        window.killStreakCount = 0;
+    }
+    // -------------------------
 
     var mais = new THREE.Mesh(
         new THREE.PlaneGeometry(parseInt(103/4.5), parseInt(88/4.5), 1, 1), 
@@ -260,10 +274,151 @@ function setMaisUm(_x, _y, _z, morreu){
         }
     });
 
-
 }
 
-function murchar_2_3(geo, vel){
+window.showKillStreak = function(count) {
+    var hud = document.getElementById('killStreakHud');
+    if (!hud) return;
+    
+    hud.className = ''; // reset classes
+    
+    var text = "";
+    var comboClass = "";
+    if (count == 2) { text = "DOUBLE CUT!"; comboClass = "show-double"; }
+    else if (count == 3) { text = "TRIPLE CUT!"; comboClass = "show-triple"; }
+    else if (count == 4) { text = "RAMPAGE!"; comboClass = "show-rampage"; }
+    else if (count >= 5) { text = "UNSTOPPABLE!"; comboClass = "show-unstoppable"; }
+    
+    hud.innerHTML = text;
+    hud.classList.add(comboClass);
+    hud.classList.add('show');
+    
+    clearTimeout(window.killStreakTimer);
+    window.killStreakTimer = setTimeout(function() {
+        hud.classList.remove('show');
+    }, 2000);
+};
+
+// ==============================================================
+// STRING COLLISION EFFECT - kilatan saat dua tali beradu
+// ==============================================================
+export function setStringCollisionEffect(_x, _y, _z){
+
+    // --- 1. Kilatan putih (flash cepat & kecil — tidak menutupi sparks) ---
+    var flashMat = new THREE.SpriteMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.9,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    var flash = new THREE.Sprite(flashMat);
+    flash.position.set(_x, _y, _z);
+    flash.scale.set(5, 5, 1);
+    flash.renderOrder = 8; // lebih rendah dari sparks agar tidak menutupi
+    scene.add(flash);
+
+    // Flash expand cepat lalu hilang
+    TweenMax.to(flash.scale, 0.08, {
+        x: 12, y: 12,
+        ease: Power2.easeOut
+    });
+    TweenMax.to(flashMat, 0.18, {
+        opacity: 0,
+        ease: Power1.easeIn,
+        onComplete: function(){
+            scene.remove(flash);
+            flash = undefined;
+        }
+    });
+
+    // --- 2. Ring shockwave (cincin melebar dari titik kontak) ---
+    var ringMat = new THREE.SpriteMaterial({
+        color: 0xff6600,
+        transparent: true,
+        opacity: 0.8,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false
+    });
+    var ring = new THREE.Sprite(ringMat);
+    ring.position.set(_x, _y, _z);
+    ring.scale.set(2, 2, 1);
+    ring.renderOrder = 9;
+    scene.add(ring);
+
+    TweenMax.to(ring.scale, 0.35, {
+        x: 20, y: 20,
+        ease: Power2.easeOut
+    });
+    TweenMax.to(ringMat, 0.35, {
+        opacity: 0,
+        ease: Power1.easeIn,
+        onComplete: function(){
+            scene.remove(ring);
+            ring = undefined;
+        }
+    });
+
+    // --- 3. Partikel percikan (sparks) — renderOrder tertinggi agar selalu terlihat ---
+    var numSparks = 14;
+    for(var s = 0; s < numSparks; s++){
+        (function(){
+            // Warna: kuning, oranye, atau putih panas
+            var colors = [0xffff00, 0xff8800, 0xff4400, 0xffffff];
+            var clr = colors[Math.floor(Math.random() * colors.length)];
+            var sparkMat = new THREE.SpriteMaterial({
+                color: clr,
+                transparent: true,
+                opacity: 1,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false
+            });
+            var spark = new THREE.Sprite(sparkMat);
+            // Ukuran lebih besar agar terlihat jelas
+            var sz = 3 + Math.random() * 4;
+            spark.position.set(_x, _y, _z);
+            spark.scale.set(sz, sz, 1);
+            spark.renderOrder = 12; // tertinggi — selalu di atas flash
+            scene.add(spark);
+
+            // Arah acak ke segala sisi + sedikit ke atas
+            var angle  = Math.random() * Math.PI * 2,
+                speed  = 15 + Math.random() * 35,
+                vx     = Math.cos(angle) * speed,
+                vz     = Math.sin(angle) * speed,
+                vy     = Math.random() * 25 + 8,
+                dur    = 0.3 + Math.random() * 0.4;
+
+            TweenMax.to(spark.position, dur, {
+                x: _x + vx,
+                y: _y + vy,
+                z: _z + vz,
+                ease: Power2.easeOut
+            });
+            // Shrink + fade
+            TweenMax.to(spark.scale, dur, {
+                x: 0.2, y: 0.2,
+                ease: Power2.easeIn
+            });
+            TweenMax.to(sparkMat, dur * 0.8, {
+                delay: dur * 0.2,
+                opacity: 0,
+                ease: Power1.easeIn,
+                onComplete: function(){
+                    scene.remove(spark);
+                    spark = undefined;
+                }
+            });
+        })();
+    }
+
+    // --- 4. Camera shake ---
+    if(typeof window.cameraShake === 'function') window.cameraShake(3.5, 0.3);
+}
+
+
+export function murchar_2_3(geo, vel){
+
     geo.vertices[5].x = geo.vertices[10].x = -15 + vel;
     geo.vertices[6].x = geo.vertices[11].x = -7.5 + vel;
     //geo.vertices[7].x = geo.vertices[12].x = 0;
@@ -272,7 +427,7 @@ function murchar_2_3(geo, vel){
     geo.verticesNeedUpdate = true;
 }
 
-function murchar_3(geo, vel){
+export function murchar_3(geo, vel){
     geo.vertices[10].x = -15 + vel;
     geo.vertices[11].x = -7.5 + vel;
     //geo.vertices[12].x = 0;
@@ -281,7 +436,7 @@ function murchar_3(geo, vel){
     geo.verticesNeedUpdate = true;
 }
 
-function murchar_4(geo, vel){
+export function murchar_4(geo, vel){
     geo.vertices[15].x = -15 + vel;
     geo.vertices[16].x = -7.5 + vel;
     //geo.vertices[17].x = 0;
@@ -290,7 +445,7 @@ function murchar_4(geo, vel){
     geo.verticesNeedUpdate = true;
 }
 
-function murchar_3_4(geo, vel){
+export function murchar_3_4(geo, vel){
     geo.vertices[10].x = geo.vertices[15].x = -15 + vel;
     geo.vertices[11].x = geo.vertices[16].x = -7.5 + vel;
     //geo.vertices[12].x = geo.vertices[17].x = 0;
@@ -299,7 +454,7 @@ function murchar_3_4(geo, vel){
     geo.verticesNeedUpdate = true;
 }
 
-function murchar_1_2_3(geo, vel){
+export function murchar_1_2_3(geo, vel){
     geo.vertices[0].x = geo.vertices[5].x = geo.vertices[10].x = -15 + vel;
     geo.vertices[1].x = geo.vertices[6].x = geo.vertices[11].x = -7.5 + vel;
     //geo.vertices[2].x = geo.vertices[7].x = geo.vertices[12].x = 0;
@@ -308,7 +463,7 @@ function murchar_1_2_3(geo, vel){
     geo.verticesNeedUpdate = true;
 }
 
-function murchar_sput(geo, vel){
+export function murchar_sput(geo, vel){
     geo.vertices[15].x = -15 + vel * 1.5;
     //geo.vertices[16].x = -7.5 + vel;
     //geo.vertices[17].x = 0;
@@ -324,7 +479,7 @@ function murchar_sput(geo, vel){
     geo.verticesNeedUpdate = true;
 }
 
-function murchar_caixao(geo, vel){
+export function murchar_caixao(geo, vel){
 
     geo.vertices[10].x = geo.vertices[15].x = -15 + vel;
     geo.vertices[11].x = geo.vertices[16].x = -7.5 + vel;
@@ -341,7 +496,7 @@ function murchar_caixao(geo, vel){
     geo.verticesNeedUpdate = true;
 }
 
-function murchar_joystick(geo, vel){
+export function murchar_joystick(geo, vel){
 
     geo.vertices[10].x = -15 + vel * 1.6;
     //geo.vertices[11].x = -7.5 + vel;
@@ -364,11 +519,11 @@ function murchar_joystick(geo, vel){
     geo.verticesNeedUpdate = true;
 }
 
-function cloneObj(obj){
+export function cloneObj(obj){
     return Object.assign({}, obj);
 }
 
-function quad3dColision(a, b){
+export function quad3dColision(a, b){
 
     //http://devdoc.net/web/developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection.html
     var pode = false;
@@ -383,7 +538,7 @@ function quad3dColision(a, b){
 
 }
 
-function quad3dColisionForce(a, b){
+export function quad3dColisionForce(a, b){
 
     //http://devdoc.net/web/developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection.html
 
@@ -399,7 +554,7 @@ function quad3dColisionForce(a, b){
 
 }
 
-function quad3dColision_XZ(a, b){
+export function quad3dColision_XZ(a, b){
 
     //http://devdoc.net/web/developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection.html
 
@@ -415,7 +570,7 @@ function quad3dColision_XZ(a, b){
 
 }
 
-function quad3dColisionPos(a, b){
+export function quad3dColisionPos(a, b){
 
     //http://devdoc.net/web/developer.mozilla.org/en-US/docs/Games/Techniques/3D_collision_detection.html
     var pode = false;
@@ -430,7 +585,7 @@ function quad3dColisionPos(a, b){
 
 }
 
-function colision(pipaA, pipaB){
+export function colision(pipaA, pipaB){
 
     //console.clear();
     //console.log(pipaA.morreu, pipaB.morreu);
@@ -599,9 +754,27 @@ function colision(pipaA, pipaB){
                             }
 
                             if(type == 'festival') updatePlacarFestival();
-                            
+
+                            // ====== REALISTIC STRING COLLISION EFFECTS ======
+                            var cp = collisionResults[0].point;
+                            // 1. Visual: kilatan + percikan di titik kontak
+                            setStringCollisionEffect(cp.x, cp.y, cp.z);
+                            // 2. Flash warna merah di tali yang putus (bertahan ~200ms lalu fade normal)
+                            if(pipaVoou.line != undefined && pipaVoou.line.material != undefined){
+                                pipaVoou.line.material.color.setHex(0xff3300);
+                                setTimeout(function(){
+                                    if(pipaVoou.line != undefined && pipaVoou.line.material != undefined){
+                                        pipaVoou.line.material.color.setHex(
+                                            pipaVoou.colorLine != undefined ? parseInt(pipaVoou.colorLine.replace('#','0x')) : 0xffffff
+                                        );
+                                    }
+                                }, 180);
+                            }
+                            // ====== END EFFECTS ======
+
                             pipaVoou.setMorreu(collisionResults[0].point, collisionResults[0].index, pipaCortou);
                             if(!(type == 'twoPlayer' && !singlePlayer)) gritoDelay(true);//evita dois sons ao msm tempo
+
 
                         }else{
                             console.log('DEU ALGO ERRADO!');
@@ -863,7 +1036,7 @@ function colision(pipaA, pipaB){
 
 }
 
-function rabiolaColidiu(pipaA, pipaB){
+export function rabiolaColidiu(pipaA, pipaB){
 
     /*if(Math.random() < 0.07){
         console.clear();
@@ -933,7 +1106,7 @@ function rabiolaColidiu(pipaA, pipaB){
 
 }
 
-function deceparColidiu(pipaA, pipaB){
+export function deceparColidiu(pipaA, pipaB){
 
     var MovingCube = pipaB.pipa1,
     originPoint = MovingCube.position.clone(),
@@ -965,7 +1138,7 @@ function deceparColidiu(pipaA, pipaB){
 
 }
 
-function colisionPersoPipa(paiPerso, paiPipa){
+export function colisionPersoPipa(paiPerso, paiPipa){
 
     var posPerso = paiPerso.perso.position,
     posPipa = paiPipa.pipa.position;
@@ -993,7 +1166,7 @@ function colisionPersoPipa(paiPerso, paiPipa){
 
 
 
-function playSom(id, volume, force){
+export function playSom(id, volume, force){
     if(BD.som){
 
         if(!BD.somGrito){
@@ -1077,13 +1250,13 @@ function playSom(id, volume, force){
     }
 }
 
-function stopSom(id){
+export function stopSom(id){
     try{
         if(sons[id] != undefined) sons[id].pause();
     }catch(err){}
 }
 
-function getPathAudioId(id){
+export function getPathAudioId(id){
     /*if(iOS){
         return 'sons/'+id+'.mp3';    
     }else{*/
@@ -1097,7 +1270,7 @@ function getPathAudioId(id){
 }
 
 //var c = 0;
-function clear3D(obj){
+export function clear3D(obj){
     if(obj != undefined){
         while(obj.children.length){
             var a = obj.children[0];
@@ -1113,7 +1286,7 @@ function clear3D(obj){
 
 
 //for each todo itens
-function testar(obj){
+export function testar(obj){
     if(obj != undefined){
         var tot = obj.children.length;
         while(tot--){
@@ -1128,7 +1301,7 @@ function testar(obj){
     }
 }
 
-function dispose3D(parentObject) {
+export function dispose3D(parentObject) {
     parentObject.traverse(function (node) {
         
         //if (node instanceof THREE.Mesh) {
@@ -1177,7 +1350,7 @@ function dispose3D(parentObject) {
     });
 }
 
-function setAlert(msg){
+export function setAlert(msg){
     
     var html = '<div id="info">' +
                 '    <nav>' +
@@ -1193,8 +1366,8 @@ function setAlert(msg){
 
 }
 
-var timeoutConsole = undefined;
-function setMsgConsole(msg){
+export var timeoutConsole = undefined;
+export function setMsgConsole(msg){
     $('#console').html(msg);
     clearTimeout(timeoutConsole);
     timeoutConsole = setTimeout(function(){
@@ -1202,7 +1375,7 @@ function setMsgConsole(msg){
     }, 3000);
 }
 
-function setMsg(msg, delay){
+export function setMsg(msg, delay){
 
     if(delay == undefined) delay = 3000;
 
@@ -1216,7 +1389,7 @@ function setMsg(msg, delay){
     
 }
 
-var key = "SXGWLZPDOKFIVUHJYTQBNMACERxswgzldpkoifuvjhtybqmncare";
+export var key = "SXGWLZPDOKFIVUHJYTQBNMACERxswgzldpkoifuvjhtybqmncare";
 /*function encodeStr(uncoded) {
   uncoded = uncoded.toUpperCase().replace(/^\s+|\s+$/g,"");
   var coded = "";
@@ -1229,7 +1402,7 @@ var key = "SXGWLZPDOKFIVUHJYTQBNMACERxswgzldpkoifuvjhtybqmncare";
     }
   return encodeURIComponent(coded);  
 }*/
-function decodeStr(coded) {
+export function decodeStr(coded) {
   coded = decodeURIComponent(coded);  
   var uncoded = "";
   var chr;
@@ -1248,7 +1421,7 @@ function decodeStr(coded) {
 
 
 
-var vocabulary_pt = {
+export var vocabulary_pt = {
     online:'Online',//online:'Online<b>BETA</b>',
     //vento:'Vento',
     comprar:'Comprar',
@@ -1293,33 +1466,33 @@ vocabulary_en = {
     bateuParede:'YOUR LINE BROKEN<br>CAUTION for not hitting any scene item'
 };
 
-function getVocabulary(v){
-    return this['vocabulary_'+BD.lang][v];
+export function getVocabulary(v){
+    return window['vocabulary_'+BD.lang][v];
 }
 
-function updateLanguage(){
+export function updateLanguage(){
 
     $('#usageAvatar span').html(((usageAvatar) ? getVocabulary('sim') : getVocabulary('nao')));
     
-    $('#select .menu .online').html(this['vocabulary_'+BD.lang].online);
-    //$('#select .menu .vento span').html(this['vocabulary_'+BD.lang].vento);
+    $('#select .menu .online').html(window['vocabulary_'+BD.lang].online);
+    //$('#select .menu .vento span').html(window['vocabulary_'+BD.lang].vento);
     
-    $('#comojogar nav div').eq(0).html(this['vocabulary_'+BD.lang].txIniPuxar);
-    $('#comojogar nav div').eq(1).html(this['vocabulary_'+BD.lang].txIniDisbicar);
-    $('#comojogar nav div').eq(2).html(this['vocabulary_'+BD.lang].txIniDescarregar);
+    $('#comojogar nav div').eq(0).html(window['vocabulary_'+BD.lang].txIniPuxar);
+    $('#comojogar nav div').eq(1).html(window['vocabulary_'+BD.lang].txIniDisbicar);
+    $('#comojogar nav div').eq(2).html(window['vocabulary_'+BD.lang].txIniDescarregar);
 
-    $('#config .bx h1').html(this['vocabulary_'+BD.lang].sonsDo);
-    $('#config .bx h2').html(this['vocabulary_'+BD.lang].txQuality);
-    $('#config .bx .icoSom div').html(this['vocabulary_'+BD.lang].todos);
-    $('#config .bx .icoSom3 div').html(this['vocabulary_'+BD.lang].gritos);
-    $('#select .estrelas').html(this['vocabulary_'+BD.lang].avalie);
+    $('#config .bx h1').html(window['vocabulary_'+BD.lang].sonsDo);
+    $('#config .bx h2').html(window['vocabulary_'+BD.lang].txQuality);
+    $('#config .bx .icoSom div').html(window['vocabulary_'+BD.lang].todos);
+    $('#config .bx .icoSom3 div').html(window['vocabulary_'+BD.lang].gritos);
+    $('#select .estrelas').html(window['vocabulary_'+BD.lang].avalie);
 
     $('#menu .left .lang').removeClass('ativo');
     $('#menu .left .lang.'+BD.lang).addClass('ativo');
     
 }
 
-function verificOnline(){
+export function verificOnline(){
 
 
     return true;
@@ -1360,7 +1533,7 @@ function verificOnline(){
 
 }
 
-function setMsgChat(m){
+export function setMsgChat(m){
     if($('.msgChat').length == 0) $('main').append('<div class="msgChat"></div>')
     $('.msgChat').prepend('<div>'+m+'</div>');
     var obj = $('.msgChat div').eq(0);
@@ -1373,7 +1546,7 @@ function setMsgChat(m){
     }
 }
 
-function setAlertMsg(msg){
+export function setAlertMsg(msg){
     $('#popup').remove();
     $('main').append(
         '<div id="popup" class="animated zoomInDown">' +
@@ -1388,7 +1561,7 @@ function setAlertMsg(msg){
     });
 }
 
-function setPopupSalas(){
+export function setPopupSalas(){
     $('#popup').remove();
     $('main').append(
         '<div id="popup" class="animated zoomInDown">' + 
@@ -1403,7 +1576,7 @@ function setPopupSalas(){
     });
 }
 
-function removePopupDelay(){
+export function removePopupDelay(){
     //$('#popup, #publicidade').remove();
     //alert('OPA estava desativado!');
     var a = $('#popup, #publicidade');
@@ -1412,7 +1585,7 @@ function removePopupDelay(){
     } });
 }
 
-function setFullscreen() {
+export function setFullscreen() {
     
     var element = document.body;//document.getElementById(id); 
 
@@ -1424,13 +1597,17 @@ function setFullscreen() {
     var docElm = document.documentElement;
     //if (!isInFullScreen) {
         if (element.requestFullscreen) {
-            element.requestFullscreen();
+            var p = element.requestFullscreen();
+            if(p !== undefined) p.catch(function(e){});
         } else if (element.mozRequestFullScreen) {
-            element.mozRequestFullScreen();
+            var p = element.mozRequestFullScreen();
+            if(p !== undefined) p.catch(function(e){});
         } else if (element.webkitRequestFullScreen) {
-           element.webkitRequestFullScreen();
+            var p = element.webkitRequestFullScreen();
+            if(p !== undefined) p.catch(function(e){});
         } else if (element.msRequestFullscreen) {
-            element.msRequestFullscreen();
+            var p = element.msRequestFullscreen();
+            if(p !== undefined) p.catch(function(e){});
         }
     /*} else {
         if (document.exitFullscreen) {
@@ -1452,7 +1629,7 @@ function setFullscreen() {
 
 /* STATS - stats.js - http://github.com/mrdoob/stats.js */
 // stats.js - http://github.com/mrdoob/stats.js
-(function(f,e){"object"===typeof exports&&"undefined"!==typeof module?module.exports=e():"function"===typeof define&&define.amd?define(e):f.Stats=e()})(this,function(){var f=function(){function e(a){c.appendChild(a.dom);return a}function u(a){for(var d=0;d<c.children.length;d++)c.children[d].style.display=d===a?"block":"none";l=a}var l=0,c=document.createElement("div");c.id='stats';c.style.cssText="cursor:pointer;opacity:0.9;z-index:10000";c.addEventListener("click",function(a){a.preventDefault();
+(function(f,e){"object"===typeof exports&&"undefined"!==typeof module?module.exports=e():"function"===typeof define&&define.amd?define(e):f.Stats=e()})(window,function(){var f=function(){function e(a){c.appendChild(a.dom);return a}function u(a){for(var d=0;d<c.children.length;d++)c.children[d].style.display=d===a?"block":"none";l=a}var l=0,c=document.createElement("div");c.id='stats';c.style.cssText="cursor:pointer;opacity:0.9;z-index:10000";c.addEventListener("click",function(a){a.preventDefault();
 u(++l%c.children.length)},!1);var k=(performance||Date).now(),g=k,a=0,r=e(new f.Panel("FPS","#0ff","#002")),h=e(new f.Panel("MS","#0f0","#020"));if(self.performance&&self.performance.memory)var t=e(new f.Panel("MB","#f08","#201"));u(0);return{REVISION:16,dom:c,addPanel:e,showPanel:u,begin:function(){k=(performance||Date).now()},end:function(){a++;var c=(performance||Date).now();h.update(c-k,200);if(c>g+1E3&&(r.update(1E3*a/(c-g),100),g=c,a=0,t)){var d=performance.memory;t.update(d.usedJSHeapSize/
-1048576,d.jsHeapSizeLimit/1048576)}return c},update:function(){k=this.end()},domElement:c,setMode:u}};f.Panel=function(e,f,l){var c=Infinity,k=0,g=Math.round,a=g(window.devicePixelRatio||1),r=80*a,h=48*a,t=3*a,v=2*a,d=3*a,m=15*a,n=74*a,p=30*a,q=document.createElement("canvas");q.width=r;q.height=h;q.style.cssText="width:80px;height:48px";var b=q.getContext("2d");b.font="bold "+9*a+"px Helvetica,Arial,sans-serif";b.textBaseline="top";b.fillStyle=l;b.fillRect(0,0,r,h);b.fillStyle=f;b.fillText(e,t,v);
+1048576,d.jsHeapSizeLimit/1048576)}return c},update:function(){k=this.end()},domElement:c,setMode:u}};f.Panel=function(e,f,l){var c=Infinity,k=0,g=Math.round,a=Math.max(1,g(window.devicePixelRatio||1)),r=80*a,h=48*a,t=3*a,v=2*a,d=3*a,m=15*a,n=74*a,p=30*a,q=document.createElement("canvas");q.width=r;q.height=h;q.style.cssText="width:80px;height:48px";var b=q.getContext("2d");b.font="bold "+9*a+"px Helvetica,Arial,sans-serif";b.textBaseline="top";b.fillStyle=l;b.fillRect(0,0,r,h);b.fillStyle=f;b.fillText(e,t,v);
 b.fillRect(d,m,n,p);b.fillStyle=l;b.globalAlpha=.9;b.fillRect(d,m,n,p);return{dom:q,update:function(h,w){c=Math.min(c,h);k=Math.max(k,h);b.fillStyle=l;b.globalAlpha=1;b.fillRect(0,0,r,m);b.fillStyle=f;b.fillText(g(h)+" "+e+" ("+g(c)+"-"+g(k)+")",t,v);b.drawImage(q,d+a,m,n-a,p,d,m,n-a,p);b.fillRect(d+n-a,m,a,p);b.fillStyle=l;b.globalAlpha=.9;b.fillRect(d+n-a,m,a,g((1-h/w)*p))}}};return f});

@@ -1,4 +1,4 @@
-function relo(_pipaA, _pipaB){  
+export function relo(_pipaA, _pipaB){  
 
     //if(_pipaA.pipa == undefined || _pipaB.pipa == undefined) return undefined;
 
@@ -1389,7 +1389,7 @@ function relo(_pipaA, _pipaB){
 
 }
 
-function getTipoCorte(pipa, dir, dirAdversario){
+export function getTipoCorte(pipa, dir, dirAdversario){
     
     //←↑→↓↖↗↘↙
 
@@ -1410,19 +1410,19 @@ function getTipoCorte(pipa, dir, dirAdversario){
     return tipoDeCorte;
 }
 
-function disputarDescarregando(_pipaA, _pipaB){
+export function disputarDescarregando(_pipaA, _pipaB){
     var vencedor = ((_pipaA.descarregar >= _pipaB.descarregar) ? _pipaA : _pipaB);
     //console.log('Disputou descarregando, venceu: ', ((_pipaA.descarregar >= _pipaB.descarregar) ? 'pipaA' : 'pipaB'));
     return vencedor;
 }
 
-function disputarPuxao(_pipaA, _pipaB){
+export function disputarPuxao(_pipaA, _pipaB){
     var vencedor = ((_pipaA.puxar >= _pipaB.puxar) ? _pipaA : _pipaB);
     //console.log('Disputou puxando, venceu: ', ((_pipaA.puxar >= _pipaB.puxar) ? 'pipaA' : 'pipaB'));
     return vencedor;
 }
 
-function getDirPipa(pipa){
+export function getDirPipa(pipa){
 
     //console.log('pipa', pipa);
     

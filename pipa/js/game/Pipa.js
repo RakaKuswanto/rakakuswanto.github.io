@@ -1,5 +1,5 @@
 
-function Pipa(){
+export function Pipa(){
 
 	this.id = undefined;
 	this.idLinha = undefined;
@@ -514,6 +514,18 @@ function Pipa(){
 
 			instance.posMorreu.y -= 1;
 			instance.line.material.opacity -= 0.012;//instance.posMorreu.cont * 0.01;//setOpacity
+
+			// ===== SNAP OSCILLATION - efek tali putus bergetar =====
+			if(instance.snapOscAmp != undefined && instance.snapOscAmp > 0.05){
+				instance.snapOscTime  = (instance.snapOscTime  || 0) + 0.016;
+				var osc = instance.snapOscAmp * Math.exp(-instance.snapOscDecay * instance.snapOscTime)
+				           * Math.sin(instance.snapOscFreq * instance.snapOscTime);
+				instance.posMorreu.x = instance.snapOscBaseX + osc;
+				instance.posMorreu.z = instance.snapOscBaseZ + osc * 0.6;
+				instance.snapOscAmp  = instance.snapOscAmp * Math.exp(-instance.snapOscDecay * 0.016);
+			}
+			// ========================================================
+
 
 			if(instance.line.material.opacity < 0.7){
 				instance.line2.material.opacity = instance.line.material.opacity;
@@ -1208,7 +1220,7 @@ function Pipa(){
 		//======= MATAR PIPA SE PASSAR DO EXTREMO
 		var x = instance.pipa.position.x,
 		z = instance.pipa.position.z,
-		limiteX = 1900;//LIMITE EXTREMOS CENARIO - PIPA
+		limiteX = 1900,//LIMITE EXTREMOS CENARIO - PIPA
 		limiteZ = 900;//LIMITE EXTREMOS CENARIO - PIPA
 		//return (z < -limiteZ || z > limiteZ || x < -limiteX || x > limiteX);
 
@@ -1594,8 +1606,18 @@ function Pipa(){
 		instance.descarregar = 0;
 		instance.velZigzag = 0;
 
+		// ===== SNAP OSCILLATION: tali bergetar seperti tali putus nyata =====
+		instance.snapOscTime    = 0;      // timer akumulasi oscilasi
+		instance.snapOscAmp     = 18;     // amplitudo awal getaran
+		instance.snapOscFreq    = 22;     // frekuensi getaran (radian/s)
+		instance.snapOscDecay   = 3.5;    // seberapa cepat getaran meredam
+		instance.snapOscBaseX   = (instance.posMorreu) ? instance.posMorreu.x : 0;
+		instance.snapOscBaseZ   = (instance.posMorreu) ? instance.posMorreu.z : 0;
+		// =====================================================================
+
 		//return;
 		instance.setEffPipaCaindo();
+
 
 
 
@@ -1649,7 +1671,7 @@ function Pipa(){
 		
 		//NEW
 		var tot = 40;//parseInt(instance.pipa.position.y / 10),
-		arrBezier = [];
+		var arrBezier = [];
 		while(tot--){
 			arrBezier.push( { x:rand(de2ra(10), de2ra(90)), y:rand(de2ra(-50), de2ra(50)) } );
 		}

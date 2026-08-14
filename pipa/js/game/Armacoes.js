@@ -1,4 +1,4 @@
-var armacoes = [
+export var armacoes = [
     
     [
         0, 0, -0.3, 0, 0,
