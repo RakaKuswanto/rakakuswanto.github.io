@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GymQuest // Calisthenics Tracker</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#07080B">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian: {
+              950: '#07080B',
+              900: '#0C0E14',
+              850: '#11141D',
+              800: '#171B26',
+              750: '#1E2332',
+              700: '#272F42'
+            },
+            lime: {
+              neon: '#D4FF00',
+              glow: '#E2FF3B',
+              dim: '#9ABA00',
+              deep: '#1C2400',
+              muted: 'rgba(212, 255, 0, 0.12)'
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          boxShadow: {
+            'neon-glow': '0 0 25px rgba(212, 255, 0, 0.22)',
+            'neon-strong': '0 0 35px rgba(212, 255, 0, 0.45)',
+            'neon-soft': '0 0 12px rgba(212, 255, 0, 0.14)',
+            'card-luxury': '0 12px 35px -8px rgba(0, 0, 0, 0.85)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #07080B;
+      color: #E2E8F0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .timer-ring-stroke {
+      transition: stroke-dashoffset 0.25s linear;
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+    .modal-sheet-enter { animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes sheetSlideUp {
+      from { transform: translateY(100%); opacity: 0.6; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    .modal-fade-enter { animation: modalFade 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    @keyframes modalFade {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .card-reveal-anim {
+      animation: cardPopIn 0.65s cubic-bezier(0.19, 1, 0.22, 1) forwards;
+    }
+    @keyframes cardPopIn {
+      0% { opacity: 0; transform: scale(0.88) translateY(24px) rotateX(8deg); }
+      50% { transform: scale(1.02) translateY(-4px) rotateX(0deg); }
+      100% { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .scanner-beam {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #D4FF00, transparent);
+      box-shadow: 0 0 15px #D4FF00;
+      animation: scanCycle 2.8s ease-in-out infinite;
+      pointer-events: none;
+    }
+    @keyframes scanCycle {
+      0% { transform: translateY(0); opacity: 0; }
+      15% { opacity: 1; }
+      85% { opacity: 1; }
+      100% { transform: translateY(540px); opacity: 0; }
+    }
+
+    .shimmer-glow {
+      animation: pulseAura 3s ease-in-out infinite alternate;
+    }
+    @keyframes pulseAura {
+      0% { box-shadow: 0 0 20px rgba(212, 255, 0, 0.15); }
+      100% { box-shadow: 0 0 45px rgba(212, 255, 0, 0.35); }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-obsidian-950 font-sans antialiased text-slate-200 overflow-x-hidden pb-28">
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-sm transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none">
+    <div class="bg-obsidian-900/95 border border-lime-neon/40 shadow-neon-glow backdrop-blur-xl px-4 py-3 rounded-2xl flex items-center space-x-3">
+      <span class="w-2 h-2 rounded-full bg-lime-neon animate-ping"></span>
+      <p id="toastMessage" class="text-xs font-mono font-medium text-slate-200">GymQuest Telemetry</p>
+    </div>
+  </div>
+
+  <div class="max-w-md mx-auto min-h-screen flex flex-col px-4 pt-3">
+    
+    <!-- Header -->
+    <header class="flex items-center justify-between py-3 border-b border-white/5">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-xl bg-obsidian-900 border border-lime-neon/40 flex items-center justify-center font-mono font-black text-lime-neon text-xs tracking-tighter shadow-neon-soft">
+          GQ
+        </div>
+        <div>
+          <h1 class="text-xs font-extrabold text-white tracking-widest uppercase">GYMQUEST</h1>
+          <p class="text-[9px] font-mono text-slate-400">CALISTHENICS PROTOCOL</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <!-- Streak Indicator -->
+        <div class="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-obsidian-900 border border-white/5">
+          <span class="text-lime-neon text-xs">⚡</span>
+          <span id="headerStreakValue" class="text-xs font-mono font-bold text-white">0</span>
+          <span class="text-[9px] font-mono text-slate-400 uppercase">DAYS</span>
+        </div>
+
+        <!-- Audio Toggle Button -->
+        <button id="soundToggleBtn" class="w-8 h-8 rounded-xl bg-obsidian-900 border border-white/5 flex items-center justify-center text-slate-300 hover:text-lime-neon transition-colors" title="Audio Cue">
+          <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+            <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.784L4.82 13.5H2a1 1 0 01-1-1v-5a1 1 0 011-1h2.82l3.563-3.284a1 1 0 011-.14zM14.657 5.343a1 1 0 011.414 0A9.972 9.972 0 0119 12a9.972 9.972 0 01-2.929 6.657 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 12c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z"/>
+          </svg>
+        </button>
+
+        <!-- Settings Trigger -->
+        <button onclick="GQ.UI.openSettingsModal()" class="w-8 h-8 rounded-xl bg-obsidian-900 border border-white/5 flex items-center justify-center text-slate-300 hover:text-lime-neon transition-colors" title="Settings & Equipment">
+          <svg class="w-3.5 h-3.5 fill-none stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- TAB 1: WORKOUT -->
+    <main id="tab-workout" class="view-panel flex-1 flex flex-col space-y-4 pt-3">
+      
+      <!-- Session Header Card -->
+      <section class="rounded-3xl bg-gradient-to-b from-obsidian-900 to-obsidian-950 border border-white/5 p-4 relative overflow-hidden shadow-card-luxury">
+        <div class="flex items-center justify-between mb-2">
+          <span id="levelBadgeDisplay" class="text-[10px] font-mono font-bold tracking-wider text-lime-neon uppercase bg-lime-neon/10 px-2.5 py-0.5 rounded-full border border-lime-neon/20">
+            SELECT ROUTINE
+          </span>
+          <div class="flex items-center space-x-2">
+            <button onclick="GQ.UI.promptResetSession()" class="text-[9px] font-mono text-slate-400 hover:text-rose-400 flex items-center space-x-1 px-2 py-0.5 rounded-md bg-obsidian-850 border border-white/5 transition-colors">
+              <svg class="w-2.5 h-2.5 fill-none stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Reset Session</span>
+            </button>
+            <div class="flex items-center space-x-1.5 font-mono text-xs text-slate-300">
+              <span class="w-2 h-2 rounded-full bg-lime-neon animate-pulse"></span>
+              <span id="sessionTimerDisplay">00:00:00</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="sessionLevelTitle" class="text-base font-bold text-white tracking-tight">Ready to Train Today?</h2>
+        <p id="sessionLevelSubtitle" class="text-xs text-slate-400 mt-0.5">Select a structured protocol to begin</p>
+
+        <!-- Metrics Row -->
+        <div class="grid grid-cols-2 gap-2 mt-4 pt-3 border-t border-white/5">
+          <div>
+            <p class="text-[9px] font-mono text-slate-500 uppercase">Sets Completed</p>
+            <p id="progressSetsDisplay" class="text-sm font-mono font-bold text-white mt-0.5">0 / 0 Sets</p>
+          </div>
+          <div>
+            <p class="text-[9px] font-mono text-slate-500 uppercase">Total Volume (Reps/Sec)</p>
+            <p id="totalRepsDisplay" class="text-sm font-mono font-bold text-lime-neon mt-0.5">0 Vol</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Rest Timer Bar -->
+      <section class="rounded-2xl bg-obsidian-900 border border-white/5 p-3 flex items-center justify-between shadow-card-luxury">
+        <div class="flex items-center space-x-3">
+          <div class="relative w-11 h-11 flex items-center justify-center">
+            <svg class="w-full h-full" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="16" class="text-obsidian-800" stroke-width="3" stroke="currentColor" fill="transparent"/>
+              <circle id="restTimerCircle" cx="20" cy="20" r="16" class="timer-ring-stroke text-lime-neon" stroke-width="3" stroke-dasharray="100.5" stroke-dashoffset="0" stroke-linecap="round" stroke="currentColor" fill="transparent"/>
+            </svg>
+            <span id="restTimerCounterText" class="absolute text-[11px] font-mono font-bold text-white">90s</span>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-white">Rest Interval</p>
+            <p id="restTimerStatusText" class="text-[10px] font-mono text-slate-400">Recovery between sets</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-1.5">
+          <button onclick="GQ.Timer.setRestDuration(45)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors">45s</button>
+          <button onclick="GQ.Timer.setRestDuration(90)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-lime-neon border border-lime-neon/30">90s</button>
+          <button onclick="GQ.Timer.setRestDuration(120)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors">120s</button>
+          <button id="restTimerToggleBtn" class="w-8 h-8 rounded-xl bg-lime-neon text-black flex items-center justify-center ml-1 shadow-neon-glow font-bold active:scale-95 transition-transform">
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- Dynamic Exercises List Container -->
+      <div id="exerciseListRoot" class="space-y-3"></div>
+
+      <!-- Action Button: Finish Session -->
+      <div class="pt-2 pb-4">
+        <button onclick="GQ.UI.finishSession()" class="w-full py-3.5 rounded-2xl bg-lime-neon text-black font-bold font-mono text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-neon-glow hover:bg-lime-glow active:scale-[0.98] transition-all">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          <span>FINISH & GENERATE STORY CARD</span>
+        </button>
+      </div>
+
+    </main>
+
+    <!-- TAB 2: HEATMAP & KONSISTENSI -->
+    <main id="tab-consistency" class="view-panel hidden flex-1 flex flex-col space-y-4 pt-3">
+      
+      <section class="rounded-3xl bg-obsidian-900 border border-white/5 p-4 shadow-card-luxury">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">CALISTHENICS CONSISTENCY</h2>
+            <p class="text-[11px] text-slate-400">Activity Matrix (16 Weeks)</p>
+          </div>
+          <button onclick="GQ.UI.previewLatestRecap()" class="text-[10px] font-mono font-bold text-lime-neon bg-lime-neon/15 hover:bg-lime-neon/25 px-2.5 py-1 rounded-full border border-lime-neon/30 transition-all flex items-center space-x-1.5 active:scale-95 shadow-neon-soft">
+            <span class="w-1.5 h-1.5 rounded-full bg-lime-neon animate-pulse"></span>
+            <span>VIEW RECAP CARD</span>
+          </button>
+        </div>
+
+        <!-- Heatmap Grid -->
+        <div class="overflow-x-auto no-scrollbar py-2">
+          <div class="flex items-start space-x-1.5 min-w-[320px]">
+            <div class="grid grid-rows-7 gap-[3.5px] text-[8px] font-mono text-slate-500 pr-1 select-none">
+              <span>Mon</span>
+              <span class="opacity-0">Tue</span>
+              <span>Wed</span>
+              <span class="opacity-0">Thu</span>
+              <span>Fri</span>
+              <span class="opacity-0">Sat</span>
+              <span>Sun</span>
+            </div>
+            <div id="heatmapGridCells" class="grid grid-flow-col grid-rows-7 gap-[3.5px]"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-[9px] font-mono text-slate-500 pt-2 border-t border-white/5 mt-2">
+          <span>Rest</span>
+          <div class="flex items-center space-x-1">
+            <span class="w-2.5 h-2.5 rounded-sm bg-obsidian-800"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-[#1e2f0a]"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-[#4d750d]"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-[#8cb90e]"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-lime-neon"></span>
+          </div>
+          <span>Intense</span>
+        </div>
+      </section>
+
+      <!-- Stats Metrics -->
+      <section class="grid grid-cols-2 gap-3">
+        <div class="rounded-2xl bg-obsidian-900 border border-white/5 p-3.5">
+          <p class="text-[10px] font-mono text-slate-400 uppercase">Current Streak</p>
+          <div class="flex items-baseline space-x-1 mt-1">
+            <span id="statCurrentStreak" class="text-xl font-mono font-bold text-white">0</span>
+            <span class="text-[10px] font-mono text-lime-neon">DAYS</span>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1">Consecutive workout days</p>
+        </div>
+
+        <div class="rounded-2xl bg-obsidian-900 border border-white/5 p-3.5">
+          <p class="text-[10px] font-mono text-slate-400 uppercase">Completed Sessions</p>
+          <div class="flex items-baseline space-x-1 mt-1">
+            <span id="statTotalSessions" class="text-xl font-mono font-bold text-white">0</span>
+            <span class="text-[10px] font-mono text-lime-neon">SESSIONS</span>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1">Logged in GymQuest</p>
+        </div>
+      </section>
+
+      <!-- Muscle Anatomy Heatmap Section -->
+      <section class="rounded-3xl bg-obsidian-900 border border-white/5 p-4 shadow-card-luxury space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-2 border-b border-white/5 gap-2">
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <span class="w-1.5 h-1.5 rounded-full bg-lime-neon shadow-neon-soft"></span>
+              <h3 class="text-xs font-mono font-bold text-white uppercase tracking-wider">MUSCLE ANATOMY // VOLUME SPECTRUM</h3>
+            </div>
+            <p class="text-[10px] font-mono text-slate-400 mt-0.5">Biometric hypertrophy & recovery diagnostic</p>
+          </div>
+          
+          <div class="flex items-center space-x-2 self-start sm:self-auto">
+            <!-- Time Window Switcher (7D vs 30D) -->
+            <div class="flex items-center bg-obsidian-950 p-0.5 rounded-lg border border-white/5">
+              <button id="anatomyBtn7D" onclick="GQ.Anatomy.setDays(7)" class="px-2 py-0.5 text-[9px] font-mono text-lime-neon font-bold border border-lime-neon/40 rounded transition-all">7D</button>
+              <button id="anatomyBtn30D" onclick="GQ.Anatomy.setDays(30)" class="px-2 py-0.5 text-[9px] font-mono text-slate-500 rounded transition-all">30D</button>
+            </div>
+
+            <!-- View Switcher (Front vs Back) -->
+            <div class="flex items-center bg-obsidian-950 p-0.5 rounded-lg border border-white/5">
+              <button id="anatomyBtnFront" onclick="GQ.Anatomy.setView('front')" class="px-3 py-1 text-[10px] font-mono font-bold rounded-lg bg-lime-neon text-black shadow-neon-soft transition-all">FRONT</button>
+              <button id="anatomyBtnBack" onclick="GQ.Anatomy.setView('back')" class="px-3 py-1 text-[10px] font-mono font-bold rounded-lg bg-obsidian-850 text-slate-400 hover:text-white transition-all">BACK</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Mount Point for Anatomy SVG & Telemetry Cockpit -->
+        <div id="anatomyHeatmapContainer" class="min-h-[280px]"></div>
+      </section>
+
+      <!-- Recent Sessions Log -->
+      <section class="space-y-2">
+        <h3 class="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Recent Workout Log</h3>
+        <div id="recentSessionsContainer" class="space-y-2"></div>
+      </section>
+
+    </main>
+
+    <!-- TAB 3: SKILL TREE -->
+    <main id="tab-skills" class="view-panel hidden flex-1 flex flex-col space-y-4 pt-3">
+      <section class="rounded-3xl bg-obsidian-900 border border-white/5 p-4 flex items-center justify-between shadow-card-luxury">
+        <div>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider">SKILL TREE</h2>
+          <p class="text-[11px] text-slate-400">Mastery of Levers, Handstand, Push & Squats</p>
+        </div>
+        <span class="text-xs font-mono font-bold text-lime-neon bg-lime-neon/10 px-2.5 py-1 rounded-full border border-lime-neon/20">
+          ATHLETE MATRIX
+        </span>
+      </section>
+
+      <div id="skillsContainer" class="space-y-3"></div>
+    </main>
+
+  </div>
+
+  <!-- Bottom Navigation Dock -->
+  <nav class="fixed bottom-3 left-1/2 -translate-x-1/2 w-11/12 max-w-sm z-40">
+    <div class="bg-obsidian-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 shadow-card-luxury flex items-center justify-around">
+      <button onclick="GQ.UI.changeTab('workout')" id="nav-btn-workout" class="nav-dock-btn flex-1 flex flex-col items-center py-1.5 text-lime-neon transition-colors">
+        <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span class="text-[9px] font-mono font-bold uppercase tracking-wider">Workout</span>
+      </button>
+
+      <button onclick="GQ.UI.changeTab('consistency')" id="nav-btn-consistency" class="nav-dock-btn flex-1 flex flex-col items-center py-1.5 text-slate-400 hover:text-white transition-colors">
+        <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+        </svg>
+        <span class="text-[9px] font-mono font-bold uppercase tracking-wider">Activity</span>
+      </button>
+
+      <button onclick="GQ.UI.changeTab('skills')" id="nav-btn-skills" class="nav-dock-btn flex-1 flex flex-col items-center py-1.5 text-slate-400 hover:text-white transition-colors">
+        <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <span class="text-[9px] font-mono font-bold uppercase tracking-wider">Skills</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- MODAL: Custom Routine Creator -->
+  <div id="customRoutineModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-obsidian-900 border border-lime-neon/40 p-5 shadow-2xl modal-fade-enter max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-3">
+        <div class="flex items-center space-x-2">
+          <span class="w-6 h-6 rounded-lg bg-lime-neon text-black font-mono font-bold text-xs flex items-center justify-center">GQ</span>
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider">Create Custom Routine</h3>
+        </div>
+        <button onclick="GQ.UI.closeCustomRoutineModal()" class="w-6 h-6 rounded-full bg-obsidian-800 text-slate-400 hover:text-white flex items-center justify-center text-xs">✕</button>
+      </div>
+
+      <div class="space-y-3 flex-1 overflow-y-auto no-scrollbar pr-1">
+        <div>
+          <label class="text-[10px] font-mono text-slate-400 uppercase">Routine Name</label>
+          <input type="text" id="customRoutineNameInput" placeholder="e.g. Chest & Triceps Hypertrophy" class="w-full mt-1 px-3 py-2 rounded-xl bg-obsidian-850 border border-white/10 text-xs text-white focus:outline-none focus:border-lime-neon">
+        </div>
+
+        <div>
+          <label class="text-[10px] font-mono text-slate-400 uppercase">Short Description</label>
+          <input type="text" id="customRoutineDescInput" placeholder="e.g. Focused push-up & dumbbell isolation" class="w-full mt-1 px-3 py-2 rounded-xl bg-obsidian-850 border border-white/10 text-xs text-white focus:outline-none focus:border-lime-neon">
+        </div>
+
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-[10px] font-mono text-slate-400 uppercase">Selected Exercises (<span id="customSelectedCount">0</span>)</label>
+            <span class="text-[9px] font-mono text-lime-neon">Select below:</span>
+          </div>
+
+          <!-- Search or Category filter -->
+          <input type="text" id="customExerciseSearchInput" oninput="GQ.UI.filterCustomExercises(this.value)" placeholder="Search: push up, kickback, curl..." class="w-full px-3 py-1.5 rounded-xl bg-obsidian-850 border border-white/10 text-xs text-white mb-2 focus:outline-none focus:border-lime-neon">
+
+          <!-- Selectable exercise list -->
+          <div id="customExercisesPickerList" class="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar border border-white/5 rounded-2xl p-2 bg-obsidian-950/60"></div>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-white/5 flex items-center space-x-2">
+        <button onclick="GQ.UI.closeCustomRoutineModal()" class="flex-1 py-2.5 rounded-xl bg-obsidian-800 text-xs font-mono font-bold text-slate-300 hover:text-white">CANCEL</button>
+        <button onclick="GQ.UI.saveCustomRoutine()" class="flex-1 py-2.5 rounded-xl bg-lime-neon text-xs font-mono font-bold text-black shadow-neon-glow hover:bg-lime-glow">SAVE ROUTINE</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Isometric Hold Timer -->
+  <div id="holdTimerModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="w-full max-w-xs rounded-3xl bg-obsidian-900 border border-lime-neon/40 p-6 shadow-neon-glow modal-fade-enter text-center">
+      <p id="holdModalExName" class="text-xs font-mono font-bold text-lime-neon uppercase tracking-wider">Plank Hold</p>
+      <div class="my-6">
+        <span id="holdModalCounter" class="text-6xl font-mono font-black text-white tracking-tighter">30s</span>
+        <p class="text-[10px] font-mono text-slate-400 mt-2">Brace core & maintain steady breathing</p>
+      </div>
+      <button onclick="GQ.UI.closeHoldModal()" class="w-full py-2.5 rounded-xl bg-obsidian-800 text-xs font-mono font-bold text-slate-300 hover:text-white">
+        CANCEL
+      </button>
+    </div>
+  </div>
+
+  <!-- MODAL: Exercise Swap Drawer -->
+  <div id="exerciseSwapDrawer" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-end justify-center">
+    <div class="w-full max-w-md bg-obsidian-900 border-t border-white/10 rounded-t-3xl p-5 max-h-[85vh] flex flex-col modal-sheet-enter shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <div>
+          <span id="drawerCategoryTag" class="text-[9px] font-mono text-lime-neon uppercase tracking-wider bg-lime-neon/10 px-2 py-0.5 rounded border border-lime-neon/20">
+            SLOT: PUSH
+          </span>
+          <h3 class="text-sm font-bold text-white mt-1">Select Movement Variation</h3>
+        </div>
+        <button onclick="GQ.UI.closeSwapDrawer()" class="w-7 h-7 rounded-full bg-obsidian-800 text-slate-400 hover:text-white flex items-center justify-center text-xs">✕</button>
+      </div>
+
+      <div id="drawerVariationsList" class="flex-1 overflow-y-auto no-scrollbar py-2 space-y-2"></div>
+
+      <div class="pt-2 border-t border-white/5">
+        <button onclick="GQ.UI.closeSwapDrawer()" class="w-full py-2.5 rounded-xl bg-obsidian-800 text-xs font-mono font-bold text-slate-300 hover:text-white">
+          CLOSE CATALOG
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Story Recap Card (9:16 Canvas & WebGL Shader) -->
+  <div id="gymQuestRecapModal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-sm flex flex-col items-center">
+      <div class="w-full flex items-center justify-between mb-3 text-slate-400">
+        <span class="text-[10px] font-mono font-bold tracking-widest text-lime-neon uppercase flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-lime-neon mr-1.5 shadow-neon-soft"></span>
+          OFFICIAL GYMQUEST RECAP CARD
+        </span>
+        <button onclick="GQ.UI.closeRecapModal()" class="w-7 h-7 rounded-full bg-obsidian-850 text-slate-300 flex items-center justify-center hover:text-white text-sm">✕</button>
+      </div>
+
+      <!-- 9:16 Card Container with WebGL Shader Background -->
+      <div id="gymQuestCardPreview" class="w-full aspect-[9/15] rounded-3xl border border-white/10 p-5 flex flex-col justify-between shadow-2xl relative overflow-hidden select-none bg-obsidian-950">
+        
+        <!-- WebGL Cyber Shader Background Layer -->
+        <canvas id="recapShaderCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-0"></canvas>
+
+        <!-- Subtle ambient vignette overlay ensuring text contrast without dimming shader -->
+        <div class="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/50 pointer-events-none z-0"></div>
+
+        <!-- Top Header of Card -->
+        <div class="relative z-10">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-lg bg-lime-neon text-black font-mono font-black text-[11px] flex items-center justify-center shadow-neon-soft">GQ</span>
+              <div>
+                <p class="text-[10px] font-mono font-black text-white tracking-widest leading-none uppercase">GYMQUEST</p>
+                <p id="cardProtocolLevelSub" class="text-[8px] font-mono text-lime-neon uppercase mt-0.5">CALISTHENICS PROTOCOL</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p id="cardDateText" class="text-[10px] font-mono font-bold text-lime-neon">OCT 7, 2026</p>
+              <p id="cardTimeText" class="text-[8px] font-mono text-slate-500">VERIFIED LOG</p>
+            </div>
+          </div>
+
+          <!-- Headline -->
+          <div class="mt-4">
+            <span class="text-[9px] font-mono uppercase tracking-widest text-lime-neon bg-lime-neon/10 px-2 py-0.5 rounded border border-lime-neon/20">
+              MISSION COMPLETED
+            </span>
+            <h3 id="cardSessionHeadline" class="text-xl font-bold text-white mt-1.5 leading-tight tracking-tight">Workout Session</h3>
+            <p id="cardAthleteLevelDesc" class="text-[11px] text-slate-400 mt-0.5">Athlete • GymQuest Division</p>
+          </div>
+        </div>
+
+        <!-- Dynamic Biometric Workload & Intensity Telemetry Spectrum Section -->
+        <div id="cardWorkloadTelemetryContainer" class="relative z-10 my-1 bg-black/40 backdrop-blur-sm border border-white/5 rounded-2xl p-2.5">
+          <!-- Dynamically populated high-precision SVG chart based on actual session sets -->
+        </div>
+
+        <!-- Telemetry Metrics Bar -->
+        <div class="relative z-10 grid grid-cols-3 gap-2 py-3 border-y border-white/10 my-1 bg-black/40 backdrop-blur-sm rounded-xl px-2">
+          <div>
+            <p class="text-[8px] font-mono text-slate-400 uppercase">DURATION</p>
+            <p id="cardDurationVal" class="text-lg font-mono font-black text-white mt-0.5">35<span class="text-[10px] font-normal text-slate-400 ml-0.5">MIN</span></p>
+          </div>
+          <div>
+            <p class="text-[8px] font-mono text-slate-400 uppercase">VOLUME</p>
+            <p id="cardRepsVal" class="text-lg font-mono font-black text-lime-neon mt-0.5">64<span class="text-[10px] font-normal text-slate-400 ml-0.5">VOL</span></p>
+          </div>
+          <div>
+            <p class="text-[8px] font-mono text-slate-400 uppercase">STREAK</p>
+            <p id="cardStreakVal" class="text-lg font-mono font-black text-white mt-0.5">1<span class="text-[10px] font-normal text-lime-neon ml-0.5">D</span></p>
+          </div>
+        </div>
+
+        <!-- Conquered Movements Pills -->
+        <div class="relative z-10">
+          <p class="text-[8px] font-mono text-slate-400 uppercase tracking-wider mb-1.5">MOVEMENTS CONQUERED:</p>
+          <div id="cardExercisesListPills" class="flex flex-wrap gap-1.5 max-h-24 overflow-hidden">
+            <!-- Dynamic pills inserted here -->
+          </div>
+        </div>
+
+        <!-- Official Footer Stamp -->
+        <div class="relative z-10 pt-2 border-t border-white/10 flex items-center justify-between text-[8px] font-mono text-slate-500">
+          <div class="flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full bg-lime-neon"></span>
+            <span class="text-slate-300 font-semibold tracking-wider">GYMQUEST ATHLETICS // VERIFIED</span>
+          </div>
+          <span class="tracking-widest">#GYMQUEST</span>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons for Downloading HD & Sharing -->
+      <div class="w-full flex items-center space-x-2 mt-4">
+        <button onclick="GQ.UI.downloadRecapPNG()" class="flex-1 py-3 rounded-2xl bg-lime-neon text-black font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-neon-glow active:scale-95 transition-transform">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          <span>DOWNLOAD HD CARD (PNG)</span>
+        </button>
+
+        <button onclick="GQ.UI.shareRecapCard()" class="px-4 py-3 rounded-2xl bg-obsidian-800 border border-white/10 text-white font-mono font-bold text-xs flex items-center justify-center space-x-1 hover:border-lime-neon transition-colors active:scale-95">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/></svg>
+          <span>SHARE</span>
+        </button>
+      </div>
+      <p class="text-[10px] font-mono text-slate-500 mt-2 text-center">9:16 high-resolution format ready for Instagram Stories & Status</p>
+    </div>
+  </div>
+
+  <!-- MODAL: Settings & Equipment Management -->
+  <div id="dataManagementModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-obsidian-900 border border-white/10 p-5 shadow-2xl modal-fade-enter max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+        <div class="flex items-center space-x-2">
+          <span class="w-6 h-6 rounded-lg bg-obsidian-800 border border-lime-neon/40 text-lime-neon font-mono font-bold text-xs flex items-center justify-center">GQ</span>
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider">Settings & Equipment</h3>
+        </div>
+        <button onclick="GQ.UI.closeSettingsModal()" class="w-6 h-6 rounded-full bg-obsidian-800 text-slate-400 hover:text-white flex items-center justify-center text-xs">✕</button>
+      </div>
+
+      <!-- Equipment Checklist -->
+      <div class="mb-4">
+        <p class="text-xs font-bold text-white mb-1">Home Equipment:</p>
+        <p class="text-[10px] text-slate-400 mb-2">Select gear you own to automatically filter suitable exercise progressions.</p>
+        <div id="settingsEqList" class="space-y-1.5"></div>
+      </div>
+
+      <!-- Data Backup & CSV Export -->
+      <div class="space-y-2 border-t border-white/5 pt-3">
+        <p class="text-xs font-bold text-white mb-1">Backup & Export:</p>
+
+        <button onclick="GQ.Store.exportJSON()" class="w-full text-left p-2.5 rounded-xl bg-obsidian-850 hover:bg-obsidian-800 border border-white/5 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-lime-neon">Backup Data (JSON)</p>
+            <p class="text-[10px] text-slate-400">Save full workout history to a secure JSON file.</p>
+          </div>
+          <span class="text-xs">💾</span>
+        </button>
+
+        <label class="w-full text-left p-2.5 rounded-xl bg-obsidian-850 hover:bg-obsidian-800 border border-white/5 flex items-center justify-between cursor-pointer">
+          <div>
+            <p class="text-xs font-bold text-white">Restore Data (JSON)</p>
+            <p class="text-[10px] text-slate-400">Load a previous JSON backup file from your device.</p>
+          </div>
+          <span class="text-xs">📂</span>
+          <input type="file" accept=".json" onchange="GQ.UI.handleFileRestore(this)" class="hidden">
+        </label>
+
+        <button onclick="GQ.Store.exportCSV()" class="w-full text-left p-2.5 rounded-xl bg-obsidian-850 hover:bg-obsidian-800 border border-white/5 flex items-center justify-between">
+          <div>
+            <p class="text-xs font-bold text-white">Export to CSV / Excel</p>
+            <p class="text-[10px] text-slate-400">Analyze sets, reps, and volume in spreadsheet tools.</p>
+          </div>
+          <span class="text-xs">📊</span>
+        </button>
+      </div>
+
+      <!-- Factory Reset -->
+      <div class="mt-4 border-t border-white/5 pt-3">
+        <button onclick="GQ.UI.promptFactoryReset()" class="w-full p-2.5 rounded-xl bg-rose-950/20 hover:bg-rose-950/40 border border-rose-500/20 text-rose-400 text-xs font-bold flex items-center justify-between">
+          <span>Delete All Data</span>
+          <span class="text-[10px] font-mono">FACTORY RESET</span>
+        </button>
+      </div>
+
+      <div class="mt-4 pt-3 border-t border-white/5 flex justify-end">
+        <button onclick="GQ.UI.closeSettingsModal()" class="px-4 py-2 rounded-xl bg-obsidian-800 text-xs font-mono font-bold text-slate-300 hover:text-white">
+          SAVE & CLOSE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Onboarding Initial Setup -->
+  <div id="onboardingModal" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-obsidian-900 border border-lime-neon/40 p-5 shadow-neon-glow modal-fade-enter">
+      <div class="flex items-center space-x-2 mb-3">
+        <span class="w-7 h-7 rounded-xl bg-lime-neon text-black font-mono font-black text-xs flex items-center justify-center">GQ</span>
+        <div>
+          <h3 class="text-sm font-bold text-white uppercase tracking-wider">Welcome to GymQuest</h3>
+          <p class="text-[10px] font-mono text-slate-400">Calisthenics & Strength Protocol</p>
+        </div>
+      </div>
+
+      <p class="text-xs text-slate-300 mb-3">Set up your athletic profile to personalize workouts:</p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="text-[10px] font-mono text-slate-400 uppercase">Athlete Name / Call Sign</label>
+          <input type="text" id="onboardingNameInput" placeholder="e.g. Alex" class="w-full mt-1 px-3 py-2 rounded-xl bg-obsidian-850 border border-white/10 text-xs text-white focus:outline-none focus:border-lime-neon">
+        </div>
+
+        <div>
+          <label class="text-[10px] font-mono text-slate-400 uppercase">Current Experience Level</label>
+          <select id="onboardingTierSelect" class="w-full mt-1 px-3 py-2 rounded-xl bg-obsidian-850 border border-white/10 text-xs text-white focus:outline-none focus:border-lime-neon">
+            <option value="1">Foundation (Beginner / under 10 push-ups)</option>
+            <option value="2">Momentum (10+ push-ups & 20+ squats)</option>
+            <option value="3">Apex (Handstand, pistol squat, levers)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-[10px] font-mono text-slate-400 uppercase">Current Dumbbell Weight (kg)</label>
+          <input type="number" id="onboardingDbKgInput" value="5" min="1" max="50" class="w-full mt-1 px-3 py-2 rounded-xl bg-obsidian-850 border border-white/10 text-xs text-white focus:outline-none focus:border-lime-neon">
+        </div>
+
+        <div>
+          <label class="text-[10px] font-mono text-slate-400 uppercase">Available Equipment:</label>
+          <div id="onboardingEqList" class="space-y-1.5 mt-1.5 max-h-36 overflow-y-auto no-scrollbar"></div>
+        </div>
+      </div>
+
+      <div class="mt-5">
+        <button onclick="GQ.UI.saveOnboarding()" class="w-full py-3 rounded-2xl bg-lime-neon text-black font-mono font-bold text-xs uppercase tracking-wider shadow-neon-glow hover:bg-lime-glow active:scale-95 transition-transform">
+          START TRAINING PROTOCOL
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Confirmation Dialog -->
+  <div id="confirmActionModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="w-full max-w-xs rounded-3xl bg-obsidian-900 border border-rose-500/30 p-5 shadow-2xl modal-fade-enter text-center">
+      <div class="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 mx-auto flex items-center justify-center text-lg mb-3">⚠️</div>
+      <h4 id="confirmDialogTitle" class="text-xs font-bold text-white uppercase tracking-wider">Confirm Action</h4>
+      <p id="confirmDialogDescription" class="text-[11px] text-slate-400 mt-1 mb-4 leading-relaxed">This action cannot be undone.</p>
+
+      <div class="flex items-center space-x-2">
+        <button onclick="GQ.UI.closeConfirmModal()" class="flex-1 py-2.5 rounded-xl bg-obsidian-800 text-xs font-mono text-slate-300 hover:text-white">CANCEL</button>
+        <button id="confirmExecuteBtn" class="flex-1 py-2.5 rounded-xl bg-rose-500 text-xs font-mono font-bold text-black shadow-lg">CONFIRM</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modular Scripts Architecture -->
+  <script src="js/util.js"></script>
+  <script src="js/catalog.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/stats.js"></script>
+  <script src="js/timer.js"></script>
+  <script src="js/shader.js"></script>
+  <script src="js/card.js"></script>
+  <script src="js/anatomy.js"></script>
+  <script src="js/app.js"></script>
+
+  <script>
+    // Additional helpers on UI
+    GQ.UI.handleFileRestore = function(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          GQ.Store.importJSON(e.target.result);
+          GQ.UI.closeSettingsModal();
+          GQ.UI.renderAll();
+          GQ.UI.toast('Workout data successfully restored!');
+          GQ.Timer.playSuccessChime();
+        } catch (err) {
+          GQ.UI.toast('Failed to restore: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    };
+
+    GQ.UI.promptFactoryReset = function() {
+      GQ.UI.closeSettingsModal();
+      GQ.UI.showConfirmDialog(
+        'Delete All Workout Data?',
+        'All workout history and configuration will be permanently erased from this browser.',
+        () => {
+          GQ.Store.resetAll();
+          GQ.UI.renderAll();
+          GQ.UI.toast('All GymQuest data has been cleared.');
+        }
+      );
+    };
+
+    // Service Worker registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+
+    // Initialize application on load
+    window.addEventListener('DOMContentLoaded', () => {
+      GQ.UI.init();
+    });
+  </script>
+</body>
+</html>

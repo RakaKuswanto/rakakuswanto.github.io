@@ -1,0 +1,1698 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>GymQuest // Calisthenics Tracker</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            obsidian: {
+              950: '#07080B',
+              900: '#0C0E14',
+              850: '#11141D',
+              800: '#171B26',
+              750: '#1E2332',
+              700: '#272F42'
+            },
+            lime: {
+              neon: '#D4FF00',
+              glow: '#E2FF3B',
+              dim: '#9ABA00',
+              deep: '#1C2400',
+              muted: 'rgba(212, 255, 0, 0.12)'
+            }
+          },
+          fontFamily: {
+            sans: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          boxShadow: {
+            'neon-glow': '0 0 25px rgba(212, 255, 0, 0.22)',
+            'neon-strong': '0 0 35px rgba(212, 255, 0, 0.45)',
+            'neon-soft': '0 0 12px rgba(212, 255, 0, 0.14)',
+            'card-luxury': '0 12px 35px -8px rgba(0, 0, 0, 0.85)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #07080B;
+      color: #E2E8F0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .timer-ring-stroke {
+      transition: stroke-dashoffset 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      transform: rotate(-90deg);
+      transform-origin: 50% 50%;
+    }
+
+    .modal-sheet-enter {
+      animation: sheetSlideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes sheetSlideUp {
+      from { transform: translateY(100%); opacity: 0.6; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-fade-enter {
+      animation: modalFade 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    @keyframes modalFade {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  </style>
+</head>
+<body class="min-h-screen bg-obsidian-950 font-sans antialiased text-slate-200 overflow-x-hidden pb-28">
+
+  <div id="toastNotification" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-11/12 max-w-sm transition-all duration-300 transform -translate-y-20 opacity-0 pointer-events-none">
+    <div class="bg-obsidian-900/95 border border-lime-neon/40 shadow-neon-glow backdrop-blur-xl px-4 py-3 rounded-2xl flex items-center space-x-3">
+      <span class="w-2 h-2 rounded-full bg-lime-neon animate-ping"></span>
+      <p id="toastMessage" class="text-xs font-mono font-medium text-slate-200">GymQuest Telemetry</p>
+    </div>
+  </div>
+
+  <div class="max-w-md mx-auto min-h-screen flex flex-col px-4 pt-3">
+    
+    <header class="flex items-center justify-between py-3 border-b border-white/5">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-xl bg-obsidian-900 border border-lime-neon/40 flex items-center justify-center font-mono font-black text-lime-neon text-xs tracking-tighter shadow-neon-soft">
+          GQ
+        </div>
+        <div>
+          <h1 class="text-xs font-extrabold text-white tracking-widest uppercase">GYMQUEST</h1>
+          <p class="text-[9px] font-mono text-slate-400">CALISTHENICS PROTOCOL</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <!-- Streak Indicator -->
+        <div class="flex items-center space-x-1 px-2.5 py-1 rounded-full bg-obsidian-900 border border-white/5">
+          <span class="text-lime-neon text-xs">⚡</span>
+          <span id="headerStreakValue" class="text-xs font-mono font-bold text-white">18</span>
+          <span class="text-[9px] font-mono text-slate-400 uppercase">HARI</span>
+        </div>
+
+        <!-- Audio Toggle Button -->
+        <button id="soundToggleBtn" onclick="toggleAudio()" class="w-8 h-8 rounded-xl bg-obsidian-900 border border-white/5 flex items-center justify-center text-slate-300 hover:text-lime-neon transition-colors" title="Audio Cue">
+          <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 20 20">
+            <path d="M9.383 3.076A1 1 0 0110 4v12a1 1 0 01-1.617.784L4.82 13.5H2a1 1 0 01-1-1v-5a1 1 0 011-1h2.82l3.563-3.284a1 1 0 011-.14zM14.657 5.343a1 1 0 011.414 0A9.972 9.972 0 0119 12a9.972 9.972 0 01-2.929 6.657 1 1 0 01-1.414-1.414A7.971 7.971 0 0017 12c0-2.21-.894-4.208-2.343-5.657a1 1 0 010-1.414z"/>
+          </svg>
+        </button>
+
+        <!-- Settings & Data Management Trigger -->
+        <button onclick="openDataManagementModal()" class="w-8 h-8 rounded-xl bg-obsidian-900 border border-white/5 flex items-center justify-center text-slate-300 hover:text-lime-neon transition-colors" title="Pengaturan & Reset Data">
+          <svg class="w-3.5 h-3.5 fill-none stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <main id="tab-workout" class="view-panel flex-1 flex flex-col space-y-4 pt-3">
+      
+      <!-- Calisthenics Level Segmented Controller -->
+      <section class="rounded-2xl bg-obsidian-900 border border-white/5 p-1.5 flex items-center justify-between">
+        <button id="lvl-btn-foundation" onclick="switchLevelProtocol('foundation')" class="flex-1 py-2 rounded-xl text-center font-mono text-[11px] font-bold tracking-wider transition-all bg-lime-neon text-black shadow-neon-soft">
+          FOUNDATION
+        </button>
+        <button id="lvl-btn-momentum" onclick="switchLevelProtocol('momentum')" class="flex-1 py-2 rounded-xl text-center font-mono text-[11px] font-bold tracking-wider transition-all text-slate-400 hover:text-white">
+          MOMENTUM
+        </button>
+        <button id="lvl-btn-apex" onclick="switchLevelProtocol('apex')" class="flex-1 py-2 rounded-xl text-center font-mono text-[11px] font-bold tracking-wider transition-all text-slate-400 hover:text-white">
+          APEX PRO
+        </button>
+      </section>
+
+      <section class="rounded-3xl bg-gradient-to-b from-obsidian-900 to-obsidian-950 border border-white/5 p-4 relative overflow-hidden shadow-card-luxury">
+        <div class="flex items-center justify-between mb-2">
+          <span id="levelBadgeDisplay" class="text-[10px] font-mono font-bold tracking-wider text-lime-neon uppercase bg-lime-neon/10 px-2.5 py-0.5 rounded-full border border-lime-neon/20">
+            FOUNDATION PROTOCOL
+          </span>
+          <div class="flex items-center space-x-2">
+            <!-- Reset Session Button -->
+            <button onclick="promptResetSession()" class="text-[9px] font-mono text-slate-400 hover:text-rose-400 flex items-center space-x-1 px-2 py-0.5 rounded-md bg-obsidian-850 border border-white/5 transition-colors">
+              <svg class="w-2.5 h-2.5 fill-none stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>Reset Sesi</span>
+            </button>
+            <div class="flex items-center space-x-1.5 font-mono text-xs text-slate-300">
+              <span class="w-2 h-2 rounded-full bg-lime-neon animate-pulse"></span>
+              <span id="sessionTimerDisplay">00:15:20</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="sessionLevelTitle" class="text-base font-bold text-white tracking-tight">Anatomical Adaptation & Joint Prep</h2>
+        <p id="sessionLevelSubtitle" class="text-xs text-slate-400 mt-0.5">Adaptasi tendon, skapula, dan kontrol beban tubuh awal</p>
+
+        <!-- Metrics Row -->
+        <div class="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-white/5">
+          <div>
+            <p class="text-[9px] font-mono text-slate-500 uppercase">Set Selesai</p>
+            <p id="progressSetsDisplay" class="text-sm font-mono font-bold text-white mt-0.5">0 / 12 Set</p>
+          </div>
+          <div>
+            <p class="text-[9px] font-mono text-slate-500 uppercase">Total Reps/Hold</p>
+            <p id="totalRepsDisplay" class="text-sm font-mono font-bold text-lime-neon mt-0.5">0 Vol</p>
+          </div>
+          <div>
+            <p class="text-[9px] font-mono text-slate-500 uppercase">Target RPE</p>
+            <p id="targetRpeDisplay" class="text-sm font-mono font-bold text-white mt-0.5">7.5 / 10</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="rounded-2xl bg-obsidian-900 border border-white/5 p-3 flex items-center justify-between shadow-card-luxury">
+        <div class="flex items-center space-x-3">
+          <div class="relative w-11 h-11 flex items-center justify-center">
+            <svg class="w-full h-full" viewBox="0 0 40 40">
+              <circle cx="20" cy="20" r="16" class="text-obsidian-800" stroke-width="3" stroke="currentColor" fill="transparent"/>
+              <circle id="restTimerCircle" cx="20" cy="20" r="16" class="timer-ring-stroke text-lime-neon" stroke-width="3" stroke-dasharray="100.5" stroke-dashoffset="0" stroke-linecap="round" stroke="currentColor" fill="transparent"/>
+            </svg>
+            <span id="restTimerCounterText" class="absolute text-[11px] font-mono font-bold text-white">60s</span>
+          </div>
+          <div>
+            <p class="text-xs font-bold text-white">Rest Interval</p>
+            <p id="restTimerStatusText" class="text-[10px] font-mono text-slate-400">Jeda istirahat antar-set</p>
+          </div>
+        </div>
+
+        <div class="flex items-center space-x-1.5">
+          <button onclick="setRestDuration(30)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors">30s</button>
+          <button onclick="setRestDuration(60)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-lime-neon border border-lime-neon/30">60s</button>
+          <button onclick="setRestDuration(90)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors">90s</button>
+          <button id="restTimerToggleBtn" onclick="toggleRestCountdown()" class="w-8 h-8 rounded-xl bg-lime-neon text-black flex items-center justify-center ml-1 shadow-neon-glow font-bold active:scale-95 transition-transform">
+            <svg id="restTimerIcon" class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <div id="exerciseListRoot" class="space-y-3">
+        <!-- Rendered dynamically by JavaScript -->
+      </div>
+
+      <!-- Action Button: Complete & Generate GymQuest Session Card -->
+      <div class="pt-2 pb-4">
+        <button onclick="finishSessionAndShowCard()" class="w-full py-3.5 rounded-2xl bg-lime-neon text-black font-bold font-mono text-xs uppercase tracking-wider flex items-center justify-center space-x-2 shadow-neon-glow hover:bg-lime-glow active:scale-[0.98] transition-all">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+          <span>SELESAIKAN & BUAT KARTU GYMQUEST</span>
+        </button>
+      </div>
+
+    </main>
+
+    <main id="tab-consistency" class="view-panel hidden flex-1 flex flex-col space-y-4 pt-3">
+      
+      <!-- Consistency Summary -->
+      <section class="rounded-3xl bg-obsidian-900 border border-white/5 p-4 shadow-card-luxury">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h2 class="text-sm font-bold text-white uppercase tracking-wider">KONSISTENSI KALISTENIK</h2>
+            <p class="text-[11px] text-slate-400">Matriks Latihan 14 Minggu</p>
+          </div>
+          <span class="text-xs font-mono font-bold text-lime-neon bg-lime-neon/10 px-2.5 py-1 rounded-full border border-lime-neon/20">
+            KONTINUITAS TINGGI
+          </span>
+        </div>
+
+        <!-- Heatmap Grid -->
+        <div class="overflow-x-auto no-scrollbar py-2">
+          <div class="flex items-start space-x-1.5 min-w-[300px]">
+            <!-- Day Labels -->
+            <div class="grid grid-rows-7 gap-[3.5px] text-[8px] font-mono text-slate-500 pr-1 select-none">
+              <span>Sen</span>
+              <span class="opacity-0">Sel</span>
+              <span>Rab</span>
+              <span class="opacity-0">Kam</span>
+              <span>Jum</span>
+              <span class="opacity-0">Sab</span>
+              <span>Min</span>
+            </div>
+
+            <!-- Heatmap Cells -->
+            <div id="heatmapGridCells" class="grid grid-flow-col grid-rows-7 gap-[3.5px]">
+              <!-- Populated by JS -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Heatmap Legend -->
+        <div class="flex items-center justify-between text-[9px] font-mono text-slate-500 pt-2 border-t border-white/5 mt-2">
+          <span>Istirahat</span>
+          <div class="flex items-center space-x-1">
+            <span class="w-2.5 h-2.5 rounded-sm bg-obsidian-800"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-[#1e2f0a]"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-[#4d750d]"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-[#8cb90e]"></span>
+            <span class="w-2.5 h-2.5 rounded-sm bg-lime-neon"></span>
+          </div>
+          <span>Intensif</span>
+        </div>
+      </section>
+
+      <!-- Consistency Metrics -->
+      <section class="grid grid-cols-2 gap-3">
+        <div class="rounded-2xl bg-obsidian-900 border border-white/5 p-3.5">
+          <p class="text-[10px] font-mono text-slate-400 uppercase">Current Streak</p>
+          <div class="flex items-baseline space-x-1 mt-1">
+            <span id="statCurrentStreak" class="text-xl font-mono font-bold text-white">18</span>
+            <span class="text-[10px] font-mono text-lime-neon">HARI</span>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1">Disiplin latihan terjaga</p>
+        </div>
+
+        <div class="rounded-2xl bg-obsidian-900 border border-white/5 p-3.5">
+          <p class="text-[10px] font-mono text-slate-400 uppercase">Total Sesi Selesai</p>
+          <div class="flex items-baseline space-x-1 mt-1">
+            <span id="statTotalSessions" class="text-xl font-mono font-bold text-white">46</span>
+            <span class="text-[10px] font-mono text-lime-neon">SESI</span>
+          </div>
+          <p class="text-[10px] text-slate-500 mt-1">Tercatat di GymQuest</p>
+        </div>
+      </section>
+
+      <!-- Recent Sessions Log -->
+      <section class="space-y-2">
+        <h3 class="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">Log Sesi GymQuest</h3>
+        <div id="recentSessionsContainer" class="space-y-2">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+
+    </main>
+
+    <main id="tab-skills" class="view-panel hidden flex-1 flex flex-col space-y-4 pt-3">
+      
+      <section class="rounded-3xl bg-obsidian-900 border border-white/5 p-4 flex items-center justify-between shadow-card-luxury">
+        <div>
+          <h2 class="text-sm font-bold text-white uppercase tracking-wider">POHON KEMAMPUAN</h2>
+          <p class="text-[11px] text-slate-400">Masteri Lever, Press & Isometric</p>
+        </div>
+        <span class="text-xs font-mono font-bold text-lime-neon bg-lime-neon/10 px-2.5 py-1 rounded-full border border-lime-neon/20">
+          ATHLETE MATRIX
+        </span>
+      </section>
+
+      <div id="skillsContainer" class="space-y-3">
+        <!-- Populated by JS -->
+      </div>
+
+    </main>
+
+  </div>
+
+  <nav class="fixed bottom-3 left-1/2 -translate-x-1/2 w-11/12 max-w-sm z-40">
+    <div class="bg-obsidian-900/90 backdrop-blur-xl border border-white/10 rounded-2xl p-1.5 shadow-card-luxury flex items-center justify-around">
+      
+      <button onclick="changeActiveTab('workout')" id="nav-btn-workout" class="nav-dock-btn flex-1 flex flex-col items-center py-1.5 text-lime-neon transition-colors">
+        <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+        </svg>
+        <span class="text-[9px] font-mono font-bold uppercase tracking-wider">Latihan</span>
+      </button>
+
+      <button onclick="changeActiveTab('consistency')" id="nav-btn-consistency" class="nav-dock-btn flex-1 flex flex-col items-center py-1.5 text-slate-400 hover:text-white transition-colors">
+        <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+        </svg>
+        <span class="text-[9px] font-mono font-bold uppercase tracking-wider">Heatmap</span>
+      </button>
+
+      <button onclick="changeActiveTab('skills')" id="nav-btn-skills" class="nav-dock-btn flex-1 flex flex-col items-center py-1.5 text-slate-400 hover:text-white transition-colors">
+        <svg class="w-4 h-4 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        <span class="text-[9px] font-mono font-bold uppercase tracking-wider">Skills</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <div id="exerciseSwapDrawer" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-end justify-center">
+    <div class="w-full max-w-md bg-obsidian-900 border-t border-white/10 rounded-t-3xl p-5 max-h-[85vh] flex flex-col modal-sheet-enter shadow-2xl">
+      
+      <!-- Drawer Handle & Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-white/10">
+        <div>
+          <span id="drawerCategoryTag" class="text-[9px] font-mono text-lime-neon uppercase tracking-wider bg-lime-neon/10 px-2 py-0.5 rounded border border-lime-neon/20">
+            SLOT: HORIZONTAL PUSH
+          </span>
+          <h3 class="text-sm font-bold text-white mt-1">Pilih Variasi Kalistenik</h3>
+        </div>
+        <button onclick="closeSwapDrawer()" class="w-7 h-7 rounded-full bg-obsidian-800 text-slate-400 hover:text-white flex items-center justify-center text-xs">
+          ✕
+        </button>
+      </div>
+
+      <!-- Progression Level Legend -->
+      <div class="flex items-center space-x-2 py-2 text-[10px] font-mono text-slate-400 border-b border-white/5">
+        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>Foundation</span></span>
+        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-amber-400"></span><span>Momentum</span></span>
+        <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-rose-400"></span><span>Apex</span></span>
+      </div>
+
+      <!-- Drawer Variations List Container -->
+      <div id="drawerVariationsList" class="flex-1 overflow-y-auto no-scrollbar py-2 space-y-2">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="pt-2 border-t border-white/5">
+        <button onclick="closeSwapDrawer()" class="w-full py-2.5 rounded-xl bg-obsidian-800 text-xs font-mono font-bold text-slate-300 hover:text-white">
+          TUTUP KATALOG
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <div id="gymQuestRecapModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="w-full max-w-sm flex flex-col items-center">
+      
+      <div class="w-full flex items-center justify-between mb-3 text-slate-400">
+        <span class="text-[10px] font-mono font-bold tracking-widest text-lime-neon uppercase flex items-center">
+          <span class="w-1.5 h-1.5 rounded-full bg-lime-neon mr-1.5 shadow-neon-soft"></span>
+          KARTU REKAP RESMI GYMQUEST
+        </span>
+        <button onclick="closeRecapModal()" class="w-7 h-7 rounded-full bg-obsidian-850 text-slate-300 flex items-center justify-center hover:text-white text-sm">
+          ✕
+        </button>
+      </div>
+
+      <!-- 9:16 Vertical Card Preview -->
+      <div id="gymQuestCardPreview" class="w-full aspect-[9/15] rounded-3xl bg-gradient-to-b from-[#080A0E] via-[#0E1118] to-[#060709] border border-white/10 p-5 flex flex-col justify-between shadow-2xl relative overflow-hidden select-none">
+        
+        <!-- Ambient Radial Glow -->
+        <div class="absolute -top-12 -right-12 w-48 h-48 bg-lime-neon/15 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -bottom-10 -left-10 w-40 h-40 bg-lime-neon/10 rounded-full blur-2xl pointer-events-none"></div>
+
+        <!-- Top Header of Card -->
+        <div class="relative z-10">
+          <div class="flex items-center justify-between border-b border-white/10 pb-3">
+            <div class="flex items-center space-x-2">
+              <span class="w-6 h-6 rounded-lg bg-lime-neon text-black font-mono font-black text-[11px] flex items-center justify-center shadow-neon-soft">GQ</span>
+              <div>
+                <p class="text-[10px] font-mono font-black text-white tracking-widest leading-none uppercase">GYMQUEST</p>
+                <p id="cardProtocolLevelSub" class="text-[8px] font-mono text-lime-neon uppercase mt-0.5">FOUNDATION PROTOCOL</p>
+              </div>
+            </div>
+            <div class="text-right">
+              <p id="cardDateText" class="text-[10px] font-mono font-bold text-lime-neon">24 MARET 2026</p>
+              <p id="cardTimeText" class="text-[8px] font-mono text-slate-500">JAKARTA • 17:15 WIB</p>
+            </div>
+          </div>
+
+          <!-- Headline -->
+          <div class="mt-4">
+            <span class="text-[9px] font-mono uppercase tracking-widest text-lime-neon bg-lime-neon/10 px-2 py-0.5 rounded border border-lime-neon/20">
+              MISSION COMPLETED
+            </span>
+            <h3 id="cardSessionHeadline" class="text-xl font-bold text-white mt-1.5 leading-tight tracking-tight">Anatomical Adaptation</h3>
+            <p id="cardAthleteLevelDesc" class="text-[11px] text-slate-400 mt-0.5">Calisthenics Athlete // GymQuest</p>
+          </div>
+        </div>
+
+        <!-- GymQuest Intensity Vector Wave -->
+        <div class="relative z-10 my-1">
+          <div class="flex items-center justify-between text-[8px] font-mono text-slate-400 mb-1">
+            <span>GYMQUEST FORCE CURVE</span>
+            <span class="text-lime-neon">PEAK INTENSITY 8.6</span>
+          </div>
+          <svg class="w-full h-14" viewBox="0 0 300 70" fill="none">
+            <defs>
+              <linearGradient id="gqWaveGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#D4FF00" stop-opacity="0.38"/>
+                <stop offset="100%" stop-color="#D4FF00" stop-opacity="0.0"/>
+              </linearGradient>
+            </defs>
+            <path d="M 0 52 Q 35 15, 75 35 T 150 16 T 225 38 T 300 12 L 300 70 L 0 70 Z" fill="url(#gqWaveGrad)"/>
+            <path d="M 0 52 Q 35 15, 75 35 T 150 16 T 225 38 T 300 12" stroke="#D4FF00" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+
+        <!-- Athletic Telemetry Bar -->
+        <div class="relative z-10 grid grid-cols-3 gap-2 py-3 border-y border-white/10 my-1">
+          <div>
+            <p class="text-[8px] font-mono text-slate-400 uppercase">DURASI</p>
+            <p id="cardDurationVal" class="text-lg font-mono font-black text-white mt-0.5">35<span class="text-[10px] font-normal text-slate-400 ml-0.5">MIN</span></p>
+          </div>
+          <div>
+            <p class="text-[8px] font-mono text-slate-400 uppercase">TOTAL VOLUME</p>
+            <p id="cardRepsVal" class="text-lg font-mono font-black text-lime-neon mt-0.5">64<span class="text-[10px] font-normal text-slate-400 ml-0.5">REPS</span></p>
+          </div>
+          <div>
+            <p class="text-[8px] font-mono text-slate-400 uppercase">STREAK</p>
+            <p id="cardStreakVal" class="text-lg font-mono font-black text-white mt-0.5">19<span class="text-[10px] font-normal text-lime-neon ml-0.5">D</span></p>
+          </div>
+        </div>
+
+        <!-- Conquered Movements Pills -->
+        <div class="relative z-10">
+          <p class="text-[8px] font-mono text-slate-400 uppercase tracking-wider mb-1.5">GERAKAN DITAKLUKKAN:</p>
+          <div id="cardExercisesListPills" class="flex flex-wrap gap-1.5">
+            <!-- Rendered dynamically -->
+          </div>
+        </div>
+
+        <!-- Official Footer Stamp -->
+        <div class="relative z-10 pt-2 border-t border-white/10 flex items-center justify-between text-[8px] font-mono text-slate-500">
+          <div class="flex items-center space-x-1.5">
+            <span class="w-2 h-2 rounded-full bg-lime-neon"></span>
+            <span class="text-slate-300 font-semibold tracking-wider">GYMQUEST PROTOCOL // VERIFIED</span>
+          </div>
+          <span class="tracking-widest">GQ-2026-ATHLETE</span>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons for Downloading HD & Sharing -->
+      <div class="w-full flex items-center space-x-2 mt-4">
+        <button onclick="downloadGymQuestCardPNG()" class="flex-1 py-3 rounded-2xl bg-lime-neon text-black font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center space-x-1.5 shadow-neon-glow active:scale-95 transition-transform">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/></svg>
+          <span>DOWNLOAD KARTU HD (PNG)</span>
+        </button>
+
+        <button onclick="shareGymQuestCard()" class="px-4 py-3 rounded-2xl bg-obsidian-800 border border-white/10 text-white font-mono font-bold text-xs flex items-center justify-center space-x-1 hover:border-lime-neon transition-colors active:scale-95">
+          <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/></svg>
+          <span>BAGIKAN</span>
+        </button>
+      </div>
+      <p class="text-[10px] font-mono text-slate-500 mt-2 text-center">Format 9:16 siap untuk Instagram Stories & Status</p>
+
+    </div>
+  </div>
+
+  <div id="dataManagementModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="w-full max-w-sm rounded-3xl bg-obsidian-900 border border-white/10 p-5 shadow-2xl modal-fade-enter">
+      <div class="flex items-center justify-between pb-3 border-b border-white/10 mb-4">
+        <div class="flex items-center space-x-2">
+          <span class="w-6 h-6 rounded-lg bg-obsidian-800 border border-lime-neon/40 text-lime-neon font-mono font-bold text-xs flex items-center justify-center">GQ</span>
+          <h3 class="text-xs font-bold text-white uppercase tracking-wider">Manajemen Data GymQuest</h3>
+        </div>
+        <button onclick="closeDataManagementModal()" class="w-6 h-6 rounded-full bg-obsidian-800 text-slate-400 hover:text-white flex items-center justify-center text-xs">✕</button>
+      </div>
+
+      <p class="text-[11px] text-slate-400 mb-4">Atur status sesi saat ini, muat data simulasi latihan, atau bersihkan penyimpanan.</p>
+
+      <div class="space-y-2.5">
+        <!-- Option 1: Reset Active Session Only -->
+        <button onclick="executeResetSessionOnly()" class="w-full text-left p-3 rounded-2xl bg-obsidian-850 hover:bg-obsidian-800 border border-white/5 transition-all">
+          <p class="text-xs font-bold text-white flex items-center justify-between">
+            <span>Reset Sesi Berjalan</span>
+            <span class="text-[10px] font-mono text-lime-neon">BERSIHKAN</span>
+          </p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Mengosongkan centang set latihan hari ini dan me-reset timer ke 00:00:00.</p>
+        </button>
+
+        <!-- Option 2: Load Realistic Demo Data -->
+        <button onclick="executeLoadDemoData()" class="w-full text-left p-3 rounded-2xl bg-obsidian-850 hover:bg-obsidian-800 border border-lime-neon/20 transition-all">
+          <p class="text-xs font-bold text-lime-neon flex items-center justify-between">
+            <span>Muat Data Contoh GymQuest</span>
+            <span class="text-[10px] font-mono text-lime-neon">SIMULASI</span>
+          </p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Mengisi heatmap 14 minggu & riwayat latihan dengan statistik lengkap.</p>
+        </button>
+
+        <!-- Option 3: Factory Reset All Data -->
+        <button onclick="promptFactoryReset()" class="w-full text-left p-3 rounded-2xl bg-rose-950/20 hover:bg-rose-950/40 border border-rose-500/20 transition-all">
+          <p class="text-xs font-bold text-rose-400 flex items-center justify-between">
+            <span>Hapus Semua Data & Riwayat</span>
+            <span class="text-[10px] font-mono text-rose-400">RESET TOTAL</span>
+          </p>
+          <p class="text-[10px] text-slate-400 mt-0.5">Menghapus seluruh riwayat, streak, dan data heatmap dari memori browser.</p>
+        </button>
+      </div>
+
+      <div class="mt-5 pt-3 border-t border-white/5 flex justify-end">
+        <button onclick="closeDataManagementModal()" class="px-4 py-2 rounded-xl bg-obsidian-800 text-xs font-mono font-bold text-slate-300 hover:text-white">
+          TUTUP
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmActionModal" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="w-full max-w-xs rounded-3xl bg-obsidian-900 border border-rose-500/30 p-5 shadow-2xl modal-fade-enter text-center">
+      <div class="w-10 h-10 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-400 mx-auto flex items-center justify-center text-lg mb-3">
+        ⚠️️
+      </div>
+      <h4 id="confirmDialogTitle" class="text-xs font-bold text-white uppercase tracking-wider">Konfirmasi Tindakan</h4>
+      <p id="confirmDialogDescription" class="text-[11px] text-slate-400 mt-1 mb-4 leading-relaxed">Tindakan ini akan menghapus data permanen.</p>
+
+      <div class="flex items-center space-x-2">
+        <button onclick="closeConfirmModal()" class="flex-1 py-2.5 rounded-xl bg-obsidian-800 text-xs font-mono text-slate-300 hover:text-white">
+          BATAL
+        </button>
+        <button id="confirmExecuteBtn" class="flex-1 py-2.5 rounded-xl bg-rose-500 text-xs font-mono font-bold text-black shadow-lg">
+          YA, JALANKAN
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hidden Offscreen Canvas for High-Resolution 1080x1920 Story Card Export -->
+  <canvas id="gymQuestExportCanvas" class="hidden" width="1080" height="1920"></canvas>
+
+  <script>
+    let audioMuted = false;
+    let webAudioContext = null;
+
+    function getAudioContext() {
+      if (!webAudioContext) {
+        webAudioContext = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (webAudioContext.state === 'suspended') {
+        webAudioContext.resume();
+      }
+      return webAudioContext;
+    }
+
+    function triggerChime(frequency, type = 'sine', duration = 0.12, gainValue = 0.2, delaySec = 0) {
+      if (audioMuted) return;
+      try {
+        const ctx = getAudioContext();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = type;
+        osc.frequency.setValueAtTime(frequency, ctx.currentTime + delaySec);
+
+        gain.gain.setValueAtTime(gainValue, ctx.currentTime + delaySec);
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + delaySec + duration);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        osc.start(ctx.currentTime + delaySec);
+        osc.stop(ctx.currentTime + delaySec + duration);
+      } catch (e) {
+        console.warn("Audio cue error:", e);
+      }
+    }
+
+    function toggleAudio() {
+      audioMuted = !audioMuted;
+      const btn = document.getElementById('soundToggleBtn');
+      if (audioMuted) {
+        btn.classList.add('text-slate-600');
+        showToast("Audio cue GymQuest nonaktif");
+      } else {
+        btn.classList.remove('text-slate-600');
+        triggerChime(660, 'sine', 0.1);
+        showToast("Audio cue GymQuest aktif");
+      }
+    }
+
+    const CALISTHENICS_MASTER_CATALOG = {
+      push_horizontal: [
+        { id: 'hpush_1', name: 'Incline Push-Up (Bench/Bar)', category: 'push_horizontal', level: 'foundation', type: 'reps', defaultTarget: 10, desc: 'Tangan di elevasi tinggi, ramah sendi bahu' },
+        { id: 'hpush_2', name: 'Knee Push-Up (Lantai)', category: 'push_horizontal', level: 'foundation', type: 'reps', defaultTarget: 12, desc: 'Kekuatan dorong dasar dengan tumpuan lutut' },
+        { id: 'hpush_3', name: 'Standard Floor Push-Up', category: 'push_horizontal', level: 'momentum', type: 'reps', defaultTarget: 12, desc: 'Dada sentuh lantai, tempo terkontrol 2-1-1' },
+        { id: 'hpush_4', name: 'Diamond Push-Up', category: 'push_horizontal', level: 'momentum', type: 'reps', defaultTarget: 10, desc: 'Tangan merapat segitiga, fokus dominan trisep' },
+        { id: 'hpush_5', name: 'Decline Push-Up (Kaki di Box)', category: 'push_horizontal', level: 'momentum', type: 'reps', defaultTarget: 10, desc: 'Beban lebih tinggi ke dada bagian atas dan bahu' },
+        { id: 'hpush_6', name: 'Archer Push-Up', category: 'push_horizontal', level: 'apex', type: 'reps', defaultTarget: 8, desc: 'Distribusi beban uniteral ke satu tangan bergantian' },
+        { id: 'hpush_7', name: 'Pseudo Planche Push-Up (PPPU)', category: 'push_horizontal', level: 'apex', type: 'reps', defaultTarget: 7, desc: 'Badan condong jauh ke depan, persiapan planche' },
+        { id: 'hpush_8', name: 'One-Arm Push-Up', category: 'push_horizontal', level: 'apex', type: 'reps', defaultTarget: 5, desc: 'Kekuatan dorong mutlak satu tangan tanpa rotasi badan' }
+      ],
+      pull: [
+        { id: 'pull_1', name: 'Australian Pull-Up (Inverted Row)', category: 'pull', level: 'foundation', type: 'reps', defaultTarget: 10, desc: 'Bar setinggi pinggang, tumit di lantai untuk adaptasi lats' },
+        { id: 'pull_2', name: 'Active Scapular Pulls & Dead Hang', category: 'pull', level: 'foundation', type: 'sec', defaultTarget: 30, desc: 'Tahan gantung & kuncian skapula aktif di pull-up bar' },
+        { id: 'pull_3', name: 'Standard Pull-Up (Full ROM)', category: 'pull', level: 'momentum', type: 'reps', defaultTarget: 8, desc: 'Dada ke bar, dead-hang penuh di bawah' },
+        { id: 'pull_4', name: 'Chin-Up (Underhand Grip)', category: 'pull', level: 'momentum', type: 'reps', defaultTarget: 9, desc: 'Grip telapak menghadap wajah, fokus lats dan bisep' },
+        { id: 'pull_5', name: 'L-Sit Pull-Up', category: 'pull', level: 'apex', type: 'reps', defaultTarget: 6, desc: 'Pull-up sembari menahan posisi kaki 90 derajat' },
+        { id: 'pull_6', name: 'Strict Bar Muscle-Up', category: 'pull', level: 'apex', type: 'reps', defaultTarget: 5, desc: 'Tarik eksplosif dada melampaui bar tanpa kipping lutut' },
+        { id: 'pull_7', name: 'Weighted Pull-Up (+15kg)', category: 'pull', level: 'apex', type: 'weighted', defaultTarget: 6, defaultWeight: 15, desc: 'Pull-up dengan sabuk pemberat eksternal' }
+      ],
+      dip_vertical: [
+        { id: 'dip_1', name: 'Bench Dips (Kaki di Lantai)', category: 'dip_vertical', level: 'foundation', type: 'reps', defaultTarget: 12, desc: 'Pijakan kaki di lantai untuk mengurangi tekanan sendi' },
+        { id: 'dip_2', name: 'Pike Push-Up (Lantai)', category: 'dip_vertical', level: 'foundation', type: 'reps', defaultTarget: 8, desc: 'Pinggul terangkat membentuk segitiga, beban ke bahu' },
+        { id: 'dip_3', name: 'Parallel Bar Dips', category: 'dip_vertical', level: 'momentum', type: 'reps', defaultTarget: 10, desc: 'Dips reguler di palang sejajar, kedalaman 90 derajat' },
+        { id: 'dip_4', name: 'Elevated Feet Pike Push-Up', category: 'dip_vertical', level: 'momentum', type: 'reps', defaultTarget: 8, desc: 'Kaki di atas bangku, sudut vertikal lebih tajam' },
+        { id: 'dip_5', name: 'Weighted Bar Dips (+20kg)', category: 'dip_vertical', level: 'apex', type: 'weighted', defaultTarget: 8, defaultWeight: 20, desc: 'Dips di palang sejajar dengan beban piringan besi' },
+        { id: 'dip_6', name: 'Wall Handstand Push-Up (HSPU)', category: 'dip_vertical', level: 'apex', type: 'reps', defaultTarget: 6, desc: 'Push-up vertikal penuh menempel dinding' },
+        { id: 'dip_7', name: 'Freestanding HSPU', category: 'dip_vertical', level: 'apex', type: 'reps', defaultTarget: 4, desc: 'Push-up handstand bebas tanpa bantuan dinding' }
+      ],
+      core_statics: [
+        { id: 'core_1', name: 'Hollow Body Hold', category: 'core_statics', level: 'foundation', type: 'sec', defaultTarget: 30, desc: 'Punggung bawah menempel rata ke lantai, perut mengunci' },
+        { id: 'core_2', name: 'Plank Hold Terkontrol', category: 'core_statics', level: 'foundation', type: 'sec', defaultTarget: 45, desc: 'Grip lantai aktif, bokong dan kuadrisep terkunci' },
+        { id: 'core_3', name: 'Hanging Knee Raises', category: 'core_statics', level: 'momentum', type: 'reps', defaultTarget: 12, desc: 'Gantung di bar dan angkat lutut menyentuh dada' },
+        { id: 'core_4', name: 'Tuck L-Sit Hold (Parallettes)', category: 'core_statics', level: 'momentum', type: 'sec', defaultTarget: 15, desc: 'Menahan tubuh di atas palang parallette dengan lutut ditekuk' },
+        { id: 'core_5', name: 'Hanging Toes-To-Bar', category: 'core_statics', level: 'momentum', type: 'reps', defaultTarget: 10, desc: 'Ujung kaki menyentuh pull-up bar dengan kaki lurus' },
+        { id: 'core_6', name: 'Full L-Sit / V-Sit Hold', category: 'core_statics', level: 'apex', type: 'sec', defaultTarget: 15, desc: 'Kaki lurus sempurna membentuk sudut 90 derajat atau lebih' },
+        { id: 'core_7', name: 'Full Front Lever Hold', category: 'core_statics', level: 'apex', type: 'sec', defaultTarget: 8, desc: 'Badan lurus horizontal sejajar tanah di pull-up bar' },
+        { id: 'core_8', name: 'Straddle / Full Planche Hold', category: 'core_statics', level: 'apex', type: 'sec', defaultTarget: 6, desc: 'Kekuatan lengan lurus mutlak melayang di atas tanah' }
+      ]
+    };
+
+    const PROTOCOL_CONFIGS = {
+      foundation: {
+        name: "FOUNDATION PROTOCOL",
+        title: "Anatomical Adaptation & Joint Prep",
+        subtitle: "Adaptasi tendon, skapula, dan kontrol beban tubuh awal",
+        rpe: "7.0 / 10",
+        durationMinutes: 35,
+        defaultSlots: [
+          { catalogId: 'hpush_1', setsCount: 3, targetVal: 10 },
+          { catalogId: 'pull_1', setsCount: 3, targetVal: 10 },
+          { catalogId: 'dip_1', setsCount: 3, targetVal: 12 },
+          { catalogId: 'core_1', setsCount: 3, targetVal: 30 }
+        ]
+      },
+      momentum: {
+        name: "MOMENTUM PROTOCOL",
+        title: "Volume Accumulation & Full ROM",
+        subtitle: "Gerakan berat badan penuh, kontrol tempo, dan daya tahan",
+        rpe: "8.2 / 10",
+        durationMinutes: 45,
+        defaultSlots: [
+          { catalogId: 'hpush_3', setsCount: 4, targetVal: 12 },
+          { catalogId: 'pull_3', setsCount: 4, targetVal: 8 },
+          { catalogId: 'dip_3', setsCount: 4, targetVal: 10 },
+          { catalogId: 'core_4', setsCount: 3, targetVal: 15 }
+        ]
+      },
+      apex: {
+        name: "APEX PROTOCOL",
+        title: "Elite Force & Isometric Dominance",
+        subtitle: "Transisi eksplosif, beban ekstra (+kg), dan kuncian statis",
+        rpe: "9.2 / 10",
+        durationMinutes: 55,
+        defaultSlots: [
+          { catalogId: 'pull_6', setsCount: 3, targetVal: 5 },
+          { catalogId: 'dip_5', setsCount: 4, targetVal: 8, weight: 20 },
+          { catalogId: 'hpush_6', setsCount: 3, targetVal: 8 },
+          { catalogId: 'core_7', setsCount: 3, targetVal: 8 }
+        ]
+      }
+    };
+
+    const GYMQUEST_STORAGE_KEY = 'gymquest_calisthenics_db_v2';
+
+    let appState = {
+      currentLevel: 'foundation',
+      streak: 18,
+      totalSessions: 46,
+      sessionElapsedSeconds: 920,
+      activeExercises: [],
+      skills: [
+        { name: "Strict Bar Muscle-Up", level: "Apex", percent: 85, badge: "Gold", record: "8 Reps Bersih" },
+        { name: "Full Front Lever", level: "Momentum", percent: 70, badge: "Silver", record: "12 Detik Static" },
+        { name: "Freestanding Handstand", level: "Apex", percent: 90, badge: "Elite", record: "45 Detik Balance" },
+        { name: "Straddle Planche Hold", level: "Foundation", percent: 45, badge: "Bronze", record: "Tuck 15 Detik" }
+      ],
+      history: [
+        { date: "2026-03-24", title: "Anatomical Adaptation & Joint Prep", level: "Foundation", reps: 72, duration: 35 },
+        { date: "2026-03-23", title: "Volume Accumulation & Full ROM", level: "Momentum", reps: 88, duration: 45 },
+        { date: "2026-03-21", title: "Elite Force & Isometric Dominance", level: "Apex", reps: 94, duration: 52 },
+        { date: "2026-03-19", title: "Anatomical Adaptation & Joint Prep", level: "Foundation", reps: 68, duration: 32 }
+      ],
+      heatmap: {}
+    };
+
+    function generateSimulatedHeatmap() {
+      const now = new Date();
+      const map = {};
+      const totalDays = 14 * 7;
+
+      for (let i = totalDays - 1; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(now.getDate() - i);
+        const key = d.toISOString().split('T')[0];
+        
+        const trained = Math.random() > 0.35;
+        if (trained) {
+          const rand = Math.random();
+          let lvl = 1;
+          if (rand > 0.75) lvl = 4;
+          else if (rand > 0.45) lvl = 3;
+          else if (rand > 0.2) lvl = 2;
+          map[key] = lvl;
+        } else {
+          map[key] = 0;
+        }
+      }
+      const todayKey = new Date().toISOString().split('T')[0];
+      map[todayKey] = 3;
+      return map;
+    }
+
+    function loadSavedState() {
+      try {
+        const saved = localStorage.getItem(GYMQUEST_STORAGE_KEY);
+        if (saved) {
+          appState = JSON.parse(saved);
+        } else {
+          appState.heatmap = generateSimulatedHeatmap();
+          buildActiveExercisesForLevel('foundation');
+          persistState();
+        }
+      } catch (err) {
+        appState.heatmap = generateSimulatedHeatmap();
+        buildActiveExercisesForLevel('foundation');
+      }
+
+      if (!appState.activeExercises || appState.activeExercises.length === 0) {
+        buildActiveExercisesForLevel(appState.currentLevel || 'foundation');
+      }
+    }
+
+    function persistState() {
+      try {
+        localStorage.setItem(GYMQUEST_STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {}
+    }
+
+    function findCatalogItemById(id) {
+      for (const cat in CALISTHENICS_MASTER_CATALOG) {
+        const found = CALISTHENICS_MASTER_CATALOG[cat].find(item => item.id === id);
+        if (found) return found;
+      }
+      return null;
+    }
+
+    function buildActiveExercisesForLevel(levelKey) {
+      appState.currentLevel = levelKey;
+      const config = PROTOCOL_CONFIGS[levelKey];
+      appState.activeExercises = config.defaultSlots.map((slot, index) => {
+        const item = findCatalogItemById(slot.catalogId);
+        const setsArray = [];
+        for (let i = 1; i <= slot.setsCount; i++) {
+          setsArray.push({
+            num: i,
+            target: slot.targetVal,
+            weight: slot.weight || 0,
+            done: false
+          });
+        }
+        return {
+          slotIndex: index,
+          catalogId: slot.catalogId,
+          category: item.category,
+          name: item.name,
+          desc: item.desc,
+          type: item.type,
+          level: item.level,
+          sets: setsArray
+        };
+      });
+      persistState();
+    }
+
+    function switchLevelProtocol(levelKey) {
+      if (appState.currentLevel === levelKey) return;
+      triggerChime(640, 'sine', 0.08);
+
+      ['foundation', 'momentum', 'apex'].forEach(lvl => {
+        const btn = document.getElementById(`lvl-btn-${lvl}`);
+        if (lvl === levelKey) {
+          btn.className = 'flex-1 py-2 rounded-xl text-center font-mono text-[11px] font-bold tracking-wider transition-all bg-lime-neon text-black shadow-neon-soft';
+        } else {
+          btn.className = 'flex-1 py-2 rounded-xl text-center font-mono text-[11px] font-bold tracking-wider transition-all text-slate-400 hover:text-white';
+        }
+      });
+
+      buildActiveExercisesForLevel(levelKey);
+      updateSessionTelemetryHeaders();
+      renderExerciseChecklist();
+      showToast(`Protokol beralih ke: ${levelKey.toUpperCase()}`);
+    }
+
+    function updateSessionTelemetryHeaders() {
+      const config = PROTOCOL_CONFIGS[appState.currentLevel];
+      document.getElementById('levelBadgeDisplay').innerText = config.name;
+      document.getElementById('sessionLevelTitle').innerText = config.title;
+      document.getElementById('sessionLevelSubtitle').innerText = config.subtitle;
+      document.getElementById('targetRpeDisplay').innerText = config.rpe;
+    }
+
+    function renderExerciseChecklist() {
+      const container = document.getElementById('exerciseListRoot');
+      if (!container) return;
+      container.innerHTML = '';
+
+      let totalSetsCount = 0;
+      let completedSetsCount = 0;
+      let totalVolumeCount = 0;
+
+      appState.activeExercises.forEach((ex, exIdx) => {
+        const card = document.createElement('div');
+        card.className = 'rounded-2xl bg-obsidian-900 border border-white/5 p-3.5 shadow-card-luxury';
+
+        const unitLabel = ex.type === 'sec' ? 'detik' : 'reps';
+        const weightTag = ex.type === 'weighted' ? `(+${ex.sets[0]?.weight || 15}kg)` : '';
+
+        let setsMarkup = '';
+        ex.sets.forEach((set, setIdx) => {
+          totalSetsCount++;
+          if (set.done) {
+            completedSetsCount++;
+            totalVolumeCount += Number(set.target);
+          }
+
+          setsMarkup += `
+            <div class="flex items-center justify-between p-2 rounded-xl ${set.done ? 'bg-lime-neon/10 border border-lime-neon/30' : 'bg-obsidian-850 border border-white/5'} transition-all mt-1.5">
+              <div class="flex items-center space-x-2.5">
+                <span class="w-6 h-6 rounded-lg ${set.done ? 'bg-lime-neon text-black font-bold' : 'bg-obsidian-800 text-slate-400'} font-mono text-xs flex items-center justify-center">
+                  ${set.num}
+                </span>
+                <span class="text-xs font-mono font-medium ${set.done ? 'text-lime-neon font-bold' : 'text-slate-300'}">
+                  ${set.target} ${unitLabel} ${set.weight ? `(+${set.weight}kg)` : ''}
+                </span>
+              </div>
+              <div class="flex items-center space-x-2">
+                ${ex.sets.length > 1 ? `
+                  <button onclick="removeSetFromExercise(${exIdx}, ${setIdx})" class="text-slate-600 hover:text-rose-400 text-xs px-1" title="Hapus set">✕</button>
+                ` : ''}
+                <button onclick="toggleSetStatus(${exIdx}, ${setIdx})" class="w-7 h-7 rounded-xl flex items-center justify-center transition-all ${set.done ? 'bg-lime-neon text-black shadow-neon-soft' : 'bg-obsidian-750 text-slate-500 hover:text-white'}">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
+        });
+
+        card.innerHTML = `
+          <div class="flex items-start justify-between mb-2">
+            <div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-[9px] font-mono px-1.5 py-0.5 rounded uppercase font-bold ${getDifficultyBadgeClass(ex.level)}">
+                  ${ex.level}
+                </span>
+                <span class="text-xs font-bold text-white">${ex.name} ${weightTag}</span>
+              </div>
+              <p class="text-[10px] font-mono text-slate-400 mt-0.5">${ex.desc}</p>
+            </div>
+            <!-- Quick Swap Button -->
+            <button onclick="openSwapDrawer(${exIdx})" class="text-[10px] font-mono font-bold text-lime-neon bg-lime-neon/10 hover:bg-lime-neon/20 border border-lime-neon/30 px-2.5 py-1 rounded-lg flex items-center space-x-1 transition-all active:scale-95">
+              <span>⇄</span>
+              <span>GANTI</span>
+            </button>
+          </div>
+          <div class="space-y-1">
+            ${setsMarkup}
+          </div>
+          <div class="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between">
+            <span class="text-[9px] font-mono text-slate-500">
+              ${ex.sets.filter(s => s.done).length}/${ex.sets.length} Set Selesai
+            </span>
+            <button onclick="addSetToExercise(${exIdx})" class="text-[10px] font-mono text-slate-400 hover:text-lime-neon flex items-center space-x-1 py-0.5 px-2 rounded bg-obsidian-850 border border-white/5">
+              <span>+ Tambah Set</span>
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      document.getElementById('progressSetsDisplay').innerText = `${completedSetsCount} / ${totalSetsCount} Set`;
+      document.getElementById('totalRepsDisplay').innerText = `${totalVolumeCount} Vol`;
+    }
+
+    function getDifficultyBadgeClass(lvl) {
+      if (lvl === 'foundation') return 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+      if (lvl === 'momentum') return 'bg-amber-500/10 text-amber-400 border border-amber-500/30';
+      return 'bg-rose-500/10 text-rose-400 border border-rose-500/30';
+    }
+
+    function toggleSetStatus(exIndex, setIndex) {
+      const targetSet = appState.activeExercises[exIndex].sets[setIndex];
+      targetSet.done = !targetSet.done;
+      persistState();
+      renderExerciseChecklist();
+
+      if (targetSet.done) {
+        triggerChime(880, 'sine', 0.12, 0.25);
+        showToast(`Set ${targetSet.num} selesai! Rest timer dimulai.`);
+        startRestCountdown();
+      } else {
+        triggerChime(440, 'sine', 0.08, 0.1);
+      }
+    }
+
+    function addSetToExercise(exIndex) {
+      const ex = appState.activeExercises[exIndex];
+      const newNum = ex.sets.length + 1;
+      const lastTarget = ex.sets[ex.sets.length - 1]?.target || 10;
+      const lastWeight = ex.sets[ex.sets.length - 1]?.weight || 0;
+
+      ex.sets.push({
+        num: newNum,
+        target: lastTarget,
+        weight: lastWeight,
+        done: false
+      });
+      persistState();
+      renderExerciseChecklist();
+      triggerChime(580, 'sine', 0.05);
+      showToast(`Set ${newNum} ditambahkan pada ${ex.name}`);
+    }
+
+    function removeSetFromExercise(exIndex, setIndex) {
+      const ex = appState.activeExercises[exIndex];
+      if (ex.sets.length <= 1) return;
+      ex.sets.splice(setIndex, 1);
+      ex.sets.forEach((s, idx) => s.num = idx + 1);
+      persistState();
+      renderExerciseChecklist();
+      triggerChime(420, 'sine', 0.05);
+    }
+
+    let currentSwapSlotIndex = null;
+
+    function openSwapDrawer(exSlotIndex) {
+      currentSwapSlotIndex = exSlotIndex;
+      const currentEx = appState.activeExercises[exSlotIndex];
+      const category = currentEx.category;
+      const options = CALISTHENICS_MASTER_CATALOG[category] || [];
+
+      document.getElementById('drawerCategoryTag').innerText = `KATEGORI: ${category.replace('_', ' ').toUpperCase()}`;
+
+      const listRoot = document.getElementById('drawerVariationsList');
+      listRoot.innerHTML = '';
+
+      options.forEach(item => {
+        const isCurrent = item.name === currentEx.name;
+        const row = document.createElement('div');
+        row.className = `p-3 rounded-2xl border transition-all cursor-pointer ${
+          isCurrent 
+            ? 'bg-lime-neon/15 border-lime-neon/40 shadow-neon-soft' 
+            : 'bg-obsidian-850 border-white/5 hover:border-lime-neon/30 hover:bg-obsidian-800'
+        }`;
+
+        row.onclick = () => selectVariationForSlot(item);
+
+        row.innerHTML = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <span class="text-[9px] font-mono px-2 py-0.5 rounded uppercase font-bold ${getDifficultyBadgeClass(item.level)}">
+                ${item.level}
+              </span>
+              <span class="text-xs font-bold text-white">${item.name}</span>
+            </div>
+            ${isCurrent ? '<span class="text-[10px] font-mono font-bold text-lime-neon">AKTIF</span>' : ''}
+          </div>
+          <p class="text-[10px] font-mono text-slate-400 mt-1">${item.desc}</p>
+          <div class="flex items-center justify-between text-[9px] font-mono text-slate-500 mt-1.5">
+            <span>Standar: ${item.defaultTarget} ${item.type === 'sec' ? 'detik' : 'reps'}</span>
+            <span class="text-lime-neon">Ganti ke gerakan ini →</span>
+          </div>
+        `;
+        listRoot.appendChild(row);
+      });
+
+      const drawer = document.getElementById('exerciseSwapDrawer');
+      drawer.classList.remove('hidden');
+      drawer.classList.add('flex');
+      triggerChime(500, 'sine', 0.05);
+    }
+
+    function closeSwapDrawer() {
+      const drawer = document.getElementById('exerciseSwapDrawer');
+      drawer.classList.add('hidden');
+      drawer.classList.remove('flex');
+      currentSwapSlotIndex = null;
+    }
+
+    function selectVariationForSlot(catalogItem) {
+      if (currentSwapSlotIndex === null) return;
+      const ex = appState.activeExercises[currentSwapSlotIndex];
+
+      ex.catalogId = catalogItem.id;
+      ex.name = catalogItem.name;
+      ex.desc = catalogItem.desc;
+      ex.type = catalogItem.type;
+      ex.level = catalogItem.level;
+
+      // Adjust sets to new defaults
+      ex.sets.forEach(s => {
+        s.target = catalogItem.defaultTarget;
+        s.weight = catalogItem.defaultWeight || 0;
+        s.done = false;
+      });
+
+      persistState();
+      renderExerciseChecklist();
+      closeSwapDrawer();
+      triggerChime(780, 'sine', 0.12);
+      showToast(`Variasi diganti ke: ${catalogItem.name}`);
+    }
+
+    let restConfigSecs = 60;
+    let restTimeRemaining = 60;
+    let restIntervalId = null;
+    let isRestActive = false;
+    const CIRCLE_CIRCUMFERENCE = 100.5;
+
+    function refreshRestTimerUI() {
+      const text = document.getElementById('restTimerCounterText');
+      const ring = document.getElementById('restTimerCircle');
+      if (text) text.innerText = `${restTimeRemaining}s`;
+
+      if (ring) {
+        const fraction = restTimeRemaining / restConfigSecs;
+        const offset = CIRCLE_CIRCUMFERENCE - (fraction * CIRCLE_CIRCUMFERENCE);
+        ring.style.strokeDashoffset = offset;
+      }
+    }
+
+    function setRestDuration(seconds) {
+      clearInterval(restIntervalId);
+      isRestActive = false;
+      restConfigSecs = seconds;
+      restTimeRemaining = seconds;
+      refreshRestTimerUI();
+      document.getElementById('restTimerStatusText').innerText = `Diatur ke ${seconds}s`;
+      triggerChime(520, 'sine', 0.05);
+    }
+
+    function toggleRestCountdown() {
+      if (isRestActive) {
+        clearInterval(restIntervalId);
+        isRestActive = false;
+        document.getElementById('restTimerStatusText').innerText = 'Jeda dihentikan';
+      } else {
+        startRestCountdown();
+      }
+    }
+
+    function startRestCountdown() {
+      clearInterval(restIntervalId);
+      if (restTimeRemaining <= 0) restTimeRemaining = restConfigSecs;
+      isRestActive = true;
+      document.getElementById('restTimerStatusText').innerText = 'Menghitung waktu istirahat...';
+
+      restIntervalId = setInterval(() => {
+        restTimeRemaining--;
+        refreshRestTimerUI();
+
+        if (restTimeRemaining === 3 || restTimeRemaining === 2 || restTimeRemaining === 1) {
+          triggerChime(700, 'sine', 0.08, 0.15);
+        }
+
+        if (restTimeRemaining <= 0) {
+          clearInterval(restIntervalId);
+          isRestActive = false;
+          document.getElementById('restTimerStatusText').innerText = 'Waktu Istirahat Selesai!';
+          triggerChime(950, 'sine', 0.15, 0.3, 0);
+          triggerChime(1250, 'sine', 0.25, 0.3, 0.12);
+          showToast("Istirahat selesai! Siap masuk ke set berikutnya.");
+        }
+      }, 1000);
+    }
+
+    function renderConsistencyHeatmap() {
+      const grid = document.getElementById('heatmapGridCells');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      const now = new Date();
+      const totalDays = 14 * 7;
+      const start = new Date();
+      start.setDate(now.getDate() - (totalDays - 1));
+
+      const levelClasses = {
+        0: 'bg-obsidian-800/80 border border-white/5',
+        1: 'bg-[#1e2f0a] border border-[#2b4412]',
+        2: 'bg-[#4d750d] border border-[#639915]',
+        3: 'bg-[#8cb90e] border border-[#9fd611]',
+        4: 'bg-lime-neon shadow-neon-glow'
+      };
+
+      for (let i = 0; i < totalDays; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const dateKey = d.toISOString().split('T')[0];
+        const lvl = appState.heatmap[dateKey] || 0;
+
+        const cell = document.createElement('div');
+        cell.className = `w-[11px] h-[11px] rounded-[2.5px] cursor-pointer transition-transform hover:scale-125 ${levelClasses[lvl]}`;
+        cell.title = `${dateKey}: Intensitas Level ${lvl}`;
+        cell.onclick = () => {
+          triggerChime(550, 'sine', 0.05);
+          showToast(`GymQuest Log [${dateKey}]: Tingkat Latihan ${lvl}/4`);
+        };
+        grid.appendChild(cell);
+      }
+
+      document.getElementById('headerStreakValue').innerText = appState.streak;
+      document.getElementById('statCurrentStreak').innerText = appState.streak;
+      document.getElementById('statTotalSessions').innerText = appState.totalSessions;
+
+      // History log
+      const histRoot = document.getElementById('recentSessionsContainer');
+      if (histRoot) {
+        histRoot.innerHTML = '';
+        if (appState.history.length === 0) {
+          histRoot.innerHTML = `<div class="p-3 text-center text-xs font-mono text-slate-500">Belum ada riwayat sesi tersimpan.</div>`;
+        } else {
+          appState.history.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'rounded-xl bg-obsidian-900 border border-white/5 p-3 flex items-center justify-between';
+            row.innerHTML = `
+              <div>
+                <p class="text-xs font-bold text-white">${item.title}</p>
+                <p class="text-[10px] font-mono text-slate-400">${item.date} • ${item.duration} Menit • <span class="text-lime-neon font-bold uppercase">${item.level || 'GYMQUEST'}</span></p>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-mono font-bold text-lime-neon">${item.reps} Vol</span>
+              </div>
+            `;
+            histRoot.appendChild(row);
+          });
+        }
+      }
+    }
+
+    function renderSkillsProgression() {
+      const container = document.getElementById('skillsContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      appState.skills.forEach(skill => {
+        const item = document.createElement('div');
+        item.className = 'rounded-2xl bg-obsidian-900 border border-white/5 p-3.5 shadow-card-luxury';
+        item.innerHTML = `
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <h4 class="text-xs font-bold text-white">${skill.name}</h4>
+              <p class="text-[10px] font-mono text-slate-400">Rekor Terbaik: <span class="text-lime-neon">${skill.record}</span></p>
+            </div>
+            <span class="text-[9px] font-mono font-bold px-2 py-0.5 rounded bg-lime-neon/10 text-lime-neon border border-lime-neon/20 uppercase">
+              ${skill.badge}
+            </span>
+          </div>
+          <div class="w-full bg-obsidian-800 rounded-full h-1.5 overflow-hidden">
+            <div class="bg-gradient-to-r from-lime-dim to-lime-neon h-full rounded-full" style="width: ${skill.percent}%"></div>
+          </div>
+          <div class="flex justify-between items-center text-[9px] font-mono text-slate-500 mt-1.5">
+            <span>Tier: ${skill.level}</span>
+            <span>${skill.percent}% Penguasaan</span>
+          </div>
+        `;
+        container.appendChild(item);
+      });
+    }
+
+    function openDataManagementModal() {
+      triggerChime(500, 'sine', 0.05);
+      const modal = document.getElementById('dataManagementModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeDataManagementModal() {
+      const modal = document.getElementById('dataManagementModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function promptResetSession() {
+      showConfirmDialog(
+        "Reset Sesi Hari Ini?",
+        "Semua centang set pada sesi berjalan akan dikosongkan dan durasi akan diulang.",
+        () => executeResetSessionOnly()
+      );
+    }
+
+    function executeResetSessionOnly() {
+      appState.activeExercises.forEach(ex => {
+        ex.sets.forEach(s => s.done = false);
+      });
+      appState.sessionElapsedSeconds = 0;
+      setRestDuration(60);
+      persistState();
+      renderExerciseChecklist();
+      closeDataManagementModal();
+      triggerChime(600, 'sine', 0.1);
+      showToast("Sesi latihan hari ini berhasil direset!");
+    }
+
+    function executeLoadDemoData() {
+      appState.streak = 24;
+      appState.totalSessions = 52;
+      appState.heatmap = generateSimulatedHeatmap();
+      buildActiveExercisesForLevel(appState.currentLevel || 'momentum');
+      appState.activeExercises[0].sets[0].done = true;
+      appState.activeExercises[0].sets[1].done = true;
+      appState.activeExercises[1].sets[0].done = true;
+      appState.history = [
+        { date: "2026-03-24", title: "Volume Accumulation & Full ROM", level: "Momentum", reps: 86, duration: 45 },
+        { date: "2026-03-23", title: "Elite Force & Isometric Dominance", level: "Apex", reps: 94, duration: 50 },
+        { date: "2026-03-22", title: "Anatomical Adaptation & Joint Prep", level: "Foundation", reps: 68, duration: 35 },
+        { date: "2026-03-20", title: "Volume Accumulation & Full ROM", level: "Momentum", reps: 102, duration: 48 }
+      ];
+      persistState();
+      renderExerciseChecklist();
+      renderConsistencyHeatmap();
+      closeDataManagementModal();
+      triggerChime(750, 'sine', 0.15);
+      showToast("Data simulasi GymQuest berhasil dimuat!");
+    }
+
+    function promptFactoryReset() {
+      closeDataManagementModal();
+      showConfirmDialog(
+        "Hapus Seluruh Data?",
+        "Tindakan ini akan mengosongkan seluruh riwayat latihan, mereset streak menjadi 0, dan membersihkan memori perangkat.",
+        () => {
+          localStorage.removeItem(GYMQUEST_STORAGE_KEY);
+          appState.streak = 0;
+          appState.totalSessions = 0;
+          appState.heatmap = {};
+          appState.history = [];
+          appState.sessionElapsedSeconds = 0;
+          buildActiveExercisesForLevel('foundation');
+          persistState();
+          renderExerciseChecklist();
+          renderConsistencyHeatmap();
+          triggerChime(300, 'sine', 0.2);
+          showToast("Seluruh data GymQuest telah dibersihkan.");
+        }
+      );
+    }
+
+    let onConfirmCallback = null;
+    function showConfirmDialog(title, description, callback) {
+      document.getElementById('confirmDialogTitle').innerText = title;
+      document.getElementById('confirmDialogDescription').innerText = description;
+      onConfirmCallback = callback;
+
+      const modal = document.getElementById('confirmActionModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      document.getElementById('confirmExecuteBtn').onclick = () => {
+        closeConfirmModal();
+        if (onConfirmCallback) onConfirmCallback();
+      };
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirmActionModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function finishSessionAndShowCard() {
+      let totalVolume = 0;
+      let completedSets = 0;
+      const conqueredNames = [];
+
+      appState.activeExercises.forEach(ex => {
+        let hasDone = false;
+        ex.sets.forEach(s => {
+          if (s.done) {
+            completedSets++;
+            totalVolume += Number(s.target);
+            hasDone = true;
+          }
+        });
+        if (hasDone) {
+          conqueredNames.push(ex.name);
+        }
+      });
+
+      if (completedSets === 0) {
+        showToast("Centang minimal 1 set sebelum membuat kartu rekap!");
+        triggerChime(320, 'sine', 0.15);
+        return;
+      }
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      appState.heatmap[todayStr] = 4;
+      appState.streak += 1;
+      appState.totalSessions += 1;
+
+      const currentConfig = PROTOCOL_CONFIGS[appState.currentLevel];
+
+      appState.history.unshift({
+        date: todayStr,
+        title: currentConfig.title,
+        level: currentConfig.name,
+        reps: totalVolume,
+        duration: currentConfig.durationMinutes
+      });
+
+      const now = new Date();
+      const dateString = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }).toUpperCase();
+      const timeString = now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) + ' WIB';
+
+      document.getElementById('cardProtocolLevelSub').innerText = currentConfig.name;
+      document.getElementById('cardDateText').innerText = dateString;
+      document.getElementById('cardTimeText').innerText = `JAKARTA • ${timeString}`;
+      document.getElementById('cardSessionHeadline').innerText = currentConfig.title;
+      document.getElementById('cardDurationVal').innerHTML = `${currentConfig.durationMinutes}<span class="text-[10px] font-normal text-slate-400 ml-0.5">MIN</span>`;
+      document.getElementById('cardRepsVal').innerHTML = `${totalVolume}<span class="text-[10px] font-normal text-slate-400 ml-0.5">VOL</span>`;
+      document.getElementById('cardStreakVal').innerHTML = `${appState.streak}<span class="text-[10px] font-normal text-lime-neon ml-0.5">D</span>`;
+
+      const pillsRoot = document.getElementById('cardExercisesListPills');
+      pillsRoot.innerHTML = '';
+      conqueredNames.forEach(name => {
+        const pill = document.createElement('span');
+        pill.className = 'text-[9px] font-mono bg-obsidian-850 border border-white/10 px-2 py-0.5 rounded-lg text-slate-200';
+        pill.innerText = name;
+        pillsRoot.appendChild(pill);
+      });
+
+      persistState();
+      renderConsistencyHeatmap();
+
+      openRecapModal();
+      triggerChime(523.25, 'triangle', 0.12, 0.25, 0);
+      triggerChime(659.25, 'triangle', 0.12, 0.25, 0.1);
+      triggerChime(783.99, 'triangle', 0.15, 0.25, 0.2);
+      triggerChime(1046.50, 'triangle', 0.35, 0.3, 0.3);
+    }
+
+    function openRecapModal() {
+      const modal = document.getElementById('gymQuestRecapModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeRecapModal() {
+      const modal = document.getElementById('gymQuestRecapModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function drawGymQuestHDCanvas() {
+      const canvas = document.getElementById('gymQuestExportCanvas');
+      const ctx = canvas.getContext('2d');
+      const W = 1080;
+      const H = 1920;
+      const config = PROTOCOL_CONFIGS[appState.currentLevel];
+
+      // 1. Dark Luxury Obsidian Background
+      const bg = ctx.createLinearGradient(0, 0, 0, H);
+      bg.addColorStop(0, '#060709');
+      bg.addColorStop(0.5, '#0E1118');
+      bg.addColorStop(1, '#050608');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0, 0, W, H);
+
+      // 2. Neon Lime Ambient Glow Spheres
+      const glow = ctx.createRadialGradient(W - 140, 220, 10, W - 140, 220, 520);
+      glow.addColorStop(0, 'rgba(212, 255, 0, 0.22)');
+      glow.addColorStop(1, 'rgba(212, 255, 0, 0.0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, W, H);
+
+      // 3. Elegant Outer Border Frame
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.09)';
+      ctx.lineWidth = 2.5;
+      ctx.strokeRect(60, 60, W - 120, H - 120);
+
+      // 4. GymQuest Logo Badge
+      ctx.fillStyle = '#D4FF00';
+      ctx.beginPath();
+      ctx.roundRect(100, 105, 64, 64, 18);
+      ctx.fill();
+
+      ctx.fillStyle = '#060709';
+      ctx.font = 'bold 32px "JetBrains Mono", monospace';
+      ctx.fillText('GQ', 110, 150);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 36px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('GYMQUEST', 185, 140);
+
+      ctx.fillStyle = '#D4FF00';
+      ctx.font = 'bold 20px "JetBrains Mono", monospace';
+      ctx.fillText(config.name, 185, 168);
+
+      // Date Stamp Right Side
+      const now = new Date();
+      const dateText = now.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' }).toUpperCase();
+      ctx.textAlign = 'right';
+      ctx.fillStyle = '#D4FF00';
+      ctx.font = 'bold 26px "JetBrains Mono", monospace';
+      ctx.fillText(dateText, W - 100, 140);
+
+      ctx.fillStyle = '#64748B';
+      ctx.font = '500 20px "JetBrains Mono", monospace';
+      ctx.fillText('OFFICIAL SESSION LOG', W - 100, 168);
+      ctx.textAlign = 'left';
+
+      // Header Divider
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.beginPath();
+      ctx.moveTo(100, 205);
+      ctx.lineTo(W - 100, 205);
+      ctx.stroke();
+
+      // 5. Headline Section
+      ctx.fillStyle = '#D4FF00';
+      ctx.font = 'bold 22px "JetBrains Mono", monospace';
+      ctx.fillText('MISSION COMPLETED // ATHLETIC TARGET', 100, 275);
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 54px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText(config.title, 100, 345);
+
+      ctx.fillStyle = '#94A3B8';
+      ctx.font = '28px "Plus Jakarta Sans", sans-serif';
+      ctx.fillText('Calisthenics Athlete • GymQuest Division', 100, 390);
+
+      // 6. GymQuest Force Curve Wave
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'bold 20px "JetBrains Mono", monospace';
+      ctx.fillText('GYMQUEST FORCE CURVE // PEAK RPE 8.6', 100, 480);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(100, 680);
+      ctx.bezierCurveTo(240, 500, 320, 640, 480, 520);
+      ctx.bezierCurveTo(640, 400, 780, 660, 980, 490);
+      ctx.lineWidth = 6;
+      ctx.strokeStyle = '#D4FF00';
+      ctx.stroke();
+
+      ctx.lineTo(980, 720);
+      ctx.lineTo(100, 720);
+      ctx.closePath();
+      const waveFill = ctx.createLinearGradient(0, 480, 0, 720);
+      waveFill.addColorStop(0, 'rgba(212, 255, 0, 0.28)');
+      waveFill.addColorStop(1, 'rgba(212, 255, 0, 0.0)');
+      ctx.fillStyle = waveFill;
+      ctx.fill();
+      ctx.restore();
+
+      // 7. Core Telemetry Metrics Bar
+      const statY = 820;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.beginPath();
+      ctx.moveTo(100, statY);
+      ctx.lineTo(W - 100, statY);
+      ctx.stroke();
+
+      // Duration
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'bold 24px "JetBrains Mono", monospace';
+      ctx.fillText('DURASI', 100, statY + 50);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 96px "JetBrains Mono", monospace';
+      ctx.fillText(`${config.durationMinutes}`, 100, statY + 140);
+      ctx.font = '36px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#94A3B8';
+      ctx.fillText('MIN', 250, statY + 140);
+
+      // Volume
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'bold 24px "JetBrains Mono", monospace';
+      ctx.fillText('TOTAL VOLUME', 420, statY + 50);
+      ctx.fillStyle = '#D4FF00';
+      ctx.font = 'bold 96px "JetBrains Mono", monospace';
+      const volCount = document.getElementById('cardRepsVal').innerText.replace(/\D/g, '') || '64';
+      ctx.fillText(volCount, 420, statY + 140);
+      ctx.font = '36px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#94A3B8';
+      ctx.fillText('VOL', 570, statY + 140);
+
+      // Streak
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'bold 24px "JetBrains Mono", monospace';
+      ctx.fillText('STREAK AKTIF', 740, statY + 50);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 96px "JetBrains Mono", monospace';
+      ctx.fillText(`${appState.streak}`, 740, statY + 140);
+      ctx.font = '36px "JetBrains Mono", monospace';
+      ctx.fillStyle = '#D4FF00';
+      ctx.fillText('HARI', 880, statY + 140);
+
+      ctx.beginPath();
+      ctx.moveTo(100, statY + 180);
+      ctx.lineTo(W - 100, statY + 180);
+      ctx.stroke();
+
+      // 8. Completed Movements
+      ctx.fillStyle = '#64748B';
+      ctx.font = 'bold 24px "JetBrains Mono", monospace';
+      ctx.fillText('GERAKAN KALISTENIK DITAKLUKKAN:', 100, statY + 240);
+
+      let itemY = statY + 300;
+      appState.activeExercises.forEach(ex => {
+        const finished = ex.sets.filter(s => s.done).length;
+        if (finished > 0) {
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.05)';
+          ctx.beginPath();
+          ctx.roundRect(100, itemY - 35, W - 200, 72, 18);
+          ctx.fill();
+
+          ctx.fillStyle = '#D4FF00';
+          ctx.font = 'bold 28px "JetBrains Mono", monospace';
+          ctx.fillText('✓', 130, itemY + 12);
+
+          ctx.fillStyle = '#FFFFFF';
+          ctx.font = 'bold 26px "Plus Jakarta Sans", sans-serif';
+          ctx.fillText(ex.name, 175, itemY + 12);
+
+          ctx.textAlign = 'right';
+          ctx.fillStyle = '#94A3B8';
+          ctx.font = '500 24px "JetBrains Mono", monospace';
+          ctx.fillText(`${finished}/${ex.sets.length} Set Selesai`, W - 140, itemY + 12);
+          ctx.textAlign = 'left';
+
+          itemY += 90;
+        }
+      });
+
+      // 9. Footer Watermark
+      ctx.fillStyle = '#64748B';
+      ctx.font = '500 22px "JetBrains Mono", monospace';
+      ctx.fillText('GYMQUEST ATHLETICS • OFFICIAL SYSTEM METRIC', 100, H - 120);
+
+      ctx.textAlign = 'right';
+      ctx.fillText('WWW.GYMQUEST.FIT', W - 100, H - 120);
+      ctx.textAlign = 'left';
+    }
+
+    function downloadGymQuestCardPNG() {
+      drawGymQuestHDCanvas();
+      const canvas = document.getElementById('gymQuestExportCanvas');
+      const dataUrl = canvas.toDataURL('image/png');
+
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.download = `GymQuest-${appState.currentLevel}-${new Date().toISOString().split('T')[0]}.png`;
+      downloadAnchor.href = dataUrl;
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      document.body.removeChild(downloadAnchor);
+
+      triggerChime(880, 'sine', 0.15);
+      showToast("Kartu GymQuest HD (PNG) berhasil diunduh!");
+    }
+
+    async function shareGymQuestCard() {
+      drawGymQuestHDCanvas();
+      const canvas = document.getElementById('gymQuestExportCanvas');
+
+      if (navigator.share) {
+        try {
+          canvas.toBlob(async (blob) => {
+            const file = new File([blob], 'GymQuest-Session.png', { type: 'image/png' });
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+              await navigator.share({
+                title: 'GymQuest // Calisthenics Protocol',
+                text: `Sesi ${PROTOCOL_CONFIGS[appState.currentLevel].title} selesai! Streak: ${appState.streak} Hari. #GymQuest`,
+                files: [file]
+              });
+            } else {
+              await navigator.share({
+                title: 'GymQuest // Calisthenics Protocol',
+                text: `Sesi ${PROTOCOL_CONFIGS[appState.currentLevel].title} selesai! Streak: ${appState.streak} Hari. #GymQuest`
+              });
+            }
+          });
+        } catch (e) {
+          downloadGymQuestCardPNG();
+        }
+      } else {
+        downloadGymQuestCardPNG();
+      }
+    }
+
+    function changeActiveTab(tabKey) {
+      triggerChime(600, 'sine', 0.05, 0.08);
+
+      document.querySelectorAll('.view-panel').forEach(view => view.classList.add('hidden'));
+      const activePanel = document.getElementById(`tab-${tabKey}`);
+      if (activePanel) activePanel.classList.remove('hidden');
+
+      document.querySelectorAll('.nav-dock-btn').forEach(btn => {
+        btn.classList.remove('text-lime-neon');
+        btn.classList.add('text-slate-400');
+      });
+
+      const selectedBtn = document.getElementById(`nav-btn-${tabKey}`);
+      if (selectedBtn) {
+        selectedBtn.classList.add('text-lime-neon');
+        selectedBtn.classList.remove('text-slate-400');
+      }
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    let toastTimeout = null;
+    function showToast(text) {
+      const toast = document.getElementById('toastNotification');
+      const messageElem = document.getElementById('toastMessage');
+      messageElem.innerText = text;
+
+      toast.classList.remove('-translate-y-20', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.add('-translate-y-20', 'opacity-0');
+        toast.classList.remove('translate-y-0', 'opacity-100');
+      }, 3000);
+    }
+
+    setInterval(() => {
+      appState.sessionElapsedSeconds++;
+      const hrs = Math.floor(appState.sessionElapsedSeconds / 3600);
+      const mins = Math.floor((appState.sessionElapsedSeconds % 3600) / 60);
+      const secs = appState.sessionElapsedSeconds % 60;
+      const clock = document.getElementById('sessionTimerDisplay');
+      if (clock) {
+        clock.innerText = `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      }
+    }, 1000);
+
+    window.addEventListener('DOMContentLoaded', () => {
+      loadSavedState();
+      updateSessionTelemetryHeaders();
+      renderExerciseChecklist();
+      renderConsistencyHeatmap();
+      renderSkillsProgression();
+      refreshRestTimerUI();
+    });
+  </script>
+</body>
+</html>
