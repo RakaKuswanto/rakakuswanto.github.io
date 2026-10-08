@@ -89,8 +89,8 @@
       id: 'traps',
       name: 'Trapezius & Rhomboids',
       common: 'Traps & Upper Back',
-      view: 'back',
-      desc: 'Scapular retraction, elevation & upper spinal posture',
+      view: 'both',
+      desc: 'Scapular retraction, elevation (shrugs) & upper spinal posture',
       optMin: 6,
       optMax: 14
     },
@@ -152,6 +152,15 @@
 
   // Comprehensive exercise to muscle group mappings
   const EXERCISE_TARGETS = {
+    // Warm-up & Mobility
+    wu_jj:      { primary: ['calves'], secondary: ['quads'] },
+    wu_wrist:   { primary: ['forearms'], secondary: [] },
+    wu_arm:     { primary: ['shoulders_front', 'shoulders_rear'], secondary: ['traps'] },
+    wu_catcow:  { primary: ['lower_back'], secondary: ['abs'] },
+    wu_scap:    { primary: ['traps'], secondary: ['chest'] },
+    wu_wgs:     { primary: ['hamstrings', 'glutes'], secondary: ['lower_back'] },
+    wu_squat:   { primary: ['quads'], secondary: ['glutes', 'calves'] },
+
     // Push Horizontal
     ph_wall:     { primary: ['chest'], secondary: ['shoulders_front', 'triceps'] },
     ph_incline:  { primary: ['chest'], secondary: ['shoulders_front', 'triceps'] },
@@ -442,8 +451,8 @@
 
       // Ensure active selected muscle exists in current view, else fallback
       const activeDef = MUSCLE_DEFS[this.selectedMuscleId];
-      if (!activeDef || activeDef.view !== this.currentView) {
-        const fallback = Object.values(MUSCLE_DEFS).find(m => m.view === this.currentView);
+      if (!activeDef || (activeDef.view !== 'both' && activeDef.view !== this.currentView)) {
+        const fallback = Object.values(MUSCLE_DEFS).find(m => m.view === 'both' || m.view === this.currentView);
         if (fallback) this.selectedMuscleId = fallback.id;
       }
 
@@ -600,6 +609,16 @@
             <path d="M 62 76 Q 52 100 48 126 Q 44 148 40 170 M 138 76 Q 148 100 152 126 Q 156 148 160 170"/>
             <!-- Pelvis & Legs Baseline Frame -->
             <path d="M 70 170 Q 100 174 130 170"/>
+          </g>
+
+          <!-- TRAPS (Upper Trapezius - Anterior Neck Slopes) -->
+          <g onclick="GQ.Anatomy.selectMuscle('traps')" class="cursor-pointer transition-all hover:opacity-80">
+            <!-- Left Upper Trap Slope -->
+            <path d="M 94 50 L 68 66 L 76 72 L 94 62 Z"
+              fill="${getFill('traps')}" stroke="${getStroke('traps')}" stroke-width="${getStrokeW('traps')}" style="${getFilter('traps')}"/>
+            <!-- Right Upper Trap Slope -->
+            <path d="M 106 50 L 132 66 L 124 72 L 106 62 Z"
+              fill="${getFill('traps')}" stroke="${getStroke('traps')}" stroke-width="${getStrokeW('traps')}" style="${getFilter('traps')}"/>
           </g>
 
           <!-- CHEST (Pectorals) -->

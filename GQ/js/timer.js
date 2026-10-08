@@ -132,11 +132,40 @@
     setRestDuration(sec) {
       this.stopRest();
       this.restDurationSec = sec;
+      if (GQ.Store && GQ.Store.state && GQ.Store.state.settings) {
+        GQ.Store.state.settings.restSec = sec;
+        GQ.Store.save();
+      }
+      if (GQ.UI && GQ.UI.updateRestDurationButtons) {
+        GQ.UI.updateRestDurationButtons(sec);
+      }
       if (this.onRestTick) this.onRestTick(sec, sec);
     },
 
+    addRestTime(sec = 30) {
+      if (this.isRestRunning && this.restTargetTimestamp) {
+        this.restTargetTimestamp += (sec * 1000);
+        this.restDurationSec += sec;
+        this.beep(880, 'sine', 0.08, 0.2);
+        if (GQ.UI && GQ.UI.toast) GQ.UI.toast(`+${sec}s Rest Added`);
+      } else {
+        this.setRestDuration(this.restDurationSec + sec);
+      }
+    },
+
+    skipRest() {
+      if (this.isRestRunning) {
+        this.stopRest();
+        this.beep(440, 'sine', 0.08, 0.2);
+        if (GQ.UI && GQ.UI.toast) GQ.UI.toast('Rest interval skipped. Next set ready!');
+        if (this.onRestTick) this.onRestTick(this.restDurationSec, this.restDurationSec);
+        if (GQ.UI && GQ.UI.updateRestButtonIcon) GQ.UI.updateRestButtonIcon();
+      }
+    },
+
     startRest(sec = null) {
-      if (sec) this.restDurationSec = sec;
+      const defaultSec = (GQ.Store && GQ.Store.state && GQ.Store.state.settings && GQ.Store.state.settings.restSec) || 90;
+      this.restDurationSec = sec || this.restDurationSec || defaultSec;
       const now = Date.now();
       this.restTargetTimestamp = now + (this.restDurationSec * 1000);
       this.isRestRunning = true;
@@ -169,6 +198,8 @@
       this.restIntervalId = null;
       this.isRestRunning = false;
       this.restTargetTimestamp = null;
+      this.releaseWakeLock();
+      if (GQ.UI && GQ.UI.hideFloatingRestBar) GQ.UI.hideFloatingRestBar();
     },
 
     toggleRest() {

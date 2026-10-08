@@ -240,6 +240,20 @@
   // user's equipment wins. {ladder} picks the step matching the user's tier.
   GQ.ROUTINE_TEMPLATES = [
     {
+      key: 'proto_hybrid_upper',
+      name: 'Upper Body Hybrid: Push-Pull Synergy',
+      desc: 'Calisthenics push trio (Push-Up, Diamond, PPPU) paired with antagonist Dumbbell Rows, Bicep Curls & Reverse Flyes',
+      warmup: ['wu_wrist', 'wu_scap', 'wu_arm'],
+      slots: [
+        { pick: [{ id: 'ph_std' }, { ladder: 'push_h' }], sets: 3 },
+        { pick: [{ id: 'db_row' }, { ladder: 'row' }], sets: 3 },
+        { pick: [{ id: 'ph_diamond' }], sets: 3 },
+        { pick: [{ id: 'db_curl' }, { id: 'db_hammer' }], sets: 3 },
+        { pick: [{ id: 'ph_pppu' }], sets: 3 },
+        { pick: [{ id: 'db_rdfly' }, { id: 'db_shrug' }], sets: 3 },
+      ],
+    },
+    {
       key: 'proto_upper',
       name: 'Day 1: Upper Body Armor & Posture',
       desc: 'Push-ups, dumbbell rows, overhead presses, kickbacks, hammer curls & core',

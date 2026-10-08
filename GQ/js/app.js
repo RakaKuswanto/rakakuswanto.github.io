@@ -53,7 +53,7 @@
           s.sound = !s.sound;
           GQ.Store.save();
           this.updateSoundIcon();
-          this.toast(s.sound ? 'Audio Cue aktif' : 'Audio Cue nonaktif');
+          this.toast(s.sound ? 'Audio Cues enabled' : 'Audio Cues muted');
           if (s.sound) GQ.Timer.beep(750, 'sine', 0.1);
         });
       }
@@ -73,23 +73,65 @@
         const text = document.getElementById('restTimerCounterText');
         const ring = document.getElementById('restTimerCircle');
         const status = document.getElementById('restTimerStatusText');
+        const floatClock = document.getElementById('floatingRestClock');
 
         if (text) text.innerText = `${remaining}s`;
+        if (floatClock) floatClock.innerText = `${remaining}s`;
+
         if (ring) {
           const circ = 100.5;
-          const fraction = remaining / total;
+          const fraction = total > 0 ? remaining / total : 0;
           ring.style.strokeDashoffset = circ - (fraction * circ);
         }
         if (status) {
           status.innerText = GQ.Timer.isRestRunning ? 'Rest interval in progress...' : `Set to ${total}s`;
         }
         this.updateRestButtonIcon();
+
+        if (GQ.Timer.isRestRunning) {
+          this.showFloatingRestBar();
+        } else {
+          this.hideFloatingRestBar();
+        }
       };
 
       GQ.Timer.onRestComplete = () => {
         this.toast('Rest interval complete! Proceed to the next set.');
         this.updateRestButtonIcon();
+        this.hideFloatingRestBar();
       };
+
+      // Initial active button highlight
+      const curRestSec = (GQ.Store.state && GQ.Store.state.settings && GQ.Store.state.settings.restSec) || 90;
+      this.updateRestDurationButtons(curRestSec);
+    },
+
+    showFloatingRestBar() {
+      const bar = document.getElementById('floatingRestBar');
+      if (bar) {
+        bar.classList.remove('translate-y-24', 'opacity-0', 'pointer-events-none');
+        bar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+      }
+    },
+
+    hideFloatingRestBar() {
+      const bar = document.getElementById('floatingRestBar');
+      if (bar) {
+        bar.classList.add('translate-y-24', 'opacity-0', 'pointer-events-none');
+        bar.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+      }
+    },
+
+    updateRestDurationButtons(sec) {
+      [45, 90, 120].forEach(d => {
+        const btn = document.getElementById(`restBtn-${d}`);
+        if (!btn) return;
+        if (d === Number(sec)) {
+          btn.className = 'px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-lime-neon border border-lime-neon/40 font-bold';
+        } else {
+          btn.className = 'px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors';
+        }
+      });
     },
 
     updateSoundIcon() {

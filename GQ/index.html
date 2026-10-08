@@ -211,10 +211,11 @@
         </div>
 
         <div class="flex items-center space-x-1.5">
-          <button onclick="GQ.Timer.setRestDuration(45)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors">45s</button>
-          <button onclick="GQ.Timer.setRestDuration(90)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-lime-neon border border-lime-neon/30">90s</button>
-          <button onclick="GQ.Timer.setRestDuration(120)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors">120s</button>
-          <button id="restTimerToggleBtn" class="w-8 h-8 rounded-xl bg-lime-neon text-black flex items-center justify-center ml-1 shadow-neon-glow font-bold active:scale-95 transition-transform">
+          <button id="restBtn-45" onclick="GQ.Timer.setRestDuration(45)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors">45s</button>
+          <button id="restBtn-90" onclick="GQ.Timer.setRestDuration(90)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-lime-neon border border-lime-neon/40 font-bold">90s</button>
+          <button id="restBtn-120" onclick="GQ.Timer.setRestDuration(120)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-white transition-colors">120s</button>
+          <button onclick="GQ.Timer.addRestTime(30)" class="px-2 py-1 text-[10px] font-mono rounded-lg bg-obsidian-850 text-slate-300 hover:text-lime-neon border border-white/5 transition-colors" title="Add 30 seconds">+30s</button>
+          <button id="restTimerToggleBtn" class="w-8 h-8 rounded-xl bg-lime-neon text-black flex items-center justify-center ml-1 shadow-neon-glow font-bold active:scale-95 transition-transform" title="Start/Pause Rest">
             <svg class="w-4 h-4 fill-current" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"/></svg>
           </button>
         </div>
@@ -351,6 +352,29 @@
       <div id="skillsContainer" class="space-y-3"></div>
     </main>
 
+  </div>
+
+  <!-- Floating Mini Rest Cockpit (Active when rest interval runs and user scrolls) -->
+  <div id="floatingRestBar" class="fixed bottom-16 left-1/2 -translate-x-1/2 w-11/12 max-w-sm z-30 transition-all duration-300 transform translate-y-24 opacity-0 pointer-events-none">
+    <div class="bg-obsidian-900/95 backdrop-blur-xl border border-lime-neon/40 rounded-2xl p-2.5 shadow-neon-soft flex items-center justify-between">
+      <div class="flex items-center space-x-2.5">
+        <div class="w-8 h-8 rounded-xl bg-lime-neon/20 border border-lime-neon/40 text-lime-neon font-mono font-bold text-xs flex items-center justify-center animate-pulse">
+          ⏱
+        </div>
+        <div>
+          <p class="text-[9px] font-mono text-slate-400 uppercase tracking-wider">REST INTERVAL</p>
+          <p id="floatingRestClock" class="text-base font-mono font-black text-lime-neon">90s</p>
+        </div>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <button onclick="GQ.Timer.addRestTime(30)" class="px-2.5 py-1.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-lime-neon border border-lime-neon/30 text-[10px] font-mono font-bold active:scale-95 transition-transform">
+          +30s
+        </button>
+        <button onclick="GQ.Timer.skipRest()" class="px-2.5 py-1.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-750 text-slate-300 hover:text-white border border-white/10 text-[10px] font-mono active:scale-95 transition-transform">
+          Skip ✕
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Bottom Navigation Dock -->
