@@ -233,17 +233,7 @@
           this.canvas.height = pixelH;
         }
 
-        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
-        gl.useProgram(this.program);
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-        gl.enableVertexAttribArray(this.posAttr);
-        gl.vertexAttribPointer(this.posAttr, 2, gl.FLOAT, false, 0, 0);
-
-        gl.uniform2f(this.resUniform, this.canvas.width, this.canvas.height);
-        gl.uniform1f(this.timeUniform, (Date.now() - this.startTime) / 1000);
-
-        gl.drawArrays(gl.TRIANGLES, 0, 6);
+        this.renderAt((Date.now() - this.startTime) / 1000);
 
         this.animId = requestAnimationFrame(render);
       };
@@ -251,10 +241,27 @@
       this.animId = requestAnimationFrame(render);
     }
 
-    start2DFallback() {
-      const ctx = this.canvas.getContext('2d');
-      if (!ctx) return;
+    renderAt(timeSec) {
+      if (this.is2DFallback) {
+        this.render2DAt(timeSec);
+        return;
+      }
+      const gl = this.gl;
+      if (!gl || !this.program) return;
 
+      gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      gl.useProgram(this.program);
+      gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+      gl.enableVertexAttribArray(this.posAttr);
+      gl.vertexAttribPointer(this.posAttr, 2, gl.FLOAT, false, 0, 0);
+
+      gl.uniform2f(this.resUniform, this.canvas.width, this.canvas.height);
+      gl.uniform1f(this.timeUniform, timeSec);
+
+      gl.drawArrays(gl.TRIANGLES, 0, 6);
+    }
+
+    start2DFallback() {
       const render2D = () => {
         const parent = this.canvas.parentElement;
         const rect = this.canvas.getBoundingClientRect();
@@ -266,39 +273,45 @@
           this.canvas.height = displayH;
         }
 
-        const W = this.canvas.width;
-        const H = this.canvas.height;
-        const t = (Date.now() - this.startTime) / 1000 * 0.25;
-
-        // Luxury Dark Obsidian background
-        const grad = ctx.createLinearGradient(0, 0, 0, H);
-        grad.addColorStop(0, '#040608');
-        grad.addColorStop(0.5, '#080c12');
-        grad.addColorStop(1, '#020305');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, W, H);
-
-        // Elegant flowing silk contour waves
-        for (let i = 0; i < 5; i++) {
-          const wavePhase = t + i * 0.45;
-          ctx.beginPath();
-          ctx.strokeStyle = i === 2 ? 'rgba(212, 255, 0, 0.25)' : 'rgba(255, 255, 255, 0.06)';
-          ctx.lineWidth = i === 2 ? 1.5 : 1;
-
-          for (let x = 0; x <= W; x += 6) {
-            const y = H * 0.35 + (i * 45) +
-                      Math.sin(x * 0.008 + wavePhase) * 35 +
-                      Math.cos(x * 0.004 - wavePhase * 0.6) * 20;
-            if (x === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-          }
-          ctx.stroke();
-        }
+        this.render2DAt((Date.now() - this.startTime) / 1000);
 
         this.animId = requestAnimationFrame(render2D);
       };
 
       this.animId = requestAnimationFrame(render2D);
+    }
+
+    render2DAt(timeSec) {
+      const ctx = this.canvas.getContext('2d');
+      if (!ctx) return;
+      const W = this.canvas.width;
+      const H = this.canvas.height;
+      const t = timeSec * 0.25;
+
+      // Luxury Dark Obsidian background
+      const grad = ctx.createLinearGradient(0, 0, 0, H);
+      grad.addColorStop(0, '#040608');
+      grad.addColorStop(0.5, '#080c12');
+      grad.addColorStop(1, '#020305');
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, W, H);
+
+      // Elegant flowing silk contour waves
+      for (let i = 0; i < 5; i++) {
+        const wavePhase = t + i * 0.45;
+        ctx.beginPath();
+        ctx.strokeStyle = i === 2 ? 'rgba(212, 255, 0, 0.25)' : 'rgba(255, 255, 255, 0.06)';
+        ctx.lineWidth = i === 2 ? 1.5 : 1;
+
+        for (let x = 0; x <= W; x += 6) {
+          const y = H * 0.35 + (i * 45) +
+                    Math.sin(x * 0.008 + wavePhase) * 35 +
+                    Math.cos(x * 0.004 - wavePhase * 0.6) * 20;
+          if (x === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
     }
 
     stop() {

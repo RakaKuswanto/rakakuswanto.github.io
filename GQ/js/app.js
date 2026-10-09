@@ -293,9 +293,15 @@
                   <span>${warmupExercises.length} Warm-up</span>
                 </div>
               </div>
-              <button onclick="GQ.UI.startRoutine('${t.key}')" class="px-3.5 py-2 rounded-xl bg-lime-neon text-black font-mono font-bold text-xs uppercase shadow-neon-soft hover:bg-lime-glow active:scale-95 transition-transform flex-shrink-0">
-                START
-              </button>
+              <div class="flex items-center space-x-1.5 flex-shrink-0">
+                <button onclick="GQ.UI.customizePresetRoutine('${t.key}')" class="px-2.5 py-2 rounded-xl bg-obsidian-800 border border-white/10 hover:border-lime-neon/40 text-slate-300 hover:text-white font-mono text-xs flex items-center space-x-1 transition-colors" title="Customize this preset">
+                  <span>⚙️</span>
+                  <span class="text-[10px]">EDIT</span>
+                </button>
+                <button onclick="GQ.UI.startRoutine('${t.key}')" class="px-3.5 py-2 rounded-xl bg-lime-neon text-black font-mono font-bold text-xs uppercase shadow-neon-soft hover:bg-lime-glow active:scale-95 transition-transform">
+                  START
+                </button>
+              </div>
             </div>
 
             <!-- Preview Exercise List -->
@@ -348,6 +354,7 @@
                   <p class="text-[10px] text-slate-400 mt-0.5">${cr.desc || 'Custom training protocol'}</p>
                 </div>
                 <div class="flex items-center space-x-1.5 flex-shrink-0">
+                  <button onclick="GQ.UI.editCustomRoutine(${crIdx})" class="w-7 h-7 rounded-lg bg-obsidian-800 text-slate-400 hover:text-lime-neon text-xs flex items-center justify-center transition-colors" title="Edit routine">✏️</button>
                   <button onclick="GQ.UI.deleteCustomRoutine(${crIdx})" class="w-7 h-7 rounded-lg bg-obsidian-800 text-slate-500 hover:text-rose-400 text-xs flex items-center justify-center transition-colors" title="Delete routine">✕</button>
                   <button onclick="GQ.UI.startCustomRoutine(${crIdx})" class="px-3.5 py-2 rounded-xl bg-lime-neon text-black font-mono font-bold text-xs uppercase shadow-neon-soft hover:bg-lime-glow active:scale-95 transition-transform">
                     START
@@ -1331,6 +1338,34 @@
       this.toast('GymQuest HD Card downloaded successfully!');
     },
 
+    exportRecapVideo() {
+      if (!this._currentRecapSession) return;
+      const btn = document.getElementById('exportRecapVideoBtn');
+      const btnText = document.getElementById('exportVideoBtnText');
+      if (btn) btn.disabled = true;
+
+      this.toast('🎬 Recording 15s Story Video... Please keep this screen open.');
+
+      GQ.Card.exportVideo(
+        this._currentRecapSession,
+        this._currentRecapStreak,
+        (percent, sec) => {
+          if (btnText) btnText.innerText = `REC ${sec}s (${percent}%)`;
+        },
+        () => {
+          if (btn) btn.disabled = false;
+          if (btnText) btnText.innerText = 'EXPORT 15s VIDEO';
+          this.toast('🏆 15-second Video Story exported successfully!');
+          GQ.Timer.playSuccessChime();
+        },
+        (err) => {
+          if (btn) btn.disabled = false;
+          if (btnText) btnText.innerText = 'EXPORT 15s VIDEO';
+          this.toast('Video export error: ' + (err.message || 'Browser not supported'));
+        }
+      );
+    },
+
     shareRecapCard() {
       if (!this._currentRecapSession) return;
       GQ.Card.shareStory(this._currentRecapSession, this._currentRecapStreak);
@@ -1584,19 +1619,42 @@
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
-    /* ── CUSTOM ROUTINE CREATOR LOGIC ───────────────────────────── */
+    /* ── CUSTOM ROUTINE CREATOR & EDITOR LOGIC ─────────────────── */
     _customSelectedExercises: [],
+    _editingRoutineIndex: null,
 
-    openCustomRoutineModal() {
+    openCustomRoutineModal(editIndex = null, prefillSlots = null, prefillName = '', prefillDesc = '') {
+      this._editingRoutineIndex = editIndex;
       this._customSelectedExercises = [];
+
       const modal = document.getElementById('customRoutineModal');
+      const titleEl = document.getElementById('customRoutineModalTitle');
+      const saveBtn = document.getElementById('customRoutineModalSaveBtn');
       const nameIn = document.getElementById('customRoutineNameInput');
       const descIn = document.getElementById('customRoutineDescInput');
       const searchIn = document.getElementById('customExerciseSearchInput');
 
-      if (nameIn) nameIn.value = '';
-      if (descIn) descIn.value = '';
+      if (titleEl) {
+        titleEl.textContent = (editIndex !== null) ? 'Edit Custom Routine' : (prefillSlots ? 'Customize Routine' : 'Create Custom Routine');
+      }
+      if (saveBtn) {
+        saveBtn.textContent = (editIndex !== null) ? 'UPDATE ROUTINE' : 'SAVE ROUTINE';
+      }
+
+      if (nameIn) nameIn.value = prefillName || '';
+      if (descIn) descIn.value = prefillDesc || '';
       if (searchIn) searchIn.value = '';
+
+      if (Array.isArray(prefillSlots) && prefillSlots.length > 0) {
+        this._customSelectedExercises = prefillSlots.map(s => {
+          const ex = GQ.EX[s.exerciseId || s.id];
+          return {
+            id: s.exerciseId || s.id,
+            sets: s.sets || 3,
+            target: s.target || (ex ? ex.target : 10)
+          };
+        }).filter(item => Boolean(GQ.EX[item.id]));
+      }
 
       this.updateCustomSelectedCount();
       this.filterCustomExercises('');
@@ -1604,7 +1662,53 @@
       if (modal) modal.classList.remove('hidden'), modal.classList.add('flex');
     },
 
+    editCustomRoutine(crIdx) {
+      const cr = GQ.Store.state.routines && GQ.Store.state.routines[crIdx];
+      if (!cr) return;
+      this.openCustomRoutineModal(crIdx, cr.slots, cr.name, cr.desc);
+    },
+
+    customizePresetRoutine(templateKey) {
+      const t = GQ.ROUTINE_TEMPLATES.find(tpl => tpl.key === templateKey);
+      if (!t) return;
+
+      const slots = [];
+      const userTier = GQ.Store.state.profile.tier || 1;
+      const userEq = GQ.Store.state.profile.equipment || ['none'];
+
+      t.slots.forEach(slot => {
+        let picked = null;
+        for (const exId of slot.pick) {
+          const ex = GQ.EX[exId];
+          if (ex && ex.tier <= userTier && GQ.isAvailable(ex, userEq)) {
+            picked = ex;
+            break;
+          }
+        }
+        if (!picked) {
+          for (const exId of slot.pick) {
+            const ex = GQ.EX[exId];
+            if (ex && GQ.isAvailable(ex, userEq)) {
+              picked = ex;
+              break;
+            }
+          }
+        }
+        if (!picked && slot.pick.length > 0) picked = GQ.EX[slot.pick[0]];
+        if (picked) {
+          slots.push({
+            exerciseId: picked.id,
+            sets: slot.sets || 3,
+            target: picked.target
+          });
+        }
+      });
+
+      this.openCustomRoutineModal(null, slots, `${t.name} (Custom)`, `Customized based on ${t.name}`);
+    },
+
     closeCustomRoutineModal() {
+      this._editingRoutineIndex = null;
       const modal = document.getElementById('customRoutineModal');
       if (modal) modal.classList.add('hidden'), modal.classList.remove('flex');
     },
@@ -1692,6 +1796,24 @@
         return;
       }
 
+      if (this._editingRoutineIndex !== null && GQ.Store.state.routines && GQ.Store.state.routines[this._editingRoutineIndex]) {
+        const existing = GQ.Store.state.routines[this._editingRoutineIndex];
+        existing.name = name;
+        existing.desc = (descIn && descIn.value.trim()) || 'Custom training protocol';
+        existing.slots = this._customSelectedExercises.map(item => ({
+          exerciseId: item.id,
+          sets: 3,
+          target: item.target
+        }));
+        GQ.Store.save();
+        this.closeCustomRoutineModal();
+        this.renderWorkoutTab();
+        this.toast(`Routine "${name}" updated!`);
+        GQ.Timer.playSuccessChime();
+        this._editingRoutineIndex = null;
+        return;
+      }
+
       const newRoutine = {
         id: GQ.U.uid(),
         name: name,
@@ -1711,6 +1833,7 @@
       this.renderWorkoutTab();
       this.toast(`Routine "${name}" created successfully!`);
       GQ.Timer.playSuccessChime();
+      this._editingRoutineIndex = null;
     },
 
     startCustomRoutine(crIndex) {
