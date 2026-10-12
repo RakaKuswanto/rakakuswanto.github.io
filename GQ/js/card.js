@@ -9,6 +9,11 @@
 (function (GQ) {
   'use strict';
 
+  // Single source of truth for reps of a completed set (used by spectrum AND movement list)
+  function repsOf(st) {
+    return Number(st.actual || st.target || 10);
+  }
+
   function getSessionSets(sessionData) {
     const sets = [];
     (sessionData.exercises || []).forEach(e => {
@@ -18,7 +23,7 @@
           sets.push({
             exId: e.exerciseId,
             exName: ex ? ex.name : e.exerciseId,
-            reps: Number(st.actual || st.target || 10),
+            reps: repsOf(st),
             weightKg: Number(st.weightKg || 0),
             isPR: Boolean(st.pr),
             setNum: idx + 1
@@ -38,6 +43,83 @@
       ];
     }
     return sets;
+  }
+
+  // ALL movements that have at least one completed set (no cap), matching the spectrum's sets.
+  function getMovementsToRender(sessionData) {
+    const done = (sessionData.exercises || []).filter(e => e.sets && e.sets.some(s => s.done));
+    if (done.length > 0) return done;
+    return [
+      { exerciseId: 'pushup_reg', sets: [{ done: true, actual: 15 }, { done: true, actual: 12 }] },
+      { exerciseId: 'db_kickback', sets: [{ done: true, actual: 12 }, { done: true, actual: 10 }] },
+      { exerciseId: 'dip_parallel', sets: [{ done: true, actual: 10 }, { done: true, actual: 8 }] }
+    ];
+  }
+
+  // Auto-fit: shrink rows, then switch to 2 columns, so every movement fits above the footer.
+  function movementLayout(n, topY, bottomY) {
+    const avail = bottomY - topY;
+    let cols = n > 9 ? 2 : 1;
+    let rows = Math.max(1, Math.ceil(n / cols));
+    if (cols === 2 && rows > 12) cols = 3, rows = Math.ceil(n / 3);
+    const rowH = Math.max(26, Math.min(88, Math.floor(avail / rows)));
+    const gap = 14;
+    const colW = Math.floor((880 - gap * (cols - 1)) / cols);
+    return { cols, rows, rowH, boxH: Math.max(22, rowH - (rowH > 50 ? 14 : 6)), colW, gap };
+  }
+
+  function drawMovementRow(ctx, W, e, idx, L, topY, glow) {
+    const ex = GQ.EX[e.exerciseId];
+    const doneSets = (e.sets || []).filter(s => s.done);
+    if (doneSets.length === 0) return;
+
+    const col = idx % L.cols;
+    const row = Math.floor(idx / L.cols);
+    const x = 100 + col * (L.colW + L.gap);
+    const y = topY + row * L.rowH;
+    const cy = y + L.boxH / 2;
+    const scale = Math.max(0.5, Math.min(1, L.boxH / 72)) * (L.cols === 1 ? 1 : L.cols === 2 ? 0.8 : 0.66);
+    const nameFs = Math.round(26 * scale);
+    const setFs = Math.round(24 * scale);
+    const pad = Math.round(30 * scale) + 4;
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+    ctx.beginPath();
+    ctx.roundRect(x, y, L.colW, L.boxH, Math.min(18, L.boxH / 3));
+    ctx.fill();
+
+    ctx.fillStyle = '#D4FF00';
+    ctx.font = `bold ${Math.round(28 * scale)}px "JetBrains Mono", monospace`;
+    if (glow) { ctx.shadowColor = '#D4FF00'; ctx.shadowBlur = glow; }
+    ctx.textBaseline = 'middle';
+    ctx.fillText('✓', x + pad * 0.5, cy);
+    ctx.shadowBlur = 0;
+
+    // Sets summary (right aligned) - fall back to shorter text if too wide
+    const reps = doneSets.map(repsOf);
+    const unit = GQ.unit(ex);
+    ctx.textAlign = 'right';
+    ctx.fillStyle = '#94A3B8';
+    ctx.font = `500 ${setFs}px "JetBrains Mono", monospace`;
+    const maxSetW = L.colW * 0.6;
+    let setsText = `${doneSets.length} Sets (${reps.join('-')} ${unit})`;
+    if (ctx.measureText(setsText).width > maxSetW) setsText = `${doneSets.length} Sets (${reps[0]}…${reps[reps.length - 1]} ${unit})`;
+    if (ctx.measureText(setsText).width > maxSetW) setsText = `${doneSets.length} Sets`;
+    ctx.fillText(setsText, x + L.colW - pad * 0.6, cy);
+    const setsW = ctx.measureText(setsText).width;
+
+    // Name (truncate to fit remaining width)
+    ctx.textAlign = 'left';
+    ctx.fillStyle = '#FFFFFF';
+    ctx.font = `bold ${nameFs}px "Plus Jakarta Sans", sans-serif`;
+    let exName = ex ? ex.name : (e.exerciseId || 'Exercise');
+    const maxNameW = L.colW - pad - setsW - pad * 1.4;
+    while (exName.length > 4 && ctx.measureText(exName).width > maxNameW) {
+      exName = exName.slice(0, -2).replace(/…$/, '').trimEnd();
+      if (ctx.measureText(exName + '…').width <= maxNameW) { exName += '…'; break; }
+    }
+    ctx.fillText(exName, x + pad * 1.4 + 6, cy);
+    ctx.textBaseline = 'alphabetic';
   }
 
   const Card = {
@@ -334,7 +416,7 @@
       let totalVol = 0;
       (sessionData.exercises || []).forEach(e => {
         e.sets.forEach(st => {
-          if (st.done) totalVol += Number(st.actual || 0);
+          if (st.done) totalVol += repsOf(st);
         });
       });
       if (totalVol === 0 && sessionData.legacyVolume) totalVol = sessionData.legacyVolume;
@@ -390,43 +472,10 @@
         ctx.textAlign = 'left';
       }
 
-      let itemY = statY + 295;
-      const completedExercises = (sessionData.exercises || []).filter(e => e.sets && e.sets.some(s => s.done));
-      
-      const exToRender = completedExercises.length > 0 ? completedExercises.slice(0, 6) : [
-        { exerciseId: 'pushup_reg', sets: [{ done: true, actual: 15 }, { done: true, actual: 12 }] },
-        { exerciseId: 'db_kickback', sets: [{ done: true, actual: 12 }, { done: true, actual: 10 }] },
-        { exerciseId: 'dip_parallel', sets: [{ done: true, actual: 10 }, { done: true, actual: 8 }] }
-      ];
-
-      exToRender.forEach(e => {
-        const ex = GQ.EX[e.exerciseId];
-        const doneSets = (e.sets || []).filter(s => s.done);
-        if (doneSets.length === 0) return;
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-        ctx.beginPath();
-        ctx.roundRect(100, itemY - 32, W - 200, 72, 18);
-        ctx.fill();
-
-        ctx.fillStyle = '#D4FF00';
-        ctx.font = 'bold 28px "JetBrains Mono", monospace';
-        ctx.fillText('✓', 130, itemY + 14);
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 26px "Plus Jakarta Sans", sans-serif';
-        const exName = ex ? ex.name : (e.exerciseId || 'Exercise');
-        ctx.fillText(exName.length > 28 ? exName.slice(0, 26) + '...' : exName, 175, itemY + 14);
-
-        // Sets summary
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#94A3B8';
-        ctx.font = '500 24px "JetBrains Mono", monospace';
-        const setsText = doneSets.map(s => s.actual).join('-') + ` ${GQ.unit(ex)}`;
-        ctx.fillText(`${doneSets.length} Sets (${setsText})`, W - 130, itemY + 14);
-        ctx.textAlign = 'left';
-
-        itemY += 88;
+      const exToRender = getMovementsToRender(sessionData);
+      const mvLayout = movementLayout(exToRender.length, statY + 263, H - 200);
+      exToRender.forEach((e, idx) => {
+        drawMovementRow(ctx, W, e, idx, mvLayout, statY + 263, 0);
       });
 
       // ── 8. Official Footer Stamp ──
@@ -821,7 +870,7 @@
       let totalVol = 0;
       (sessionData.exercises || []).forEach(e => {
         e.sets.forEach(st => {
-          if (st.done) totalVol += Number(st.actual || 0);
+          if (st.done) totalVol += repsOf(st);
         });
       });
       if (totalVol === 0 && sessionData.legacyVolume) totalVol = sessionData.legacyVolume;
@@ -896,17 +945,13 @@
       }
       ctx.restore();
 
-      // Staggered Exercise Items
-      let itemY = statY + 295;
-      const completedExercises = (sessionData.exercises || []).filter(e => e.sets && e.sets.some(s => s.done));
-      const exToRender = completedExercises.length > 0 ? completedExercises.slice(0, 6) : [
-        { exerciseId: 'pushup_reg', sets: [{ done: true, actual: 15 }, { done: true, actual: 12 }] },
-        { exerciseId: 'db_kickback', sets: [{ done: true, actual: 12 }, { done: true, actual: 10 }] },
-        { exerciseId: 'dip_parallel', sets: [{ done: true, actual: 10 }, { done: true, actual: 8 }] }
-      ];
+      // Staggered Exercise Items (ALL completed movements, auto-fit layout)
+      const exToRender = getMovementsToRender(sessionData);
+      const mvLayout = movementLayout(exToRender.length, statY + 263, H - 200);
+      const stagger = Math.min(0.45, 3.6 / Math.max(1, exToRender.length));
 
       exToRender.forEach((e, idx) => {
-        const itemStart = 9.4 + idx * 0.45;
+        const itemStart = 9.4 + idx * stagger;
         if (timeSec < itemStart) return;
 
         const itemProg = easeOutCubic(clamp((timeSec - itemStart) / 0.5, 0, 1));
@@ -915,42 +960,8 @@
         ctx.save();
         ctx.globalAlpha = itemProg;
         ctx.translate(slideX, 0);
-
-        const ex = GQ.EX[e.exerciseId];
-        const doneSets = (e.sets || []).filter(s => s.done);
-        if (doneSets.length === 0) {
-          ctx.restore();
-          return;
-        }
-
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-        ctx.beginPath();
-        ctx.roundRect(100, itemY - 32, W - 200, 72, 18);
-        ctx.fill();
-
-        // Glowing Checkmark
-        ctx.fillStyle = '#D4FF00';
-        ctx.font = 'bold 28px "JetBrains Mono", monospace';
-        ctx.shadowColor = '#D4FF00';
-        ctx.shadowBlur = itemProg < 0.8 ? 14 : 0;
-        ctx.fillText('✓', 130, itemY + 14);
-        ctx.shadowBlur = 0;
-
-        ctx.fillStyle = '#FFFFFF';
-        ctx.font = 'bold 26px "Plus Jakarta Sans", sans-serif';
-        const exName = ex ? ex.name : (e.exerciseId || 'Exercise');
-        ctx.fillText(exName.length > 28 ? exName.slice(0, 26) + '...' : exName, 175, itemY + 14);
-
-        // Sets summary
-        ctx.textAlign = 'right';
-        ctx.fillStyle = '#94A3B8';
-        ctx.font = '500 24px "JetBrains Mono", monospace';
-        const setsText = doneSets.map(s => s.actual).join('-') + ` ${GQ.unit(ex)}`;
-        ctx.fillText(`${doneSets.length} Sets (${setsText})`, W - 130, itemY + 14);
-        ctx.textAlign = 'left';
-
+        drawMovementRow(ctx, W, e, idx, mvLayout, statY + 263, itemProg < 0.8 ? 14 : 0);
         ctx.restore();
-        itemY += 88;
       });
 
       // ── 8. Official Footer Stamp (Always visible, extra glow at 13s+) ──

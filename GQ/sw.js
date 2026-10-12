@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gymquest-v3.8-cache';
+const CACHE_NAME = 'gymquest-v4.0-cache';
 const ASSETS = [
   './',
   './index.html',

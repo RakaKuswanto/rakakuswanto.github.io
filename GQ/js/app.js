@@ -1678,23 +1678,18 @@
 
       t.slots.forEach(slot => {
         let picked = null;
-        for (const exId of slot.pick) {
-          const ex = GQ.EX[exId];
-          if (ex && ex.tier <= userTier && GQ.isAvailable(ex, userEq)) {
-            picked = ex;
+        for (const candidate of slot.pick) {
+          if (candidate.id && GQ.EX[candidate.id] && GQ.isAvailable(GQ.EX[candidate.id], userEq)) {
+            picked = GQ.EX[candidate.id];
             break;
           }
-        }
-        if (!picked) {
-          for (const exId of slot.pick) {
-            const ex = GQ.EX[exId];
-            if (ex && GQ.isAvailable(ex, userEq)) {
-              picked = ex;
-              break;
-            }
+          if (candidate.ladder) {
+            const ladderSteps = GQ.LADDER_STEPS[candidate.ladder] || [];
+            picked = ladderSteps.find(st => st.tier === userTier && GQ.isAvailable(st, userEq))
+                  || ladderSteps.find(st => GQ.isAvailable(st, userEq));
+            if (picked) break;
           }
         }
-        if (!picked && slot.pick.length > 0) picked = GQ.EX[slot.pick[0]];
         if (picked) {
           slots.push({
             exerciseId: picked.id,

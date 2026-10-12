@@ -312,6 +312,7 @@
           muscleId: mId,
           sets: 0,
           reps: 0,
+          secs: 0,
           exercises: {} // { exName: setsCount }
         };
       });
@@ -324,6 +325,7 @@
           const ex = GQ.EX[exSlot.exerciseId];
           const exName = ex ? ex.name : exSlot.exerciseId;
           const targets = EXERCISE_TARGETS[exSlot.exerciseId] || { primary: [], secondary: [] };
+          const isTimed = GQ.unit(ex) === 'sec';
 
           let doneSets = 0;
           let doneReps = 0;
@@ -340,19 +342,25 @@
           targets.primary.forEach(m => {
             if (loads[m]) {
               loads[m].sets += doneSets;
-              loads[m].reps += doneReps;
+              if (isTimed) loads[m].secs += doneReps; else loads[m].reps += doneReps;
               loads[m].exercises[exName] = (loads[m].exercises[exName] || 0) + doneSets;
             }
           });
 
           targets.secondary.forEach(m => {
             if (loads[m]) {
-              loads[m].sets += Math.round(doneSets * 0.5 * 10) / 10;
-              loads[m].reps += Math.round(doneReps * 0.5);
-              loads[m].exercises[exName] = (loads[m].exercises[exName] || 0) + Math.round(doneSets * 0.5 * 10) / 10;
+              loads[m].sets += doneSets * 0.5;
+              if (isTimed) loads[m].secs += Math.round(doneReps * 0.5); else loads[m].reps += Math.round(doneReps * 0.5);
+              loads[m].exercises[exName] = (loads[m].exercises[exName] || 0) + doneSets * 0.5;
             }
           });
         });
+      });
+
+      // Clean float noise (e.g. 0.1+0.2) once, at the end
+      Object.values(loads).forEach(l => {
+        l.sets = Math.round(l.sets * 10) / 10;
+        Object.keys(l.exercises).forEach(k => { l.exercises[k] = Math.round(l.exercises[k] * 10) / 10; });
       });
 
       return loads;
@@ -361,10 +369,19 @@
     /**
      * Determine stimulus tier and hex fill/stroke colors based on set load.
      */
-    getStimulusMetrics(muscleId, sets) {
+    /** Weekly targets scaled to the selected window (7D = x1, 30D = ~x4.3). */
+    getWindowScale() {
+      return Math.max(1, this.currentWindowDays / 7);
+    },
+
+    getTargetRange(muscleId) {
       const def = MUSCLE_DEFS[muscleId] || { optMin: 8, optMax: 16 };
-      const min = def.optMin;
-      const max = def.optMax;
+      const k = this.getWindowScale();
+      return { min: Math.round(def.optMin * k), max: Math.round(def.optMax * k) };
+    },
+
+    getStimulusMetrics(muscleId, sets) {
+      const { min, max } = this.getTargetRange(muscleId);
 
       if (sets <= 0) {
         return {
@@ -457,8 +474,30 @@
       }
 
       const activeMuscle = MUSCLE_DEFS[this.selectedMuscleId] || MUSCLE_DEFS['chest'];
-      const activeLoad = loads[this.selectedMuscleId] || { sets: 0, reps: 0, exercises: {} };
+      const activeLoad = loads[this.selectedMuscleId] || { sets: 0, reps: 0, secs: 0, exercises: {} };
       const activeMetrics = this.getStimulusMetrics(this.selectedMuscleId, activeLoad.sets);
+      const activeRange = this.getTargetRange(this.selectedMuscleId);
+
+      // Ranked spectrum of every muscle group, highest volume first
+      const ranked = Object.values(MUSCLE_DEFS)
+        .map(def => ({ def, sets: (loads[def.id] && loads[def.id].sets) || 0 }))
+        .sort((a, b) => b.sets - a.sets || a.def.common.localeCompare(b.def.common));
+      const spectrumHtml = ranked.map(({ def, sets }) => {
+        const m = this.getStimulusMetrics(def.id, sets);
+        const range = this.getTargetRange(def.id);
+        const pct = Math.min(100, Math.round((sets / range.max) * 100));
+        const isSel = def.id === this.selectedMuscleId;
+        const viewTag = def.view === 'front' ? 'F' : def.view === 'back' ? 'B' : 'F+B';
+        return `
+          <div onclick="GQ.Anatomy.jumpToMuscle('${def.id}')" class="cursor-pointer flex items-center space-x-2 px-1.5 py-1 rounded-lg ${isSel ? 'bg-white/5 ring-1 ring-lime-neon/40' : 'hover:bg-white/5'}">
+            <span class="w-5 text-[8px] font-mono text-slate-500">${viewTag}</span>
+            <span class="w-28 truncate text-[10px] text-slate-200">${def.common.split(' & ')[0]}</span>
+            <div class="flex-1 h-1.5 rounded-full bg-obsidian-900 overflow-hidden">
+              <div class="h-full rounded-full" style="width:${pct}%; background:${m.level === 0 ? 'transparent' : m.fill}"></div>
+            </div>
+            <span class="w-10 text-right text-[9px] font-mono ${sets > 0 ? 'text-lime-neon' : 'text-slate-600'}">${sets}</span>
+          </div>`;
+      }).join('');
 
       // Render View Toggle Buttons state
       const btnFront = document.getElementById('anatomyBtnFront');
@@ -542,9 +581,11 @@
                   </p>
                 </div>
                 <div class="bg-obsidian-900/90 p-2 rounded-xl border border-white/5">
-                  <p class="text-[9px] font-mono text-slate-400">TOTAL REPETITIONS</p>
+                  <p class="text-[9px] font-mono text-slate-400">${activeLoad.secs > 0 && activeLoad.reps === 0 ? 'TOTAL HOLD TIME' : 'TOTAL REPETITIONS'}</p>
                   <p class="text-base font-mono font-bold text-white mt-0.5">
-                    ${activeLoad.reps} <span class="text-[10px] font-normal text-slate-400">REPS</span>
+                    ${activeLoad.secs > 0 && activeLoad.reps === 0
+                      ? `${activeLoad.secs} <span class="text-[10px] font-normal text-slate-400">SEC</span>`
+                      : `${activeLoad.reps} <span class="text-[10px] font-normal text-slate-400">REPS</span>${activeLoad.secs > 0 ? ` <span class="text-[10px] font-normal text-slate-400">+ ${activeLoad.secs} SEC</span>` : ''}`}
                   </p>
                 </div>
               </div>
@@ -552,13 +593,13 @@
               <!-- Optimal Target Progress Bar -->
               <div>
                 <div class="flex items-center justify-between text-[9px] font-mono text-slate-400 mb-1">
-                  <span>Weekly Hypertrophy Target (${activeMuscle.optMin}–${activeMuscle.optMax} Sets)</span>
-                  <span class="text-lime-neon font-bold">${Math.round(Math.min(100, (activeLoad.sets / activeMuscle.optMin) * 100))}%</span>
+                  <span>${this.currentWindowDays === 7 ? 'Weekly' : this.currentWindowDays + '-Day'} Hypertrophy Target (${activeRange.min}–${activeRange.max} Sets)</span>
+                  <span class="text-lime-neon font-bold">${Math.round(Math.min(100, (activeLoad.sets / activeRange.min) * 100))}%</span>
                 </div>
                 <div class="w-full bg-obsidian-900 rounded-full h-1.5 overflow-hidden">
                   <div class="h-full rounded-full transition-all duration-500 ${
-                    activeLoad.sets >= activeMuscle.optMin ? 'bg-lime-neon shadow-neon-soft' : 'bg-gradient-to-r from-lime-dim to-lime-neon'
-                  }" style="width: ${Math.min(100, Math.round((activeLoad.sets / activeMuscle.optMin) * 100))}%"></div>
+                    activeLoad.sets >= activeRange.min ? 'bg-lime-neon shadow-neon-soft' : 'bg-gradient-to-r from-lime-dim to-lime-neon'
+                  }" style="width: ${Math.min(100, Math.round((activeLoad.sets / activeRange.min) * 100))}%"></div>
                 </div>
               </div>
 
@@ -575,9 +616,25 @@
                 💡 <span class="text-slate-200">${activeMetrics.advice}</span>
               </p>
             </div>
+
+            <!-- Ranked Volume Spectrum: ALL muscle groups (front + back) -->
+            <div class="p-3 rounded-2xl bg-obsidian-850/80 border border-white/10 space-y-1.5">
+              <p class="text-[9px] font-mono text-slate-400 uppercase tracking-wider">Full-Body Volume Spectrum (${this.currentWindowDays}D)</p>
+              ${spectrumHtml}
+            </div>
           </div>
         </div>
       `;
+    },
+
+    /** Switch to the muscle's view (if needed) and select it. Used by the ranked spectrum. */
+    jumpToMuscle(muscleId) {
+      const def = MUSCLE_DEFS[muscleId];
+      if (!def) return;
+      if (def.view !== 'both' && def.view !== this.currentView) this.currentView = def.view;
+      this.selectedMuscleId = muscleId;
+      GQ.Timer.beep(640, 'sine', 0.04);
+      this.render();
     },
 
     /**
